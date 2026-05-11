@@ -16,7 +16,7 @@ eta_t = 0.88;       % 透平机等熵效率
 m_charge = 26.9;    
 m_discharge = 40.3; 
 
-% 初始化状态点矩阵: [节点, T(K), P(MPa), h(kJ/kg), s(kJ/(kg*K)), m(kg/s)]
+% 初始化状态点矩阵: [节点, T(K), P(MPa), h(J/kg), s(kJ/(kg*K)), m(kg/s)]
 Num_States = 15;
 States = zeros(Num_States, 6);
 States(:, 1) = 1:Num_States;
@@ -106,6 +106,10 @@ States(14, 5) = getFluidProperty(libLoc, 'S', 'P', States(14,3), 'T', States(14,
 States(15, 2) = 298; States(15, 3) = 0.102; States(15, 6) = m_discharge;
 States(15, 4) = getFluidProperty(libLoc, 'H', 'P', States(15,3), 'T', States(15,2), Fluid, 1, 1, 'MASS BASE SI');
 States(15, 5) = getFluidProperty(libLoc, 'S', 'P', States(15,3), 'T', States(15,2), Fluid, 1, 1, 'MASS BASE SI');
+
+% 单位转换: REFPROP 'MASS BASE SI' 返回 H [J/kg], S [J/(kg·K)]
+States(:, 4) = States(:, 4) / 1000;   % J/kg → kJ/kg
+States(:, 5) = States(:, 5) / 1000;   % J/(kg·K) → kJ/(kg·K)
 
 %% 4. 输出计算结果表
 fprintf('========================================================================================\n');
