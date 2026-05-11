@@ -192,13 +192,14 @@ s_crit = s_crit / 1000;               % J/(kg·K) → kJ/(kg·K)
 
 % CO2 饱和线数据 (用于 p-h, T-s 饱和曲线图)
 T_triple = 216.6;  % CO2 三相点温度
-N_sat = 60;
-T_sat_range = linspace(T_triple, T_crit - 0.5, N_sat);
-h_liq_sat = zeros(1, N_sat + 1);
-h_vap_sat = zeros(1, N_sat + 1);
-s_liq_sat = zeros(1, N_sat + 1);
-s_vap_sat = zeros(1, N_sat + 1);
-P_sat_arr = zeros(1, N_sat + 1);
+T_sat_range = [linspace(T_triple, T_crit-15, 40), ...
+               T_crit - [10, 7, 5, 3, 2, 1.5, 1.0, 0.6, 0.3, 0.15, 0.05]]';
+N_sat = length(T_sat_range);
+h_liq_sat = zeros(N_sat + 1, 1);
+h_vap_sat = zeros(N_sat + 1, 1);
+s_liq_sat = zeros(N_sat + 1, 1);
+s_vap_sat = zeros(N_sat + 1, 1);
+P_sat_arr = zeros(N_sat + 1, 1);
 for i = 1:N_sat
     P_sat_arr(i) = getFluidProperty(libLoc, 'P', 'T', T_sat_range(i), 'Q', 0, Fluid, 1, 1, 'MASS BASE SI') / 1e6;  % Pa → MPa
     h_liq_sat(i) = getFluidProperty(libLoc, 'H', 'T', T_sat_range(i), 'Q', 0, Fluid, 1, 1, 'MASS BASE SI') / 1000;
@@ -974,8 +975,8 @@ plot(T_crit, P_crit, 'p', 'MarkerSize', 16, ...
     'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
 
 labels_charge = {'1,2', '', '3', '4', '5', '6', '7'};
-T_off_C =  [  -25,   0,   4,   4, -20,  18, -18];
-P_mul_C =  [ 0.70,   0, 1.15,1.15,1.08,0.88,0.88];
+T_off_C =  [   12,   0,   5,   5, -15,  10, -15];
+P_mul_C =  [ 1.80,   0, 1.15,1.15,1.06,0.92,0.92];
 for i = 1:length(T_charge)
     if i == 2, continue; end
     text(T_charge(i) + T_off_C(i), P_charge(i) * P_mul_C(i), labels_charge{i}, ...
@@ -1006,8 +1007,8 @@ plot(T_crit, P_crit, 'p', 'MarkerSize', 16, ...
     'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
 
 labels_discharge = {'8', '9', '10', '11', '12', '13', '14', '15'};
-T_off_D =  [  -18,  20,   4,   4,   4,   4,  20,   4];
-P_mul_D =  [ 0.88,1.10,0.82,0.85,0.85,0.85,0.78,0.70];
+T_off_D =  [  -15,  15,   5,   5,   5,   5,  12,  12];
+P_mul_D =  [ 0.92,1.08,0.92,0.85,0.85,0.85,1.50,1.80];
 for i = 1:length(T_discharge)
     text(T_discharge(i) + T_off_D(i), P_discharge(i) * P_mul_D(i), labels_discharge{i}, ...
         'FontSize', 8, 'FontWeight', 'bold', 'Color', [0 0 0.7], ...
@@ -1039,13 +1040,18 @@ s_discharge = States(8:15, 5);
 subplot(1,2,1);
 hold on; grid on;
 
+% 饱和穹顶
+plot(s_liq_sat, T_sat_range, 'k-', 'LineWidth', 1.5);
+plot(s_vap_sat, T_sat_range, 'k-', 'LineWidth', 1.5);
+fill([s_liq_sat; flipud(s_vap_sat)], [T_sat_range; flipud(T_sat_range)], ...
+    [0.85 0.85 0.85], 'FaceAlpha', 0.15, 'EdgeColor', 'none');
 plot(s_charge, T_charge, '-ro', 'LineWidth', 2.5, 'MarkerSize', 9, ...
     'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r');
 plot(s_crit, T_crit, 'p', 'MarkerSize', 16, ...
     'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
 
-s_off_C = [-0.06, 0, 0.02, 0.02, 0.02, -0.08, 0.02];
-T_off_Cs= [  -15, 0,   10,   -6,   10,  -12,  -12];
+s_off_C = [ 0.03, 0, 0.04, 0.04, 0.04,-0.06, 0.04];
+T_off_Cs= [  -18, 0,   12,  -10,   12,  -10,  -15];
 for i = 1:length(s_charge)
     if i == 1
         text(s_charge(i) + s_off_C(i), T_charge(i) + T_off_Cs(i), '1,2', ...
@@ -1069,13 +1075,18 @@ box on;
 subplot(1,2,2);
 hold on; grid on;
 
+% 饱和穹顶
+plot(s_liq_sat, T_sat_range, 'k-', 'LineWidth', 1.5);
+plot(s_vap_sat, T_sat_range, 'k-', 'LineWidth', 1.5);
+fill([s_liq_sat; flipud(s_vap_sat)], [T_sat_range; flipud(T_sat_range)], ...
+    [0.85 0.85 0.85], 'FaceAlpha', 0.15, 'EdgeColor', 'none');
 plot(s_discharge, T_discharge, '--bs', 'LineWidth', 2.5, 'MarkerSize', 9, ...
     'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'b');
 plot(s_crit, T_crit, 'p', 'MarkerSize', 16, ...
     'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
 
-s_off_D = [ 0.02,-0.08, 0.02, 0.02,-0.08, 0.02, 0.02,-0.06];
-T_off_Ds= [  -12,  -10,  -12,  -16,  -10,    8,  -16,   10];
+s_off_D = [ 0.04,-0.06, 0.04, 0.04,-0.06, 0.04, 0.04,-0.04];
+T_off_Ds= [  -12,  -12,  -10,  -15,  -12,   12,  -18,   12];
 for i = 1:length(s_discharge)
     text(s_discharge(i) + s_off_D(i), T_discharge(i) + T_off_Ds(i), labels_discharge{i}, ...
         'FontSize', 8, 'FontWeight', 'bold', 'Color', [0 0 0.7], ...
@@ -1101,13 +1112,18 @@ h_discharge = States(8:15, 4);
 subplot(1,2,1);
 hold on; grid on;
 
+% 饱和穹顶
+plot(h_liq_sat, P_sat_arr, 'k-', 'LineWidth', 1.5);
+plot(h_vap_sat, P_sat_arr, 'k-', 'LineWidth', 1.5);
+fill([h_liq_sat; flipud(h_vap_sat)], [P_sat_arr; flipud(P_sat_arr)], ...
+    [0.85 0.85 0.85], 'FaceAlpha', 0.15, 'EdgeColor', 'none');
 plot(h_charge, P_charge, '-ro', 'LineWidth', 2.5, 'MarkerSize', 9, ...
     'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r');
 plot(h_crit, P_crit, 'p', 'MarkerSize', 16, ...
     'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
 
-h_offset_C = [ -35,   0,   8,   8,   8, -40, -35];
-P_mult_Ch  = [0.65,   0, 1.30,1.30,1.10,1.30,0.65];
+h_offset_C = [  18,   0,  10,  10,  10, -30, -30];
+P_mult_Ch  = [1.80,   0, 1.30,1.30,1.10,1.30,0.92];
 for i = 1:length(h_charge)
     if i == 1
         text(h_charge(i) + h_offset_C(i), P_charge(i) * P_mult_Ch(i), '1,2', ...
@@ -1134,13 +1150,18 @@ box on;
 subplot(1,2,2);
 hold on; grid on;
 
+% 饱和穹顶
+plot(h_liq_sat, P_sat_arr, 'k-', 'LineWidth', 1.5);
+plot(h_vap_sat, P_sat_arr, 'k-', 'LineWidth', 1.5);
+fill([h_liq_sat; flipud(h_vap_sat)], [P_sat_arr; flipud(P_sat_arr)], ...
+    [0.85 0.85 0.85], 'FaceAlpha', 0.15, 'EdgeColor', 'none');
 plot(h_discharge, P_discharge, '--bs', 'LineWidth', 2.5, 'MarkerSize', 9, ...
     'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'b');
 plot(h_crit, P_crit, 'p', 'MarkerSize', 16, ...
     'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
 
-h_offset_D = [   8, -40,    8,    8, -40,    8,   15,  -30];
-P_mult_Dh  = [0.70,0.70, 0.80, 0.75, 0.88, 0.85, 0.65, 0.65];
+h_offset_D = [  12, -30,   12,   12, -30,   12,   18,   15];
+P_mult_Dh  = [0.92,0.92, 0.88, 0.85, 0.88, 0.85, 1.80, 2.00];
 for i = 1:length(h_discharge)
     text(h_discharge(i) + h_offset_D(i), P_discharge(i) * P_mult_Dh(i), labels_discharge{i}, ...
         'FontSize', 9, 'FontWeight', 'bold', 'Color', [0 0 0.7]);
@@ -1160,54 +1181,7 @@ box on;
 
 exportgraphics(gcf, fullfile(outDir, 'Fig13_ph_Diagram.png'), 'Resolution', 300);
 
-% --- 图S1: CO2 p-h 饱和曲线 (饱和液线 + 饱和汽线 + 两相区) ---
-figure('Name', 'CO2 p-h Saturation Curve', 'Color', 'w', 'Position', [150, 150, 750, 600]);
-hold on; grid on;
 
-fill([h_liq_sat, fliplr(h_vap_sat)], [P_sat_arr, fliplr(P_sat_arr)], ...
-    [0.85 0.92 1.0], 'FaceAlpha', 0.35, 'EdgeColor', 'none');
-plot(h_liq_sat, P_sat_arr, 'b-', 'LineWidth', 2.5);
-plot(h_vap_sat, P_sat_arr, 'r-', 'LineWidth', 2.5);
-plot(h_crit, P_crit, 'p', 'MarkerSize', 16, ...
-    'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
-text(h_crit - 40, P_crit * 1.5, 'Critical Point', 'FontSize', 10, 'FontWeight', 'bold', 'Color', [0 0.6 0]);
-
-set(gca, 'YScale', 'log');
-yticks([0.1, 0.5, 1, 5, 10]);
-yticklabels({'0.1', '0.5', '1.0', '5.0', '10.0'});
-ylim([0.1, 12]);
-
-xlabel('Specific Enthalpy h [kJ/kg]', 'FontSize', 10, 'FontWeight', 'bold');
-ylabel('Pressure P [MPa]', 'FontSize', 10, 'FontWeight', 'bold');
-title('CO_2 p-h Saturation Curve', 'FontSize', 11, 'FontWeight', 'bold');
-legend({'Two-Phase Region', 'Saturated Liquid', 'Saturated Vapor', 'Critical Point'}, ...
-    'Location', 'best');
-set(gca, 'FontSize', 10, 'LineWidth', 1.2);
-box on;
-
-exportgraphics(gcf, fullfile(outDir, 'FigS1_ph_Saturation.png'), 'Resolution', 300);
-
-% --- 图S2: CO2 T-s 饱和曲线 (饱和液线 + 饱和汽线 + 两相区) ---
-figure('Name', 'CO2 T-s Saturation Curve', 'Color', 'w', 'Position', [150, 150, 750, 600]);
-hold on; grid on;
-
-fill([s_liq_sat, fliplr(s_vap_sat)], [T_sat_range, fliplr(T_sat_range)], ...
-    [0.85 0.92 1.0], 'FaceAlpha', 0.35, 'EdgeColor', 'none');
-plot(s_liq_sat, T_sat_range, 'b-', 'LineWidth', 2.5);
-plot(s_vap_sat, T_sat_range, 'r-', 'LineWidth', 2.5);
-plot(s_crit, T_crit, 'p', 'MarkerSize', 16, ...
-    'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
-text(s_crit - 0.3, T_crit + 12, 'Critical Point', 'FontSize', 10, 'FontWeight', 'bold', 'Color', [0 0.6 0]);
-
-xlabel('Specific Entropy s [kJ/(kg.K)]', 'FontSize', 10, 'FontWeight', 'bold');
-ylabel('Temperature T [K]', 'FontSize', 10, 'FontWeight', 'bold');
-title('CO_2 T-s Saturation Curve', 'FontSize', 11, 'FontWeight', 'bold');
-legend({'Two-Phase Region', 'Saturated Liquid', 'Saturated Vapor', 'Critical Point'}, ...
-    'Location', 'best');
-set(gca, 'FontSize', 10, 'LineWidth', 1.2);
-box on;
-
-exportgraphics(gcf, fullfile(outDir, 'FigS2_Ts_Saturation.png'), 'Resolution', 300);
 
 % --- 图12: 不同负荷比下的运行可行域变化 (论文 Fig. 12 比较) ---
 figure('Name', 'Feasibility Domain: Load Ratio (Fig. 12 comparison)', 'Color', 'w', 'Position', [50, 50, 1100, 450]);
