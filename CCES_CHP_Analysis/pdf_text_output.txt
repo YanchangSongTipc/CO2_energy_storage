@@ -1,0 +1,1545 @@
+=== PAGE 1 ===
+Energy 291 (2024) 130122
+Available online 25 December 2023
+0360-5442/© 2023 Published by Elsevier Ltd.Study on the operational feasibility domain of combined heat and power 
+generation system based on compressed carbon dioxide energy storage 
+Jiahao Haoa,b, Pingyang Zhenga,b, Yanan Lia, Zhentao Zhanga, Jiajun Zhanga,c,d, 
+Junling Yanga, Yunkai Yuea,c,*, Xiaoqiong Lia 
+aKey Laboratory of Cryogenic Science and Technology, Technical Institute of Physics and Chemistry, Chinese Academy of Sciences, Beijing, 100190, China 
+bUniversity of Chinese Academy of Sciences, Beijing, 101408, China 
+cChangsha Borui Energy Technology Co., Ltd., Changsha, 410205, China 
+dShanghai Maritime University, Shanghai, 200135, China   
+ARTICLE INFO  
+Keywords: 
+Compressed carbon dioxide energy storage 
+Combined heat and power supply 
+Operational feasibility domain 
+Thermoelectric coupling 
+Analysis of variable operating condition ABSTRACT  
+Compressed carbon dioxide energy storage (CCES), as one of the compressed gas energy storage (CGES) tech-
+nologies, can make the system capable of combined heat and power supply by storing and releasing electrical 
+energy in the form of heat and potential energy, which is of positive significance for realizing efficient and 
+comprehensive energy utilization and promoting the development of energy storage technology. A combined 
+heat and power supply system based on compressed carbon dioxide energy storage (CCES-CHP) and its math -
+ematical model are constructed. In order to construct a visualized operational feasibility domain, the dimen -
+sionless factors γ1 and γ2 and the ratio parameters α1 and α2 are defined to reflect the coupling relationship 
+between the system storage/release energy power, mass flow rate and cooling/heat release power. A dual state of 
+charge (SOC) model of heat and gas storage is also constructed. Further research is conducted on the shape and 
+characteristics of the operational feasibility domain under the combined heat and power mode. The change of the 
+ratio of themoelectric distribution ratio dispatch and wide operating conditions are analyzed. Thus provide an 
+idea for evaluating the flexibility of the system operation combined heat and power capacity and response 
+tracking. Finally, the analysis process and application potential of the proposed operational feasibility domain 
+analysis method were validated for a typical integrated energy system.   
+1.Introduction 
+With the growing consensus on achieving carbon neutrality world -
+wide, the development of renewable energy sources is accelerating at an 
+unprecedented pace [1]. However, the intermittency, seasonality, and 
+unpredictability of these sources have highlighted the critical need for 
+energy storage solutions. Physical energy storage technologies offer a 
+promising approach to achieving gradient utilization of energy. This 
+approach not only effectively addresses the challenge of energy con-
+sumption from renewable sources but also enhances the operational 
+efficiency and flexibility of energy systems. As a result, it supports the 
+development of a sustainable, low-carbon, and economically viable 
+energy infrastructure, which is currently the focal point of energy 
+research and the driving force behind the future of energy development 
+[2,3]. Among many energy storage technologies, compressed gas energy 
+storage (CGES) has become a promising energy storage technology by 
+virtue of its high power generation, wide range of capacity, and low 
+investment cost [4]. Compressed air energy storage (CAES) is the earliest 
+developed and the most mature technology among CGES. The conven -
+tional non-adiabatic CAES (D-CAES) system [5] requires the stored air to 
+be reheated by fuel combustion before expansion, and the energy stor-
+age efficiency is not high, which has now largely fallen out of use. After 
+years of evolution, a series of CAES systems without the use of fossil fuels 
+have been proposed, including adiabatic CAES (A-CAES) [6], isothermal 
+CAES (I-CAES) [7], and combined thermal CAES [8]. However, the most 
+distinctive feature of the above types of CAES is the reliance on a large 
+and high-pressure storage medium (usually underground caves, salt 
+caverns, abandoned mines, etc.), which also leads to their low energy 
+density. The liquid air energy storage (LAES) technology for 
+low-pressure liquid storage [9], where the fact that the critical 
+*Corresponding author. Key Laboratory of Cryogenic Science and Technology, Technical Institute of Physics and Chemistry, Chinese Academy of Sciences, Beijing, 
+100190, China. 
+E-mail address: yueyunkai@mail.ipc.ac.cn (Y. Yue).  
+Contents lists available at ScienceDirect 
+Energy 
+u{�~zkw! s{yo|kr o>!ÐÐÐ1ow �o�to~1m{y2w{m k�o2ozo~rÞ!
+https://doi.org/10.1016/j.energy.2023.130122 
+Received 28 June 2023; Received in revised form 22 November 2023; Accepted 22 December 2023   
+
+=== PAGE 2 ===
+Energy 291 (2024) 130122
+2temperature of the air is low leads to its need to be cooled to a tem-
+perature close to 77 K. Although it significantly increases the energy 
+density, the loss of energy storage efficiency is evident, usually below 50 
+%, and cryogenic liquefaction devices and storage tanks face more sig-
+nificant safety challenges, as too low temperatures can cause many 
+materials to fail under stress [10]. 
+In this context, the goal of improvement for CGES is to find a new 
+working medium. CO2 has suitable critical parameters (304 K, 7.38 
+MPa) and can be liquefied at room temperature, which creates better 
+conditions for high-density storage of the gas. CO2 also has good thermal 
+conductivity, low liquid viscosity, non-toxic, non-flammable, and cheap, 
+so it is considered as the most promising work gases in CGES [11]. 
+In recent years, scholars have extensively studied the optimal design 
+of the CCES system itself [12–15], which primarily provides a reference 
+for studying the influence law of key CCES parameters on system per-
+formance. Considering the diversification of energy demand, CCES 
+technology is gradually developing towards multi-functionality. As the 
+system involves the storage and release of electrical and thermal energy, 
+it has the natural capability of combined heat and power supply [16]. 
+Some scholars have conducted research on CCES cogeneration [17]. Liu 
+et al. [18] proposed a cooling, heating and power trigeneration system 
+based on transcritical Brayton cycle and carbon dioxide energy storage, 
+and investigated the system through thermodynamic simulation. Zhang et al. [19] proposed a combined heat and power system based on fan 
+waste heat utilization and transcritical CCES. The system cycle effi-
+ciency, functional efficiency, and energy density were 0.48, 1.19, and 
+11.51 kWh/m3, respectively, at a hot water distribution ratio of 0.25. He 
+et al. [20] considered coupling a combined heat and power unit (CHP) 
+with a CCES and analyzed the effect of the CCES system on CHP per-
+formance. The results showed that the improved configuration of CCES 
+with CHP achieved better performance than the basic configuration, 
+with system power efficiency (SPE), power change rate (PCR), and en-
+ergy storage density (ESD) increasing from 47.21 %, 12.51 %, and 0.99 
+kWh/m3 to 63.07 %, 19.51 %, and 1.32 kWh/m3, respectively. How-
+ever, to maintain efficient operation, the cycle pressure is very high and 
+the system is limited by the ambient temperature. 
+However, although the above work has conducted some research on 
+CCES cogeneration, there are still some limitations or shortcomings. The 
+first problem is that CO2 exhibits dual gas and liquid characteristics after 
+crossing the critical point, and the CO2 storage pressure set in some 
+literature is so high that the CO2 inevitably suffers from slip pressure 
+operation during discharging and substantially increases the 
+manufacturing difficulty and initial investment of the high-pressure 
+vessel [21]. In addition, the storage pressure is directly related to the 
+pressure and temperature of the final stage turbine outlet. The outlet of 
+the last stage turbine usually still generates a large amount of waste Nomenclature 
+c heat capacity (kJ/kg K 1) 
+h enthalpy (kJ/kg K 1) 
+m mass flow rate (kg/s) 
+N number 
+n multivariate index 
+p pressure (MPa) 
+Q heat exchange power (MW) 
+Rg ideal gas constant (J/mol 1 K 1) 
+t time (s) 
+T temperature (K) 
+V volume (m3) 
+W power (MW) 
+X heat supply rate of the heat storage subsystem (%) 
+Y heat feedback rate (%) 
+Acronyms 
+AA-CAES advanced adiabatic compressed air energy storage 
+A-CAES adiabatic compressed air energy storage 
+AE-HE after-expansion heat exchanger 
+ATV ambient temperature thermal oil vessel 
+AWV ambient temperature water vessel 
+C compressor 
+CAES compressed air energy storage 
+CCES compressed gas energy storage 
+CCES Compressed carbon dioxide energy storage 
+CCES-CHP generation system based on compressed carbon dioxide 
+energy storage 
+C–CHP conventional combined heat and power unit 
+CHP combined heat and power unit 
+CO2 carbon dioxide 
+D-CAES non-adiabatic compressed air energy storage 
+EHE evaporative heat exchanger 
+HG-HE high-temperature heat exchanger 
+HPT high-pressure tank 
+HR heat recovery heat exchanger 
+HTV high-temperature thermal oil vessel 
+HWV high-temperature water vessel IC intermediate cooler 
+I-CAES isothermal compressed air energy storage 
+LAES liquid air energy storage 
+Greek symbols 
+α ratio of mass flow to power (kg/s 1 MW 1) 
+β compression/expansion ratio 
+γ the dimensionless factors defined 
+ε energy efficiency of the heat exchanger 
+η efficiency (%) 
+Subscripts 
+1,2,3, …equipment or tube label 
+AE-HE after-expansion heat exchanger 
+C compressor 
+charge charging process 
+discharge discharging process 
+E electrical 
+HG-HE high-temperature heat exchanger 
+HPT high-pressure tank 
+HR-start the inlet of the first heat recovery heat exchanger 
+HTV high-temperature thermal oil vessel 
+IC intermediate cooler 
+IC-end the outlet of the final stage intermediate cooler 
+LG-HE low-temperature heat exchanger 
+p constant pressure 
+T turbine combined heat and power generation system based 
+on compressed carbon dioxide energy storage 
+Superscripts 
+0 ambient condition 
+C compressor 
+E electrical 
+in inlet 
+lower lower limit 
+max maximum value 
+min minimum value 
+out outlet 
+TSM thermal storage medium 
+upper upper limit  J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 3 ===
+Energy 291 (2024) 130122
+3heat, but there is little attention paid to this issue. Wang et al. [22] added 
+an organic Rankine cycle to CCES, utilizing the waste heat generated by 
+turbine exhaust to achieve a round-trip efficiency of 56.64 % for the 
+entire system. This provides an idea for CCES waste heat utilization, but 
+it is a single-stage expansion. In fact, it would be more practical to 
+simultaneously increase the turbine power and use the waste heat for 
+direct heating than to add an additional waste heat utilization unit. 
+As a complex system, the operation dispatch of CCES in the inte-
+grated energy system are also more critical aspects. At present, most 
+scholars have conducted extensive research on the benefit evaluation 
+and dynamic operation of CAES and supercritical carbon dioxide cycle 
+power plants. Safaei et al. [23] conducted an economic evaluation of the 
+cogeneration operation of distributed compressed air energy storage 
+(D-CAES), and the results showed that D-CAES using compressed waste 
+heat for heating has considerable economic. He et al. [24] investigated 
+the dynamic characteristics of adiabatic CAES and found that the sliding 
+pressure charging mode is 3.92 % more energy efficient than the con-
+stant pressure charging mode. Changing the cooling water flow rate can 
+significantly adjust the output of cold, heat, and electrical power. Li 
+et al. [25] analyzed in detail the standby characteristics of AA-CAES 
+power plants under different operating conditions and established an 
+optimal dispatch model for power systems containing AA-CAES power 
+plants considering the standby market. Duniam et al. [26] took the su-
+percritical CO2 recompression Brayton cycle as an example and found 
+that some over-design of the maximum allowable pressure of the unit 
+can enable more efficient cycle operation of the system under a wider 
+range of off-design conditions. 
+The primary duty of an energy storage system with combined heat 
+and power function is to meet the customer load demand, so how to 
+achieve fast dynamic load response and load tracking becomes a vital 
+issue so that it can dispatch resources more flexibly, reduce system 
+operation costs and promote renewable energy consumption. Guo et al. 
+[27] explored the response characteristics of CAES system under the key 
+regulation parameter steps, established an integrated kinetic model, and 
+investigated the response characteristics of the charging and discharging 
+process to the step effects of the key regulation parameters. Bian et al. 
+[28] simulated the partial load performance estimation of a supercritical 
+CO2 Brayton cycle and gave a strategy for the off-design performance on 
+its operation following the load. 
+The literature review shows that the cogeneration and load dynamic 
+response dispatch of CGES is the hottest research direction at present. 
+Apart from CAES, there is still relatively little research on power simu-
+lation and operation dispatch for CCES cogeneration system, and a 
+concise and effective analysis method has not been developed yet. Only 
+Zhang et al. [29] conducted a preliminary study on the dynamic char-
+acteristics of a CCES system. However, they only compared the storage 
+reservoir under constant and variable pressure modes without consid -
+ering the combined effects of other parameters in the system. It should 
+be said that there is still a lot of work to be done in the dispatch control 
+of the CCES system. 
+In this paper, a compressed carbon dioxide energy storage combined 
+heat and power (CCES-CHP) system operating in the medium pressure 
+range is proposed, and an innovative method for constructing and 
+applying an operational feasibility domain is presented. The main 
+innovative ideas of this paper are elucidated as.  
+● The basic construction method of the operational feasibility domain 
+is constructed by coupling the electric power flow, heat transfer heat 
+flow, and mass flow in the CCES-CHP system by means of con-
+structing dimensionless numbers and ratio parameters;  
+● A dual SOC model combining heat and gas storage for CCES-CHP is 
+established, and a two-dimensional linear constraint boundary was 
+constructed to reduce the complexity of image analysis.  
+● For the first time, the operating range and regulation space of the 
+system is characterized by the visualization of coordinate diagrams, which is an attractive way of dynamic characterization that has been 
+little noticed in the literature.  
+● The impact of changes of thermoelectric distribution ratio dispatch 
+and wide operating conditions on the operational feasibility domain 
+is studied by a typical system, while also verifying the flexibility and 
+practicality of load response tracking methods. 
+2.CCES-CHP system description and thermodynamic modeling 
+2.1. System description 
+The system schematic of CCES-CHP is shown in Fig. 1. The 
+compression and expansion processes cannot be carried out simulta -
+neously, while the heating process is relatively independent, and two 
+operation modes of charging-heating and power generation-heating are 
+considered in this paper. In the energy storage process, the low valley 
+electricity or renewable energy abandoned electricity from external 
+drives the compressors (C1, C2) to compress the low-pressure CO2 in the 
+low-pressure tank (LPT) to a high temperature and high-pressure state, 
+and the CO2 is cooled down by multi-stage compression and multi-stage 
+cooling (IC1, IC2), and then stored in the high-pressure tank (HPT) in the 
+form of room temperature liquid after being liquefied by water through 
+the latent heat exchanger (LHE). The heat of compression in the energy 
+storage process is absorbed by the heat transfer oil in the ambient 
+temperature thermal oil vessel (ATV) and stored in the high-temperature 
+thermal oil vessel (HTV). In the energy release process, liquid CO2 flows 
+out from the high-pressure tank and is throttled and stabilized by a 
+throttling valve (V2), then enters the evaporative heat exchanger (EHE) 
+for complete vaporization, followed by a multi-stage heat recovery heat 
+exchanger (HR1, HR2) to absorb the stored compressed heat and raise 
+the temperature, and the supercritical CO2 drives the two-stage turbine 
+(T1, T2) to generate electricity. The CO2 from the turbine outlet is cooled 
+down by the after-expansion heat exchanger (AE-HE) and the cooler and 
+returned to the low-pressure tank. In this system, the high-temperature 
+heat exchanger (HG-HE) and the low-temperature heat exchanger (LG- 
+HE) use the high-temperature and exothermic heat storage masses to 
+provide heat at different temperatures to the customers, respectively. 
+Due to the parameter setting of CO2 expansion in the turbine, there is 
+still higher temperature grade heat available at the outlet of the final 
+stage turbine. The accompanying heat in CCES-CHP is used to heat the 
+circulating medium of the heat network to supply heat to households, 
+commercial buildings, industrial parks, etc., from which the overall 
+energy utilization efficiency of the system can be effectively improved. 
+2.2. Thermodynamic modeling 
+In order to analyze the system performance, a thermodynamic model 
+of the system components was developed based on the mass conserva -
+tion and energy conservation equations. The simulation assumptions 
+[30–32] used to simplify the system model are shown below.  
+(1) The charging/discharging power and heating power remain 
+constant during a single dispatch period;  
+(2) There is no heat exchange between the CO2 storage tank and the 
+environment;  
+(3) Neglecting heat and pressure energy losses in the heat exchanger, 
+mixing and diversion piping, and connection pipes;  
+(4) Disregard the effect of power consumed by the working fluid 
+circulation pump;  
+(5) In the process of the system undergoing a complete cycle, it is 
+assumed that each time the heat storage system stored 
+compression heat can be fully utilized by supplying heat to the 
+user after satisfying the expansion process heating, that is, 
+ignoring the difference between the minimum temperature of the 
+heat storage medium outlet and the ambient temperature due to 
+the presence of the actual minimum heat exchange temperature J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 4 ===
+Energy 291 (2024) 130122
+4difference in the heat exchanger in the heat storage system, that 
+is, ignoring the irreversible losses of the process. 
+2.2.1. Compressor model 
+The total shaft power at moment t of the compressor at each stage of 
+the system is: 
+WCt̂NC
+i1nRgmCtTCCin
+i
+n 1 
+βC
+i)n 1
+n 1
+ηC
+i(1)  
+Where, NC is the number of compressor stages, NC 2, n is the multi -
+variate index, Rg is the ideal gas constant, mC(t) is the CO2 mass flow rate 
+of the compressor at moment t, TCCin
+i is the CO2 temperature at the 
+compressor inlet, βc
+i is the compression ratio of the compressor, and ηc
+i is 
+the corresponding internal efficiency of the compressor at each stage. 
+Considering the mechanical losses of the compressor at all stages, the 
+total electrical power of the compression process at moment t is: 
+WCCEtWC1t
+ηCCE
+1WC2t
+ηCCE
+2(2)  
+Where, ηCCE
+1 and ηCCE
+2 are the mechanical efficiency of the motor for the 
+operation of the two-stage compressor, respectively. 
+The relationship between the outlet CO2 temperature of the 
+compressor of stage i and the inlet CO2 temperature exists as: 
+TCCout
+iTCCin
+i⎫
+⎭ 
+βC
+i)n 1
+n 1
+ηC
+i1⎩
+⎨ (3)  
+Where, TCCout
+i is the CO2 temperature at the compressor outlet. 
+2.2.2. Turbine model 
+The total shaft power at moment t for each stage of the turbine in the 
+system is: 
+WTt̂NT
+i1nRgmTtTTCin
+i
+n 1√
+1  
+βT
+i)n
+n 1⇑
+⋅ηT
+i (4)  
+Where, NT is the number of turbine stages, NT 2, mT(t) is the CO2 mass 
+flow rate of the turbine at moment t, TTCin
+i is the CO2 temperature at the turbine inlet, βT
+i is the expansion ratio of the compressor, and ηT
+i is the 
+corresponding internal efficiency of the turbine at each stage. 
+Considering the bearing mechanical loss of the actual power gener -
+ation of all levels of turbines, the total power generation during the 
+expansion process at moment t is 
+WTCEtηTCE
+1WT1tηTCE
+2WT2t (5)  
+Where, ηTCE
+1 and ηTCE
+2 are the mechanical efficiency of the generator 
+during the operation of two stage turbines. 
+The relationship between the outlet CO2 temperature of the i-th stage 
+turbine and the inlet CO2 temperature exists as: 
+TTCout
+iTTCin
+i⏟
+ηT
+i√ 
+βT
+i)1 n
+n 1⇑
+1⇑
+(6)  
+Where, TTCout
+i is the CO2 temperature at the turbine outlet. 
+2.2.3. Heat exchanger model 
+According to the expression of the heat exchange efficiency of the 
+heat exchanger, the sum of the quantity and temperature of the heat 
+storage medium at the outlet of the intermediate coolers (IC1 and IC2) 
+during the compression process is obtained as follows 
+̂NC
+i1TCCTSM
+iNC εNCTATVεNCTCCout
+iNC̂NC 1
+i1 
+TCCout
+i TCCin
+i1)
+(7)  
+Where, TCCTSM
+i is the thermal storage medium temperature of the i-th 
+intermediate cooler outlet, εNC is the energy efficiency of the final in-
+termediate cooler, and TATV is the temperature of the cold thermal oil 
+vessel. 
+The cooling load of the intermediate cooler at moment t is the 
+compression heat storage load, and the heat exchange power is: 
+QICtmCt⌈̂NC 1
+i1 
+hCCout
+i hCCin
+i1)
+(
+hCCout
+iNC
+ hC
+IC end)⌉
+mCtcCCCO2p⌊̂NC
+i1TCCTSM
+i NCTATV⌋
+(8)  
+Where, hCCout
+i is the enthalpy of CO2 at the outlet of the compressor of 
+stage i, hCCin
+i1 is the enthalpy of CO2 at the inlet of the compressor of stage 
+i1, hC
+IC end is the enthalpy of CO2 at the outlet of the final stage 
+Fig. 1.Schematic diagram of CCES-CHP system.  J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 5 ===
+Energy 291 (2024) 130122
+5intermediate cooler, cCCCO2p is the equivalent constant pressure specific 
+heat capacity of CO2 during the corresponding compression and cooling 
+process at moment t. This formula constructs a correlation between the 
+cold flow and hot flow heat transfer temperatures through the heat 
+exchanger energy efficiency. 
+Similarly, the summation of the heat recovery heat exchangers (HR1 
+and HR2) outlet storage medium temperature for the expansion process 
+is obtained as 
+̂NT
+i1TTCTSM
+iNTTHTVTT
+HR start̂NT 1
+i1TTCout
+i ̂NT
+i1TTCin
+i (9)  
+Where, TTCTSM
+i is the thermal storage medium temperature at the outlet 
+of the i-th heat recovery heat exchanger, TT
+HR start is the temperature of 
+CO2 at the inlet of the first heat recovery heat exchanger, THTV is the 
+temperature of the hot thermal oil vessel. 
+The heat exchange power of the heat recovery heat exchanger at 
+moment t is: 
+QHRtmTt⌈̂NT 1
+i1[ 
+hTCin
+i1 hTCout
+i)
+ 
+hTCin
+i1
+ hT
+HR start)]⌉
+mTtcTCCO2p⌊
+NTTHTV ̂NT
+i1TTCTSM
+i⌋
+(10)  
+Where, hTCout
+i is the enthalpy of CO2 at the outlet of the turbine of stage i, 
+hTCin
+i1 is the enthalpy of CO2 at the inlet of the turbine of stage i1, 
+hT
+HR start is the enthalpy of CO2 at the inlet of the first stage heat recovery 
+heat exchanger, cTCCO2p is the equivalent constant pressure specific heat 
+capacity of CO2 during the corresponding heating and expansion process 
+at moment t. 
+2.2.4. Conservation of mass and energy model 
+In the heat storage subsystem, the conservation relationship for the 
+mass flow rate of thermal oil is as follows 
+̃tcharge
+0mTSM
+Ctdt̃tdischarge
+0mTSM
+Ttdt̃tHG
+0mTSM
+HGtdt (11)  
+Where, mTSM
+C is the mass flow rate of the thermal oil during charging, 
+which is equal to the sum of the mass flow rates through IC1 and IC2, 
+mTSM
+T is the mass flow rate of the thermal oil during discharging, which is 
+equal to the sum of the mass flow rates through HR1 and HR2, mTSM
+HG is 
+the mass flow rate of the thermal oil used for high temperature heating, 
+which is the mass flow rate through HG-HE, and tcharge, tdischarge , and tHG 
+are the charging time, discharging time, and high temperature heating 
+time, respectively. 
+In the heat storage subsystem, the compression heat recovered and 
+stored from the compressor has three destinations, part of it is used to 
+heat the CO2 in front of the turbine inlet, part of it is used as a high- 
+temperature heat source to supply heat to the customer, and finally, 
+the low-temperature heat transfer oil from the outlet of each turbine 
+stage is aggregated and can be used as a low-temperature heat source to 
+supply heat to the customer. The heat balance relationship involved is as 
+follows: 
+̃tcharge
+0QICtdt̃tdischarge
+0QHRtdt̃tdischarge
+0QLG HEtdt
+̃tHG
+0QHG HEtdt (12)  
+Where, QLG-HE(t) is the heat load supplied to the low temperature user 
+through LG-HE and QHG-HE (t) is the heat load supplied to the high 
+temperature user through HG-HE. 2.3. Definition of parameters and performance evaluation indicators 
+Combined with the assumption (5) above, X is defined as the heat 
+supply rate of the heat storage subsystem during the system undergoes a 
+full cycle, reflecting the ratio of high-temperature heat supply and low- 
+temperature heat supply to total heat storage. Y is defined as the heat 
+feedback rate, reflecting the ratio of the heat used to heat CO2 by the 
+expansion generation process to the total heat storage, and the relevant 
+relationship equation is as follows 
+X⨄tHG HE
+0QHG HEtdt⨄tdischarge
+0QLG HEtdt⨄tcharge
+0QICtdt(13)  
+Y⨄tdischarge
+0QHRtdt⨄tcharge
+0QICtdt(14)  
+XY1 (15) 
+At the same time, it can be seen from Fig. 1 that the value of QHR 
+leads to different temperatures of CO2 at the turbine inlet during the 
+expansion process. If the inlet temperature is higher, the temperature of 
+the CO2 outlet will also rise at a fixed expansion ratio [33]. Hence, the 
+CO2 outlet from the last stage of the turbine also has the potential to 
+supply heat at higher temperature grades. Hence, it needs to be set ac-
+cording to the actual internal parameters of the CCES-CHP system, 
+recovering this heat from improving the overall energy conversion ef-
+ficiency of the system. 
+In the CCES-CHP system, only the electrical consumption of the 
+compressor is the only energy input, so it is used as the evaluation 
+standard of the system ’s combined heat and power performance, 
+defining the electrical energy conversion efficiency, the total thermal 
+efficiency of heating and the high-temperature heating efficiency, the 
+low-temperature heating efficiency and the waste heat heating 
+efficiency. 
+ηelectricity⨄tdischarge
+0WTCEtdt⨄tcharge
+0WCCEtdt(16)  
+|
+⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆〈
+⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⎜ηheatingCtotal⨄tHG HE
+0QHG HEtdt⨄tdischarge
+0QLG HEtdt⨄tdischarge
+0QAE HEtdt⨄tcharge
+0WCCEtdt
+ηheatingCHG HE⨄tHG
+0QHG HEtdt⨄tcharge
+0WCCEtdt
+ηheatingCLG HE⨄tdischarge
+0QLG HEtdt⨄tcharge
+0WCCEtdt
+ηheatingCAE HE⨄tdischarge
+0QAE HEtdt⨄tcharge
+0WCCEtdt
+ηheatingCtotalηheatingCHG HEηheatingCLG HEηheatingCAE HE
+(17)  
+3.Construction method of the operational feasibility domain of 
+CCES-CHP system 
+Combining the calculations mentioned above and analysis strategy of 
+CHP units regarding the power generation and heat supply power con-
+straints [34,35], we can find that the operational feasibility domain of 
+CCES-CHP is determined by electrical/thermal power constraints and 
+energy storage state constraints. And it is only related to its own per-
+formance parameters and the energy storage state in the previous time 
+period. 
+3.1. Definition of the key factors 
+Define four key parameters to perform the operational feasibility J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 6 ===
+Energy 291 (2024) 130122
+6domain analysis of CCES-CHP. 
+In order to understand the interconversion relationship between 
+compressor power consumption, compression heat, and turbine power 
+generation, the ratio of the heat transfer power of the intermediate 
+cooler of the compression process to the electric power of the 
+compressor is defined as γ1, and the ratio of the heat transfer power of 
+the heat recovery heat exchanger of the expansion process to the power 
+generation of the turbine is defined as γ2, which is obtained from 
+Equations ((2), (5), (8) and (10): 
+γ1QICt
+WCCEtεNCTCCout
+iNC εNCTATV⋃NC 1
+i1 
+TCCout
+i TCCin
+i1)
+⋃NC
+i1 
+TCCout
+i TCCin
+i)[
+ηCCE
+i(18)  
+γ2QHRt
+WTCEt⋃NT
+i1TTCin
+i ⋃NT 1
+i1TTCout
+i TT
+HR start
+⋃NT
+i1 
+TTCin
+i TTCout
+i)
+⋅ηTCE
+i(19)  
+In order to understand the correspondence between compressor power 
+consumption, turbine power generation, and work mass flow, the ratio 
+of the inlet flow rate of the compression process to the electrical power 
+of the compressor is defined as α1, and the ratio of the inlet flow rate of 
+the expansion process to the power generation of the turbine is defined 
+as α2. Referring to Equations (1) and (4), we can obtain: 
+α1mCt
+WCCEt̂NC
+i1n 1ηC
+i
+nRgTCCin
+i√ 
+βC
+i)n 1
+n 1⇑ (20)  
+α2mTt
+WTCEt̂NT
+i1n 1
+nRgmTtTTCin
+i√
+1  
+βT
+i)n
+n 1⇑
+⋅ηT
+i(21)  3.2. Constraints in combined heat and power model 
+3.2.1. Construction of a dual state of charge (SOC) model 
+The state of charge (SOC) is an important parameter that reflects the 
+dynamic process of charging and discharging of the energy storage 
+system [36]. Since the charging and discharging of CCES-CHP is 
+accompanied by dynamic heat conversion and pressure potential energy 
+conversion, its compression power and expansion power are jointly 
+determined by the gas storage SOC and heat storage SOC, and the 
+coupling relationship between these two can be determined by the 
+component-level partial load thermodynamic characteristics. Therefore, 
+this paper constructs a dual SOC model based on the high-temperature 
+heat storage tank heat storage and CO2 high-pressure tank storage 
+pressure, respectively, aiming to further clarify the special variation law 
+of CCES-CHP in the process of compression charging and expansion 
+power generation. 
+Based on the component-level partial load characteristics, a cluster 
+of variable operating characteristic curves characterizing the input and 
+output power characteristics of CCES-CHP is abstracted and used as a 
+bridge to realize the coupling of gas storage SOC and heat storage SOC, 
+and then analyze the variable operating characteristics of CCES-CHP 
+without missing the partial load characteristics and with clear physical 
+meaning. The basic framework of the research method is shown in Fig. 2. 
+The heat storage SOC is described in terms of the heat storage value 
+of high-temperature heat storage tank, and the QHTV(t) at moment t is 
+expressed in the following equation.  
+Where, QHTV(t) and QHTV (t-1) are the heat storage value of the high- 
+temperature heat storage tank corresponding to moment t and 
+moment t-1, respectively, Δt is the duration of the unit dispatch period. 
+The gas storage SOC is described in terms of the pressure of CO2 high- 
+pressure storage tank, and the pHPT(t) at moment t expressed in the 
+following equation. 
+Fig. 2.The basic framework of the dual SOC model.  QHTVt〉QHTVt 1[
+γ1WCCEt QHG HEt QLG HEt]
+ΔtCharging Heating
+condition
+QHTVt 1 [
+γ2WTCEtQHG HEtQLG HEt]
+ΔtDisharging Heating
+condition(22)   J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 7 ===
+Energy 291 (2024) 130122
+7pHPTt|
+⨆⨆〈
+⨆⨆⎜pHPTt 1Rg
+VHPTTHPTα1WCCEtΔtCharging Heating
+condition
+pHPTt 1 Rg
+VHPTTHPTα2WTCEtΔtDisharging Heating
+condition
+(23)  
+Where, pHPT(t) and pHPT (t-1) are the storage pressure of CO2 high- 
+pressure storage tank corresponding to moment t and moment t-1, 
+respectively, and VHPT and THPT are the volume and temperature of CO2 
+high-pressure storage tank, respectively. 
+3.2.2. Constraints for different operating conditions 
+In order for CCES-CHP to operate safely and efficiently with the 
+specified reasonable parameters, it is also necessary to give a reasonable 
+range of CO2 high-pressure tank pressure and high-temperature heat 
+storage tank heat storage, which affects the setting of the upper pressure 
+and upper temperature during system operation. The constraints under 
+the charge-heat condition and discharge-heat condition are shown 
+below.  
+(1) Constraints of Charging-Heating condition 
+Under the Charging-Heating condition, the electrical energy 
+consumed by the compressor is converted into the thermal energy of the 
+thermal storage mass and the potential pressure energy of CO2, and the 
+heat storage of the high-temperature thermal storage tank needs to meet 
+the two demands of expansion heat return and user heat supply, so the 
+following constraints exist: 
+Qlower
+HTV≼QHTVt≼Qupper
+HTV (24)  
+0≼QHG HEtQLG HEt≼Qmax
+HG LG (25)  
+Where, Qlower
+HTV is the lower limit of heat storage of high-temperature heat 
+storage tank, Qupper
+HTV is the upper limit of heat storage of high-temperature 
+heat storage tank, and Qmax
+HG LG is the maximum heat exchange for high 
+and low temperature heating. 
+The charging power of CCES-CHP also has an upper limit value. This 
+value is closely related to the heat transfer power of the intermediate 
+cooler, the compressor power and the upper pressure limit of the CO2 
+high-pressure tank, and the actual charging power should be less than 
+the smallest of the upper charging powers determined by these values, 
+with the following relationship: 
+WCCEt≼Wupper
+CCEmin〉Qmax
+IC
+γ1CWmax
+C
+ηCCECminCWupper
+CCE 
+When pHPTtPmax
+HPT)/
+(26)  
+Where the superscript upper refers to the upper limit of the physical 
+quantity, and the superscript max refers to the maximum value of the 
+physical quantity, ηCCECmin is the minimum value of the equivalent me-
+chanical efficiency converted after considering the actual mechanical 
+efficiency of the compressor at all stages, and this is related to the 
+processing capacity and motor performance.  
+(2) Constraints of Disharging-Heating condition 
+Under the Discharge-Heating condition, the electrical energy emitted 
+by the turbine comes from the thermal energy of the thermal storage 
+mass and the potential pressure energy of CO2. The power generated by 
+the turbine also has an upper limit value, which is closely related to the 
+upper and lower limits of the heat storage capacity of the high- 
+temperature storage tank (Equation (24)), the maximum heat ex-
+change capacity of the heat return from the turbine power generation 
+(Equation (25)), the work capacity of the turbine and the lower limit pressure of the CO2 high-pressure storage tank, so the following 
+constraint relationship exists: 
+WTCEt≼Wupper
+TCEmin〉Qmax
+HR
+γ2CWmax
+TηTCECmaxCWupper
+TCE 
+When pHPTtPmin
+HPT)/
+(27)  
+Where, ηTCECmax is the maximum value of equivalent mechanical effi-
+ciency converted after considering the actual mechanical efficiency of 
+all stages of the turbine. The larger this value is, the stronger the net 
+power generation capacity of the turbine. 
+3.3. Depiction of the coordinate diagram of the operational feasibility 
+domain 
+Based on the aforementioned operational characteristics and con-
+straints of CCES-CHP, the linear relationships of the three main energy 
+flow links of coupled heating, charging, and power generation are 
+determined. By determining the pole coordinates and intercepts of the 
+operational feasibility domain at a specific moment, the operational 
+feasibility domain consisting of coordinate axes, boundary lines, and 
+nodes can be plotted. In the following section, the steps of plotting the 
+operating feasible domain coordinate for the charging-heating and 
+discharging-heating conditions are given, respectively. 
+3.3.1. Operational feasibility domain for charging-heating condition 
+According to Equations (22), (25) and (26), the expressions of the 
+heating power under different constraints in this working condition can 
+be obtained. The boundary analytic formula (Equation (28)) of the 
+feasible domain is obtained. Assuming that the maximum exothermic 
+power used for heating at moment t is greater than the maximum 
+heating power determined by the lower limit constraint of the heat 
+storage capacity of the high-temperature storage tank, and when the 
+difference between the maximum exothermic power and the heat stored 
+by the upper limit of the charging power is greater than the remaining 
+compressed heat at the end of the previous period, the boundary of the 
+operational feasibility domain is determined by the upper limit of the 
+charging power and the lower limit of the heat storage capacity of the 
+storage tank, as shown in Equation (28) and Fig. 3. The coordinates 
+corresponding to each node A, B, C, D, and E of the operational feasi-
+bility domain are (
+0CQHTVt 1 Qlower
+HTV
+Δt)
+C(ΔtQmax
+HG LG QHTVt 1Qlower
+HTV
+Δtγ1CQmax
+HG LG)
+C
+Wupper
+CCECQmax
+HG LGC(
+Wupper
+CCECQHTVt 1 Qupper
+HTVΔtγ1Wupper
+CCE
+Δt)
+C(Qupper
+HTV QHTVt 1
+Δtγ1C0)
+. 
+|
+⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆〈
+⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⎜QHG HEtQLG HEtQHTVt 1 Qlower
+HTV
+Δtγ1WCCEt
+QHG HEtQLG HEtQHTVt 1 Qupper
+HTV
+Δtγ1WCCEt
+QHG HEtQLG HEtQmax
+HG LG
+WCCEtWupper
+CCE
+WCCEt≽0
+QHG HEtQLG HEt≽0(28)  
+3.3.2. Operational feasibility domain for Disharging-Heating condition 
+Similarly, according to equations (22), (25) and (28), the expressions 
+of the heating power under different constraints for this operating 
+condition can be obtained, i.e., the analytical formula (Equation (29)) 
+for the boundary of the feasible domain is obtained. Assuming that the 
+maximum heating power at the moment t or the maximum heat return 
+for turbine generation is less than the heat storage capacity of the high- 
+temperature storage tank at the end of the last moment, the boundary of 
+the operational feasibility domain is determined by the upper limit of 
+the discharge power and the lower limit of the heat storage capacity of 
+the storage tank, as shown in Equation (29) and Fig. 4. The coordinates J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 8 ===
+Energy 291 (2024) 130122
+8corresponding to each node A, B, C, and D of the operational feasibility 
+domain are 0CQmax
+HG LGC(ΔtQmax
+HG LG QHTVt 1Qlower
+HTV
+Δtγ2CQmax
+HG LG)
+C(
+Wupper
+TCEC
+QHTVt 1 Qupper
+HTVΔtγ2Wupper
+TCE
+Δt)
+CWupper
+TCEC0. 
+|
+⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆〈
+⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⨆⎜QHG HEtQLG HEtQHTVt 1 Qlower
+HTV
+Δtγ2WTCEt
+QHG HEtQLG HEtQHTVt 1 Qupper
+HTV
+Δtγ2WTCEt
+QHG HEtQLG HEtQmax
+HG LG
+WTCEtWupper
+TCE
+WTCEt≽0
+QHG HEtQLG HEt≽0(29)  4.Characteristics and application methods of the operational 
+feasibility domain of CCES-CHP 
+4.1. Characteristics of the operational feasibility domain  
+(1) At constant compressor and turbine efficiencies, there is a 
+deterministic relationship between the electrical power of the 
+compressor/turbine at moment t, and the heat transfer power of 
+the intercooler/heat return heat exchanger, so γ1 and γ2 are 
+constant values. γ1 and γ2 can also be viewed as the slopes of the 
+linear constraints for both the charge-heat and discharge-heat 
+conditions.  
+(2) In the operational feasibility domain, the x-axis and y-axis and 
+the upper limit value constraints of their variables form a rect-
+angular region, and together with other constraints, the opera -
+tional feasibility domain has a polygonal shape. This indicates 
+that the closer the operating feasible domain is to a rectangle, the 
+more extensive the operating range, the more operating condition 
+points, and the more flexible the operation.  
+(3) In the operational feasibility domain, the constructed boundary 
+expressions show the quantitative relationship between the pa-
+rameters under the corresponding moment t-1 and moment t. 
+Fig. 3.Operational feasibility domain image under Charging-Heating condition.  
+Fig. 4.Operational feasibility domain image under Discharging-Heating condition.  J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 9 ===
+Energy 291 (2024) 130122
+9Therefore, the operational feasibility domain situation of the last 
+moment can be deduced from the operational feasible domain of 
+the current moment and specific conditions. It can also be found 
+that the variation of the operational feasibility domain is also 
+non-stationary because the heat storage tank storage heat and the 
+gas storage reservoir pressure are non-stationary.  
+(4) The relative distance between the operating condition point of 
+the system and the boundary of the operating feasibility domain 
+at a specific time represents the regulation margin of the system. 
+If the operating condition point is located at the center of the 
+operating feasibility domain, it means that the two processes of 
+heating and charging/discharging are relatively uniform; if the 
+operating condition point is located at the boundary, it means 
+that the boundary constraint is the maximum limit factor for the 
+system to operate at that operating condition point. When the 
+system is often at or deviates from a boundary during actual 
+operation, this indicates that there is still potential for optimi -
+zation of the system parameter settings corresponding to that 
+boundary. 
+4.2. Transformation laws for operational feasibility domain 
+4.2.1. Effect of heat supply ratio change on operational feasibility domain 
+Equation (13) has defined the heat supply rate X. X varies with the 
+initial parameters throughout the operating cycle and reflects the rela-
+tionship between the distribution of compressed heat for heating and 
+heat return in the system. It is known that the gas storage SOC and heat 
+storage SOC corresponding to the beginning and end states of the CCES- 
+CHP in an operating cycle remain stable, so the mathematical relation -
+ship between X and γ1, γ2, α1, α2 can be established. 
+X1 Y1 γ2α1ηCCE
+iηTCE
+i
+γ1α2(30) 
+The inlet temperature of each turbine stage determines not only the 
+amount of work done by carbon dioxide in the turbine but also the 
+distribution of heat and electricity in the system, directly affecting the 
+magnitude of the heat supply rate. When the inlet temperature of the 
+turbine increases, more compression heat is consumed to generate the 
+same amount of electricity, so the heating rate decreases. In addition, 
+since different heating ratios correspond to different feasible domains of 
+system operation, a parameter correction for γ2 is required. Assuming 
+that the inlet temperature of each turbine stage is the same and the ratio 
+between the reference value and the actual value of this temperature is λ. 
+When λ F1, it means that the heat used for turbine heating decreases 
+and X is also more remarkable than the reference value (assuming the 
+reference value is X0); when λ D1, it means that the heat used for turbine 
+heating increases and X is less than X0. The corrected γ2 is shown in 
+Equation (31). 
+γ2′⎫
+⎬⎬⎬⎭1 1 λTT
+HR start
+⋃NT
+i1TTCin
+i ⋃NT 1
+i1TTCout
+i TT
+HR start⎩
+⎪⎪⎪⎨γ2 (31)  
+4.2.2. Effect of actual working condition on operational feasibility domain 
+Compressor and turbine are the critical components of CCES-CHP, 
+and their parameters impact the operating feasibility domain. In the 
+actual operation, the compression ratio, expansion ratio, and adiabatic 
+efficiency of the system vary under different operating conditions, which 
+means that the operating feasible domain varies over a wide range of 
+operating conditions. Therefore, based on the experimental test data of 
+the compressor and turbine provided by the manufacturer or the system 
+simulation data, a corresponding mathematical fitting relationship, such 
+as Equation (32), can be established to make more accurate adjustments 
+to the shape of the feasible domain. \
+βC
+ifunction 
+WCCEt)
+CβT
+ifunction 
+WTCEt)
+ηC
+iηCCE
+ifunction 
+WCCEt)
+CηT
+iηTCE
+ifunction 
+WTCEt) (32)  
+4.3. Application methods of the operational feasibility domain 
+CCES-CHP needs to make scheduling responses according to 
+different electric load dispatch and heat load dispatch of customers in 
+actual operation. When the requested scheduling command is different 
+from the current operating conditions, the shape of the operating 
+feasible domain can be changed by adjusting the turbine inlet temper -
+ature to change X so that the operating condition point corresponding to 
+the scheduling command is located inside or on the boundary of the new 
+operating feasibility domain. Taking the operating feasible domain of 
+the discharge-heat condition at the initial turbine inlet temperature as 
+an example, the scheduling command points in the figure correspond to 
+the power generation and heating power as Wdispatch
+TCEtand Qdispatch
+HG HEt
+Qdispatch
+LG HEt. In addition, the lower limit value constraint (the value of the 
+vertical coordinate at the intersection of the vertical axis) of the heat 
+storage capacity of the high-temperature storage tank is the same when 
+WTCEt0, so only γ2 changes in Fig. 5, and the corrected value is shown 
+in Equation (33). Furthermore, when the scheduling command point is 
+on the boundary of the new constraint equation, the operational feasi-
+bility domain of the system increases to a greater extent (the increase is 
+in the orange area in the figure). 
+γ2″QHTVt 1 Qlower
+HTV
+Δt [
+Qdispatch
+HG HEtQdispatch
+LG HEt]
+Wdispatch
+TCEt(33) 
+It should be emphasized that the corrected calculations of Equations 
+(31) and (33) for γ2 are equivalent in terms of the values obtained, 
+although they are based on different angles of the analysis method. 
+Therefore, X and λ are unified by these two formulas. 
+Further, the operational feasibility domain of CCES-CHP is bounded 
+because the input parameters of the system are always limited by the 
+available equipment performance and empirical values. Therefore, 
+when the consumer ’s dispath is not appropriate, the location of the point 
+will always lie outside the operational feasibility domain. It is then 
+necessary to calculate the actual operational feasibility domain ac-
+cording to the Heat-dependent or Power-dependent mode, that is, to 
+determine the heating power with the upper limit of the discharge power 
+or to determine the discharge power with the upper limit of the heating 
+power, Fig. 6 gives the calculation strategy of the operational feasibility 
+domain in the Heat-dependent mode. As can be seen from Fig. 7, the 
+adjusted operational feasibility domain is the area surrounded by a red 
+boundary in the Heat-dependent mode, the adjusted operating feasible 
+domain is the area surrounded by a green boundary in the Power- 
+dependent mode, and the area of the newly formed feasible domain is 
+reduced. 
+5.Example analysis 
+5.1. Operating parameters 
+The following method validation and in-depth analysis will be con-
+ducted through case-study. A particular integrated energy system is 
+selected as an example, which is configured with a 20 MW wind power 
+unit (WP), a 30 MW conventional combined heat and power unit 
+(C–CHP), and a 10 MW/50 MWh CCES-CHP system. Among them, the 
+C–CHP ’s thermoelectric ratio is set to 1.2, and the operating parameters 
+of the CCES-CHP are shown in Table 1, with most values of typical 
+design parameters reasonably provided with reference to published 
+works [18,19,37,38]. A typical day of a heating season is selected as an 
+example, and the heat load, electrical load and wind power generation 
+in this integrated energy system are counted and plotted (as shown in J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 10 ===
+Energy 291 (2024) 130122
+10Fig. 8). The day is divided into 24 h, and the system operating conditions 
+are dynamically adjusted according to the load conditions every hour. 
+Since the energy storage and release time of CCES-CHP is limited, 
+considering the economy of system construction, it can be used as a 
+supplement to the heating and power generation functions of C–CHP so 
+that the installed capacity of C–CHP can be reduced. The operation 
+optimization goal of the whole integrated energy system is to have the 
+C–CHP operate according to the heat-determined power mode by using 
+the thermal and electrical loads of consumers as dispatch and then using 
+the electrical load deficit and thermal load deficit after removing the 
+wind power generation as dispatch commands for the CCES-CHP, so as 
+to meet the needs of the consumer side. The CCES-CHP will charge when 
+the electrical load is low when the dispatch command is defined as 
+positive, and The CCES-CHP will charge when the load is high when the dispatch command is defined as a negative number and discharge when 
+the load is high when the dispatch command is defined as a negative 
+number. In addition, CCES-CHP also operates in Heat-dependent mode 
+when the supply and discharge cannot be met simultaneously. 
+5.2. Results and analysis 
+5.2.1. Performance of CCES-CHP 
+At the initial parameters of CCES-CHP, the primary goal is to maxi-
+mize its power generation as energy storage for peaking, so the high- 
+temperature heat supply is 0 at this time, i.e., all the heat storage in 
+HTV is used to heat CO2 to expand, and the turbine reaches the 
+maximum power generation limit at this time. The simulation perfor -
+mance results under the initial parameters are shown in Table 2. It is 
+Fig. 5.Variation of the operational feasibility domain for the Discharge-Heating condition considering just-in-time dispatch.  
+Fig. 6.Calculation strategy of the operational feasibility domain in the Heat-dependent mode.  J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 11 ===
+Energy 291 (2024) 130122
+11observed that when the charging power and discharging power are 
+guaranteed to be equal, the charging time is longer than the discharging 
+time because the system cycle efficiency is always less than 1, and the 
+corresponding work mass flow rate during charging is smaller than that 
+during discharging. The values of four dimensionless numbers γ1, γ2, α1, 
+and α2 are 1.16, 1.59, 2.69, and 4.03, respectively. More critically, 
+Fig. 7.Effect of Heat-dependent and Power-dependent modes on the area of the operational feasibility domain.  
+Table 1 
+Initial design parameters of CCES-CHP system.  
+Parameters Value 
+Ambient temperature/K 298 
+Ambient pressure/MPa 0.101 
+Charging power & Discharging power/MW 10; 10 
+Discharging time/h 5 
+LPT pressure/MPa 0.102 
+HPT pressure/MPa 6.8 
+Inlet temperature of compressor at all stages/K 308 
+Inlet temperature of turbine at all stages/K 483 
+Cooler outlet temperature/K 298 
+ATV temperature/K 298 
+HTV temperature/K 495 
+Minimum temperature difference of intermediate heat exchanger/K 5 
+Isentropic coefficient of compressors 0.85 
+Isentropic coefficient of turbines 0.88 
+Mechanical efficiency of the motor 0.98 
+Mechanical efficiency of the generator 0.95  
+Fig. 8.Curves of heat load, electrical load and wind power generation.  Table 2 
+CCES-CHP performance calculation results under initial parameters (when all 
+HTV heat is used for heat feedback).  
+Performance criteria Value Performance criteria Value 
+WT,E/MW 10 QAE-HE/MW 1.85 
+WC,E/MW 10 γ1 1.16 
+Charging time/h 7.5 γ2 1.59 
+Discharging time/h 5 α1/kg/(s ⋅MW) 2.69 
+mC/kg/s 26.9 α2/kg/(s ⋅MW) 4.03 
+mT/kg/s 40.3 X/% 9.0 
+QIC1/MW 4.86 Y/% 91.0 
+QIC2/MW 6.78 ηelectricity /% 66.7 
+QHR1/MW 9.47 ηheating ,HG-HE /% 0.0 
+QHR2/MW 6.41 ηheating ,LG-HE/% 9.1 
+QHG-HE /MW 0 ηheating ,AE-HE/% 12.3 
+QLG-HE/MW 1.37 ηheating ,total/% 21.4  
+Fig. 9.Heat power, elctrical power dispatch and actual operating 
+power curves. J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 12 ===
+Energy 291 (2024) 130122
+12ηelectricity is 66.7 %, and ηheating,total is 21.4 % under the default condition, 
+which indicates that the CCES-CHP system can achieve 1 unit of elec-
+trical energy when storing 0.667 units of electricity-to-electricity con-
+version and 0.214 units of electricity-to-heat conversion, where the total 
+heat supply of the system includes only two components of low- 
+temperature heating and after-expansion heating. The proposed CCES- 
+CHP system can then achieve a combined energy utilization efficiency 
+of 88.1 %, which is highly relevant for the combined heat and power 
+function of the system. On the contrary, it also shows that about 11.9 % 
+of the input energy is lost in other parts of the system, such as irre-
+versible losses from compressors, turbines, heat exchangers, and piping 
+pressure drops, which can only be expected from further optimization of 
+these devices. In addition, the heat feedback rate Y also reaches a 
+maximum of 91 % at this condition (it is not possible to reach 100 %), 
+which is due to the heat transfer temperature difference of HR1, HR2 
+and the heat storage medium outlet temperature is always greater than 
+the ambient temperature. 
+5.2.2. Dispatch and actual operation of CCES-CHP 
+Fig. 9 shows the actual response of CCES-CHP to electrical and heat 
+power dispatch and also visualizes the regulation thresholds for each 
+time period. The heating response curve of CCES-CHP completely 
+overlaps with the thermal dispatch curve, implying that it can fully track 
+the thermal dispatch command of the customer demand, thus verifying 
+the feasibility of the system ’s heat-determined power strategy. Hour 
+2–18 can be supplied by C–CHP due to the relatively small heat load of 
+customers. Since the upper limit of both the charging power and dis-
+charging power of CCES-CHP is 10 MW, the charging power of CCES- 
+CHP cannot be increased further at huor 1–12 and 24, while the 
+excess power generated by C–CHP needs to be sent to the grid for con-
+sumption. In addition, at huor 8–11, although the power dispatch is 
+positive, considering the economics of the installed capacity of the en-
+ergy storage system, there is an upper limit of the volume and heat 
+storage of the HTV, resulting in the CCES-CHP cannot store power 
+continuously. At hour 12, the CCES-CHP starts discharging and con-
+tinues to operate in a “discharge-charge-discharge ” state with the power 
+dispatch command until hour 23, a total of 12 h during which the CCES- 
+CHP can accurately track the power dispatch command from the 
+customer side. 
+Fig. 10 shows the electricity production, dispatch, and consumption 
+in the integrated energy system. The production of electric power in the system comes from CCES-CHP discharge, WP generation, and C–CHP 
+generation, and the consumption of electric power includes customer 
+consumption, grid-connected power, and CCES-CHP charging volume. 
+With the line with vertical axis coordinate 0 as the symmetry axis, the 
+bars in the figure are entirely symmetrical. It can be found that C–CHP 
+power generation decreases and then increases with time, and then 
+decreases and then increases to the upper generation limit of 30 MW. 
+The CCES-CHP is in charging state at hours 1–8, 17–19, and 22–24, in 
+generation state at hours 12–15 and 21, and ultimately loses charging 
+capacity at hours 9–11, 16, and 20, and does not need to discharge and 
+replenish the customer ’s electrical load. 
+Similarly, heat production, dispatch, and consumption in the inte-
+grated energy system are shown in Fig. 11. Comparing Figs. 9 and 11, it 
+can be found that the heat storage variation curve and the electric power 
+variation curve of CCES-CHP at each moment are positively correlated, 
+which also confirms the necessity of using γ1 to characterize the rela-
+tionship between them. When the C–CHP heat supply is less than the 
+user heat load (hours 1, 19–23), the CCES-CHP responds to the positive 
+thermal dispatch to replenish heat, and when the C–CHP heat supply is 
+equal to the user heat load (hours 2–18,24), both the heat storage and 
+the heat release of the CCES-CHP are realized inside the system, which is 
+reflected in the change of the heat storage in the HTV. Thus, the heat 
+storage in the HTV increases at the beginning of the operation, reaching 
+the upper limit of heat storage at huor 8 and then showing the opposite 
+trend to the electrical load with the “discharge-charge-discharge ” 
+operation characteristic of the CCES-CHP. Further, since the boundary 
+points of each working day are not the same and the amount of heat 
+storage in the beginning and end states of HTV is not necessarily the 
+same, the operating domain of CCES-CHP still changes dynamically on a 
+daily, weekly, or even monthly time scale. This suggests that the rated 
+capacity and rated power of CCES-CHP should be increased in order to 
+consume more rich power and better track the customer load, and the 
+optimization effect of tightly changing the operating parameters is 
+limited. 
+5.2.3. Variation of the operational feasibility domain of CCES-CHP under 
+different load ratio 
+Next, the variation law of the operational feasibility domain of CCES- 
+CHP operation under different heat load and electric load ratios is 
+investigated. It is assumed that the peak thermal load on the customer 
+side is still 41.5 MW, and two scenarios with peak electric load of 32 MW 
+and 48 MW are set, respectively. Specifically, scenario A modifies the 
+peak electrical load at hours 19–21 to 32 MW; scenario B modifies the 
+peak electrical load at hours 12–15 and hours 20–23 to 48 MW. Fig. 12 
+depicts the shape and variation of the operational feasibility domain for 
+Fig. 10.Electricity production, dispatch, and consumption in the integrated 
+energy system. 
+Fig. 11.Heat production, dispatch, and consumption in the integrated en-
+ergy system. J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 13 ===
+Energy 291 (2024) 130122
+13each moment in these two scenarios, and the surface enclosed by the 
+quadrilateral box line in the figure is the operational feasible domain 
+area. 
+Under scenario A conditions, CCES-CHP bears a smaller electrical 
+load. As shown in Fig. 12(a), at hour 12, the system cannot be charged at 
+full load due to the HTV heat storage and HPT pressure limitations. The 
+operational feasibility domain of the system from hour 12 to hour 20 is 
+the largest rectangle, which indicates that the amount of heat storage 
+and work mass storage in the system in this short period of time can fully 
+meet the demand for different charging power and discharging power, 
+and the operating condition points of the system are located on the 
+boundary of the operational feasibility domain. With the development of 
+time, the operational feasibility domain keeps shrinking from hour 20, 
+mainly because the system ’s heat storage capacity is gradually 
+increasing, leading to the decreasing charging power. At hours 23 and 
+24, the system completely loses its charging capacity but still has a large 
+discharging and heating capacity. In scenario B conditions, CCES-CHP bears a more significant elec-
+trical load. As shown in Fig. 12(b), at hours 12–15, the system discharges 
+at a maximum power of 10 MW, the heat supply dispatch is 0, and the 
+operational feasibility domain from hour 12 to hour 21 are the same and 
+have the largest area, which indicates that the HTV heat storage and 
+HPT pressure required for the charging process and the discharging 
+process of the system is sufficient. In addition, it can be found that the 
+increase of peak electric load makes CCES-CHP start discharging at 
+hours 20 and 22–23, i.e., it increases from 5 h discharge to 8 h discharge, 
+which enhances the role of CCES-CHP in peak shaving and valley filling 
+under power dispatch and improves its operational economy, which is 
+very beneficial. Similarly, it is impossible for CCES-CHP to continuously 
+discharge under peak power consumption conditions, and it can be 
+found that entering hour 24, the mass of CO2 stored in the HPT reaches 
+the lower limit, the system completely loses its discharge capacity, and 
+the heating capacity is at its worst state. On the one hand, this reflects 
+that the actual load requirements should be reasonably configured with 
+the power of the CCES-CHP, and an excessive load ratio will affect the 
+system operation at certain moments; on the other hand, it is also due to 
+the fact that the electrical loads during the peak hours are set relatively 
+large in this assumption, which leads to a sizeable continuous discharge 
+of the CCES-CHP at high loads, which is not common in the actual power 
+consumption situation. 
+The heat load, electrical load dispatch, and actual operating char-
+acteristics of CCES-CHP under scenario B conditions can be analyzed in 
+Fig. 13. Compared with the operation curve under the initial parame -
+ters, the discharge of CCES-CHP at hours 12–15 is limited by the 
+maximum discharge power and cannot fully respond to the corre -
+sponding electric load dispatch, which requires the C–CHP to shift to the 
+Power-dependent mode operation to prioritize the power supply. As 
+mentioned above, at hour 23, the CO2 stored in the HPT is close to the 
+minimum mass, so it can only discharge at a power of 0.8 MW, and there 
+is a shortfall of 8.9 MW. 
+In order for CCES-CHP to fully track the electric load dispatch 
+command at hour 23, the operational feasibility domain can be adjusted 
+by changing parameters such as the turbine inlet temperature. From the 
+method in Section 4.3, it is clear that in order to make the dispatch 
+command point lie precisely at the new operational feasibility domain 
+boundary, the upper power generation limit determined by the lower 
+limit of the HPT pressure should be increased so that the value of the 
+operational feasibility domain boundary determined by the lower limit 
+constraint is shifted to the right by 8.9 MW. Specifically, increasing the 
+turbine inlet temperature to 503 K, i.e., λ 0.94, which increases the 
+Fig. 12.Variation of the operational feasibility domain of CCES-CHP under 
+different heat and electrical load ratios:(a)Scenario A; (b)Scenario B. 
+Fig. 13.Heat power, elctrical power dispatch and actual operating power 
+curves of Scenario B. J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 14 ===
+Energy 291 (2024) 130122
+14power doing capacity per unit of fluid flow, so that CCES-CHP can fully 
+track the dispatch command for that time period, which also increases 
+its output range and regulation flexibility. 
+6.Conclusion 
+In this study, a compressed carbon dioxide energy storage cogene -
+ration (CCES-CHP) system is established. In order to thoroughly inves -
+tigate the influence of the cogeneration characteristics of CCES-CHP and 
+the customer-side flexibility dispatchable on the optimal operating 
+condition region of the system, a method of determining the operational 
+feasibility domain of CCES-CHP is proposed. Based on this, the shape, 
+characteristics, influencing factors, and application methods of the 
+operational feasibility domain are analyzed. The results can be sum-
+marized as follows.  
+(1) The dimensionless factor γ1, γ2 and ratio parameters α1, α2 
+quantifies the complex coupling and mutual constraints between 
+heat, electricity, and mass flow within the system. Among them, 
+γ1 and γ2 are the slope of the linear constraint for both the charge- 
+heat and discharge-heat conditions. The feasible region formed 
+by the upper limit constraints of the x-axis and y-axis and their 
+variables is in a two-dimensional polygonal shape.  
+(2) The operational feasibility domain of CCES-CHP is time-varying, 
+and the closer it is to a rectangle, the larger its operation range, 
+the more operating condition points, and the more flexible its 
+operation. When considering changes of dispatch command and 
+wide operating conditions, the parameter correction goal is to 
+make the new operating condition point tend towards the 
+boundary of the operational feasibility domain. Further devel -
+opment has been made of computing strategies for operational 
+feasibility domain. 
+(3)Finally, an integrated energy system case with CCES-CHP is in-
+tegrated to analyze the influence law of typical daily thermo -
+electric power distribution ratio changes and operational 
+feasibility domain considering broad working conditions. It is 
+found that a moderate increase in the electric load dispatch can 
+improve the CCES-CHP discharge time and fully improve its 
+operating economy, which verifies the application potential of the proposed operational feasibility domain analysis method. It is 
+found that under the initial parameters, the ηelectricity and ηheating, 
+total of CCES-CHP reach 66.7 % and 21.4 %, respectively, and the 
+comprehensive energy utilization efficiency of the system can 
+reach 88.1 %. 
+In conclusion, the operational feasibility domain analysis method 
+proposed in this paper can give full play to the advantages of CCES-CHP 
+combined heat and power supply, which is of guiding significance for 
+the structural improvement and operational optimization of CCES. It can 
+provide some reference for capacity planning, real-time dispatch, and 
+scheduling visualization of integrated energy systems. 
+CRediT authorship contribution statement 
+Jiahao Hao: Investigation, Methodology, Validation, Writing – 
+original draft. Pingyang Zheng: Data curation. Yanan Li: Validation, 
+Writing – review & editing. Zhentao Zhang: Conceptualization, Formal 
+analysis, Validation. Jiajun Zhang: Software. Junling Yang: Data 
+curation, Resources, Writing – review & editing. Yunkai Yue: Project 
+administration, Supervision. Xiaoqiong Li: Writing – review & editing. 
+Declaration of competing interest 
+The authors declare that they have no known competing financial 
+interests or personal relationships that could have appeared to influence 
+the work reported in this paper. 
+Data availability 
+Data will be made available on request. 
+Acknowledgements 
+This research is supported by the CAS Project for Young Scientists in 
+Basic Research (Grant No. YSBR-043), National Natural Science Foun -
+dation of China (No. 52206032 & 21978308), and Special Fund for 
+Central Guiding Local Science and Technology Development 
+(ZYYD2022B11 & 2022ZY0048).  
+Appendix A.Derivation of the minimum value of Y - used to determine the waste heat situation 
+The lower limit value of CO2 heating after turbination is given below in combination with the case of two-stage compression and two-stage 
+expansion shown in Fig. 1 and the corresponding extreme value of Y is deduced. When the temperature T13 of flowing stream 13 and the ambient 
+temperature T0 is equal, the part has no heating capacity at this time, so we get T13,min T0, and combine with Equations (9) and (10) to obtain: 
+T12TTCin
+iNTT0
+ηT
+iNT⌊(
+βT
+iNT)1 n
+n 1⌋
+1(A.1)  
+T11T12 QHR2t
+mTtcTCCO2p(A.2)  
+T10T11
+ηT
+i1√ 
+βT
+i1)1 n
+n 1⇑
+1(A.3)  
+T9T10 QHR1t
+mTtcTCCO2p(A.4)  
+where T denotes the temperature of CO2 and the numerical subscripts denote the corresponding flow units. 
+Thus, the value of Y at this point can be further obtained as: J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 15 ===
+Energy 291 (2024) 130122
+15YminYT13CminT0⨄tdischarge
+0QHR1tQHR2tdt⨄tcharge
+0QIC1tQIC2tdt⨄tdischarge
+0mTtcTCCO2pT12 T11T10 T9dt⨄tcharge
+0QIC1tQIC2tdt
+⨄tdischarge
+0mTth12 h11h10 h9dt⨄tcharge
+0QIC1tQIC2tdt(A.5) 
+Where h indicates the enthalpy of CO2 and the numerical subscript indicates the corresponding flow unit. 
+Therefore, for an actual CCES-CHP system, Ymin can be calculated first according to the parameter settings, and then the heating capacity of CO2 at 
+the turbine outlet can be judged. 
+Appendix B.Initial calculation results of CCES-CHP ’s main flow streams  
+Table 1 
+Various streams calculation results of the CCES-CHP under initial parameters (when all HTV heat is used for heat 
+feedback)  
+State points Temperature/K Pressure/MPa Mass flow/kg/s 
+1 298 0.102 26.9 
+2 298 0.102 26.9 
+3 495 0.90 26.9 
+4 308 0.85 26.9 
+5 506 6.90 26.9 
+6 309 6.85 26.9 
+7 298 6.80 26.9 
+8 296 6.65 40.3 
+9 304 6.60 40.3 
+10 483 6.50 40.3 
+11 318 0.70 40.3 
+12 483 0.65 40.3 
+13 350 0.12 40.3 
+14 303 0.102 40.3 
+15 298 0.102 40.3  
+References 
+[1]Hussain J, Lee CC. A green Path towards sustainable development: optimal 
+Behavior of the Duopoly Game model with carbon neutrality Instruments. Sustain 
+Dev 2022;30:1523 –41. 
+[2]Matos CR, Carneiro JF, Silva PP. Overview of large-scale underground energy 
+storage technologies for integration of renewable energies and criteria for reservoir 
+identification. J Energy Storage 2019;21:241 –58. 
+[3]Rahman MM, Oni AO, Gemechu E, Kumar A. Assessment of energy storage 
+technologies: a review. Energy Convers Manag 2020;223:113295 . 
+[4]Chen KQ, Pu WH, Zhang Q, Xing XL, Xiong C, Guo MD. Thermodynamic and 
+economic assessment on the supercritical compressed carbon dioxide energy 
+storage system coupled with solar thermal storage. J Energy Storage 2021;41: 
+102959 . 
+[5]Guo H, Xu YJ, Chen HS, Zhou XZ. Thermodynamic characteristics of a novel 
+supercritical compressed air energy storage system. Energy Convers Manag 2016; 
+115:167 –77. 
+[6]Courtois N, Najafiyazdi M, Lotfalian R, Boudreault R, Picard M. Analytical 
+expression for the evaluation of multi-stage adiabatic-compressed air energy 
+storage (A-CAES) systems cycle efficiency. Appl Energy 2021;288:116592 . 
+[7]Chen H, Peng YH, Wang YL, Zhang J. Thermodynamic analysis of an open type 
+isothermal compressed air energy storage system based on hydraulic pump/turbine 
+and spray cooling. Energy Convers Manag 2020;204:112293 . 
+[8]Wang PZ, Zhao P, Xu WP, Wang JF, Dai YP. Performance analysis of a combined 
+heat and compressed air energy storage system with packed bed unit and electrical 
+heater. Appl Therm Eng 2019;162:114321 . 
+[9]Szablowski L, Krawczyk P, Wolowicz M. Exergy analysis of adiabatic liquid air 
+energy storage (A-LAES) system based on Linde –Hampson cycle. Energies 2021;14: 
+945. 
+[10] Zhang T, Chen LJ, Zhang XL, Mei SW, Xue XD, Zhou Y. Thermodynamic analysis of 
+a novel hybrid liquid air energy storage system based on the utilization of LNG cold 
+energy. Energy 2018;155:641 –50. 
+[11] Mercang oz M, Hemrle J, Kaufmann L, Z’Graggen A, Ohler C. Electrothermal energy 
+storage with transcritical CO2 cycles. Energy 2012;45:407 –15. 
+[12] Liu Z, Liu B, Guo JZ, Xin X, Yang XH. Conventional and advanced exergy analysis 
+of a novel transcritical compressed carbon dioxide energy storage system. Energy 
+Convers Manag 2019;198:111807 . 
+[13] Cao Z, Deng JQ, Zhou SH, He Y. Research on the feasibility of compressed carbon 
+dioxide energy storage system with underground sequestration in antiquated mine 
+goaf. Energy Convers Manag 2020;221:112788 . 
+[14] Chaychizadeh F, Dehghandorost H, Aliabadi A, Taklifi A. Stochastic dynamic 
+simulation of a novel hybrid thermal-compressed carbon dioxide energy storage 
+system (T-CCES) integrated with a wind farm. Energy Convers Manag 2018;166: 
+500–11. [15] Chae YJ, Lee JI. Thermodynamic analysis of compressed and liquid carbon dioxide 
+energy storage system integrated with steam cycle for flexible operation of thermal 
+power plant. Energy Convers Manag 2022;256:115374 . 
+[16] Wang XY, Wu YT, Fu L. Configuration method for combined heat and power plants 
+with flexible electricity regulation. Energy Build 2023;287:112966 . 
+[17] Hemmati M, Mirzaei MA, Abapour M, Zare K, Mohammadi B, Mehrjerdi H, 
+Marzband M. Economic-environmental analysis of combined heat and power-based 
+reconfigurable microgrid integrated with multiple energy storage and demand 
+response program. Sustain Cities Soc 2021;69:102790 . 
+[18] Liu Z, Cao F, Guo JZ, Liu J, Zhai HY, Duan ZY. Performance analysis of a novel 
+combined cooling, heating and power system based on carbon dioxide energy 
+storage. Energy Convers Manag 2019;188:151 –61. 
+[19] Zhang Y, Lin YH, Lin FZ, Yang K. Thermodynamic analysis of a novel combined 
+cooling, heating, and power system consisting of wind energy and transcritical 
+compressed CO2 energy storage. Energy Convers Manag 2022;260:115609 . 
+[20] He TY, Cao Y, Si FQ. Thermodynamic analysis and optimization of a compressed 
+carbon dioxide energy storage system coupled with a combined heating and power 
+unit. Energy Convers Manag 2023;277:116618 . 
+[21] Sun L, Tang B, Xie YH. Performance assessment of two compressed and liquid 
+carbon dioxide energy storage systems: thermodynamic, exergoeconomic analysis 
+and multi-objective optimization. Energy 2022;256:124648 . 
+[22] Wang MK, Zhao P, Wu Y, Dai YP. Performance analysis of a novel energy storage 
+system based on liquid carbon dioxide. Appl Therm Eng 2015;91:812 –23. 
+[23] Safaei H, Keith DW. Compressed air energy storage with waste heat export: an 
+Alberta case study. Energy Convers Manag 2014;78:114 –24. 
+[24] He Y, Zhou SH, Xu YJ, Chen HS, Deng JQ. The influence of charging process on 
+trigenerative performance of compressed air energy storage system. Int J Energy 
+Res 2020;45(12):17133 –45. 
+[25] Li YW, Miao SH, Yin BX, Luo X, Wang JH. Power system optimal scheduling 
+strategy considering reserve characteristics of advanced adiabatic compressed air 
+energy storage plant. Proceedings of the CSEE 2018;38(18):5392 –404. 
+[26] Duniam S, Veeraragavan A. Off-design performance of the supercritical carbon 
+dioxide recompression Brayton cycle with NDDCT cooling for concentrating solar 
+power. Energy 2019;187:115992 . 
+[27] Guo H, Xu YJ, Zhang XH, Liang Q, Wang SR, Chen HS. Dynamic characteristics and 
+control of supercritical compressed air energy storage systems. Appl Energy 2021; 
+283:116294 . 
+[28] Bian XY, Wang X, Wang R, Cai JW, Tian H, Shu GQ. Optimal selection of 
+supercritical CO2 Brayton cycle layouts based on part-load performance. Energy 
+2022;256:124691 . 
+[29] Zhang Y, Wu YT, Yang K. Dynamic characteristics of a two-stage compression and 
+two-stage expansion Compressed Carbon dioxide energy storage system under 
+sliding pressure operation. Energy Convers Manag 2022;254:115218 . J. Hao et al.                                                                                                                                                                                                                                      
+
+=== PAGE 16 ===
+Energy 291 (2024) 130122
+16[30] Dai BM, Li MX, Ma YT. Thermodynamic analysis of carbon dioxide blends withlow 
+GWP (global warming potential) working fluids-based transcritical Rankine cycles 
+for low-grade heat energy recovery. Energy 2014;64:942 –52. 
+[31] Zhao SF, Ge ZH, He J, Wang CL, Yang YP, Li PF. A novel mechanism for exhaust 
+steam waste heat recovery in combined heat and power unit. Appl Energy 2017; 
+204:596 –606. 
+[32] Aghagoli A, Sorin M. CFD modelling and exergy analysis of a heat pump cycle with 
+Tesla Turbine using CO2 as a working fluid. Appl Therm Eng 2020;178:115587 . 
+[33] Osipov S, Zlyvko O, Miliukov I, Berdyugin K, Lvov D. Influence of kinematic 
+parameters of carbon dioxide turbine on its coefficient of efficiency and 
+dimensions. Inventions 2022;7(4):105 . 
+[34] Johannsen RM, Arberg E, Sorknæs P. Incentivising flexible power-to-heat operation 
+in district heating by redesigning electricity grid tariffs. Smart Energy 2021;2: 
+100013 . [35] Mehrpooya M, Sadeghzadeh M, Rahimi A, Pouriman M. Technical performance 
+analysis of a combined cooling heating and power (CCHP) system based on solid 
+oxide fuel cell (SOFC) technology-a building application. Energy Convers Manag 
+2019;198:111767 . 
+[36] Yu HQ, Zhang LS, Wang WT, Li S, Chen SY, Yang SC, Li JF, Liu XH. State of charge 
+estimation method by using a simplified electrochemical model in deep learning 
+framework for lithiumion batteries. Energy 2023;278:127846 . 
+[37] Maisonnave O, Moreau L, Aubr ˘ee R, Benkhoris MF, Neu T, Guyomarc ’h D. Optimal 
+energy management of an underwater compressed air energy storage station using 
+pumping systems. Energy Convers Manag 2018;165:771 –82. 
+[38] Neu T, Subrenat A. Experimental investigation of internal air flow during slow 
+piston compression into isothermal compressed air energy storage. J Energy 
+Storage 2021;38:102532 . J. Hao et al.                                                                                                                                                                                                                                      
+

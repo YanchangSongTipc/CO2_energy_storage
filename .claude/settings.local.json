@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import PyPDF2; print\\('PyPDF2 available'\\)\")",
+      "Bash(python3 -c \"import pikepdf; print\\('pikepdf available'\\)\")",
+      "Bash(python3 -c \"import fitz; print\\('fitz available'\\)\")",
+      "Bash(pip3 install *)",
+      "Bash(python -m pip install PyPDF2)",
+      "Bash(python3 -c ' *)",
+      "Bash(python -c ' *)",
+      "Bash(npm run test:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run build:*)",
+      "Read",
+      "Write",
+      "Edit",
+      "Bash(matlab -batch \"try, PaperReproduction; catch e, fprintf\\('ERROR: %s\\\\n', e.message\\); for i=1:min\\(5,length\\(e.stack\\)\\), fprintf\\('  at %s line %d\\\\n', e.stack\\(i\\).name, e.stack\\(i\\).line\\); end; end\")",
+      "Bash(matlab -batch \"try, PaperReproduction; catch e, fprintf\\('ERROR: %s\\\\n', e.message\\); end\")",
+      "Bash(matlab -batch \"try, PaperReproduction; catch e, fprintf\\('ERROR: %s\\\\\\\\n', e.message\\); end\")",
+      "Bash(git add *)",
+      "Bash(python -m pip install xgboost scikit-learn --quiet)",
+      "Bash(python -c \"import xgboost; print\\('XGBoost', xgboost.__version__\\)\")",
+      "Bash(python -m pip install xgboost)",
+      "Bash(python -m pip install scikit-learn xgboost pandas)",
+      "Bash(python -m pip install --no-cache-dir pandas scikit-learn)",
+      "Bash(python -m pip install --no-cache-dir xgboost)",
+      "Bash(python train_ml_models.py)",
+      "Bash(python dispatch_optimization.py)",
+      "Bash(python -m pip install --no-cache-dir matplotlib)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(git push:*)",
+      "Bash(curl * | bash)"
+    ]
+  }
+}

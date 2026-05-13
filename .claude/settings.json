@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir output_figures\\\\Fig1*.png output_figures\\\\Fig1[12]*.png)",
+      "Bash(python -c ' *)",
+      "Bash(python3)"
+    ]
+  }
+}
