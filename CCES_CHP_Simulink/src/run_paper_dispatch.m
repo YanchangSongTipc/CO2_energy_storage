@@ -32,10 +32,10 @@ beta2  = 2.307;          % Q_HR / W_T_E
 alpha1 = 2.744;          % m_charge / W_C_E [kg/(s·MW)]
 alpha2 = 4.117;          % m_discharge / W_T_E [kg/(s·MW)]
 
-% 储罐参数
-V_HPT = 500;             % m³
+% 储罐参数 (标定至5h满功率放电 @ 10MW)
+V_HPT = 6228;            % m³ (匹配 t_discharge=5h)
 T_HPT = 298;             % K
-Rg = 0.1889;             % kJ/(kg·K)
+Rg = 188.9;              % J/(kg·K) (SI单位)
 P_HPT_upper = 6.80;      % MPa
 P_HPT_lower = 0.12;      % MPa
 
@@ -105,7 +105,7 @@ for t = 1:N_hours
         % HPT上限约束: dm/dt = alpha1 * W [kg/(s·MW)*MW = kg/s]
         % dP = dm * Rg * T / (V * 1e6) [MPa], dt in seconds
         W_C_HPT = max(0, (P_HPT_upper - P_HPT_array(t)) * V_HPT * 1e6 ...
-                   / (Rg * 1000 * T_HPT) / dt_s / alpha1);
+                   / (Rg * T_HPT) / dt_s / alpha1);
 
         W_C_hourly(t) = min([W_C_target, W_C_HTV, W_C_HPT]);
 
@@ -123,7 +123,7 @@ for t = 1:N_hours
         % dP[MPa] = dm * Rg[kJ/(kg·K)] * T[K] / (V[m³] * 1e3[kJ/MJ]) / 1e3 →
         % dP = dm * Rg * T / (V * 1e6)
         dm_charge = alpha1 * W_C_hourly(t) * dt_s;
-        delta_P = dm_charge * (Rg * 1000) * T_HPT / (V_HPT * 1e6);
+        delta_P = dm_charge * Rg * T_HPT / (V_HPT * 1e6);
         P_HPT_array(t) = P_HPT_array(t) + delta_P;
 
     elseif Elec_Dispatch(t) < -0.5  % 需放电 (电网缺口 > 0.5 MW)
@@ -136,7 +136,7 @@ for t = 1:N_hours
         W_T_HTV = max(0, (Q_HTV_array(t) - Q_HTV_lower) / dt_h / beta2);
         % HPT下限约束: P drop = dm_out * Rg * T / (V * 1e6)
         W_T_HPT = max(0, (P_HPT_array(t) - P_HPT_lower) * V_HPT * 1e6 ...
-                   / ((Rg * 1000) * T_HPT) / dt_s / alpha2);
+                   / (Rg * T_HPT) / dt_s / alpha2);
 
         W_T_hourly(t) = min([W_T_target, W_T_HTV, W_T_HPT]);
 
@@ -150,7 +150,7 @@ for t = 1:N_hours
 
         Q_HTV_array(t) = Q_HTV_array(t) - (Q_return + Q_heat_hourly(t)) * dt_h;
         dm_disch = alpha2 * W_T_hourly(t) * dt_s;
-        delta_P = dm_disch * (Rg * 1000) * T_HPT / (V_HPT * 1e6);
+        delta_P = dm_disch * Rg * T_HPT / (V_HPT * 1e6);
         P_HPT_array(t) = P_HPT_array(t) - delta_P;
 
     else  % |Elec_Dispatch| <= 0.5 MW: 接近平衡

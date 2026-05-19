@@ -42,9 +42,11 @@ params.P_T2_out = 0.12e6;     % T2 出口 [Pa] = 0.12 MPa
 params.P_AEHE_out = 0.102e6;  % AE-HE 出口 [Pa]
 params.P_LPT_nom = 0.102e6;   % LPT 额定 [Pa] = 0.102 MPa
 
-%% 储罐参数
-params.V_HPT = 500;         % HPT 容积 [m^3]
-params.V_LPT = 2000;        % LPT 容积 [m^3]（低压侧容积更大）
+%% 储罐参数 (标定至5h满功率放电, V_HPT = m_needed*R*T/ΔP)
+% m_needed = alpha2 * W_design * t_discharge_design = 4.117*10*5*3600 = 741,060 kg
+% V_HPT = 741060 * 188.9 * 298 / (6.698e6) = 6228 m³
+params.V_HPT = 6228;        % HPT 容积 [m^3] (标定至5h放电)
+params.V_LPT = 10000;       % LPT 容积 [m^3] (低压侧需更大)
 params.Rg_CO2 = 188.9;      % CO2 气体常数 [J/(kg·K)] (与 Pa 单位一致)
 params.T_HPT_store = 298;   % HPT 存储温度 [K]
 
