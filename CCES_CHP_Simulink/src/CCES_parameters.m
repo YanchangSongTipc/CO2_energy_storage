@@ -54,18 +54,28 @@ params.Q_HTV_initial   = 50 * 3600;   % 初始蓄热量 [MJ_th]
 params.T_HTV_max = 573;    % 导热油最高温度 [K]
 params.T_ATV = 298;        % 冷导热油温度 [K]
 
-%% 无量纲耦合系数（来自 Cycle.m 计算结果）
-params.beta1  = 1.185;     % Q_IC / W_C_E (压缩热/充电功率比)
-params.beta2  = 2.307;     % Q_HR / W_T_E (回热/放电功率比)
-params.alpha1 = 2.744;     % m_charge / W_C_E [kg/(s·MW)]
-params.alpha2 = 4.117;     % m_discharge / W_T_E [kg/(s·MW)]
+%% 无量纲耦合系数（来自 Cycle.m 稳态设计点，全回路流量）
+% α: 质量流量/电功率   β: 热量/电功率
+% 注意: α 是全回路(压气机/透平)流量系数，非 HPT 净储/释流量
+%       满功率时 m_dot_circuit = alpha*W_design (kg/s)
+%       HPT 作为回路高压侧缓冲罐，约束了满功率持续时长
+params.beta1  = 1.185;     % Q_IC / W_C_E = 压缩热/充电功率比
+params.beta2  = 2.307;     % Q_HR / W_T_E = 回热/放电功率比
+params.alpha1 = 2.744;     % m_charge / W_C_E = 2.744 kg/(s·MW) (全回路)
+params.alpha2 = 4.117;     % m_discharge / W_T_E = 4.117 kg/(s·MW) (全回路)
 
-%% 设计功率
-params.W_design = 10;      % 设计充放电功率 [MW]
+%% 设计参数 (来自论文 Hao et al., Energy 2024)
+params.W_design = 10;           % 设计充放电功率 [MW]
+params.t_charge_design = 7.5;   % 设计充电时长 [h] (可用时间窗口)
+params.t_discharge_design = 5.0;% 设计放电时长 [h] (可用时间窗口)
 
-%% 仿真参数
+% HPT 储罐约束: 满功率 10MW 时 α1*W=27.4kg/s → 充满 ~36min
+% 因此系统不能连续满功率运行 7.5h，功率必须被 HPT 压力约束调制
+% 论文的可行性域方法正是用来处理这种功率-容量耦合约束
+
+%% 仿真参数 (可自定义调度场景)
 params.dt_sim = 60;        % 仿真时间步长 [s]
-params.t_charge = 6 * 3600; % 充电时长 [s] (6小时)
-params.t_idle = 2 * 3600;   % 中间闲置 [s]
-params.t_discharge = 6 * 3600; % 放电时长 [s]
+params.t_charge = 6 * 3600; % 预设充电时长 [s]
+params.t_idle = 2 * 3600;   % 预设闲置时长 [s]
+params.t_discharge = 6 * 3600; % 预设放电时长 [s]
 params.t_total = params.t_charge + params.t_idle + params.t_discharge;
