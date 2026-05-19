@@ -26,7 +26,8 @@
       "Bash(python -m pip install --no-cache-dir xgboost)",
       "Bash(python train_ml_models.py)",
       "Bash(python dispatch_optimization.py)",
-      "Bash(python -m pip install --no-cache-dir matplotlib)"
+      "Bash(python -m pip install --no-cache-dir matplotlib)",
+      "Bash(/opt/MATLAB/R2024a/bin/matlab -batch \"license\\('checkout','Simulink'\\); ver\\('Simulink'\\)\")"
     ],
     "deny": [
       "Bash(rm -rf:*)",
