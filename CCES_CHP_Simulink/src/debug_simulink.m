@@ -85,18 +85,25 @@ for i = 1:size(signals, 1)
     blk = [sig_root '/' signals{i,1}];
     try
         add_block('simulink/Sinks/To Workspace', blk);
-        set_param(blk, 'VariableName', signals{i,1});
-        add_line(sig_root, signals{i,2}, [signals{i,1} '/1']);
     catch
-        % 可能已存在或连接失败，跳过
+        delete_block(blk);
+        add_block('simulink/Sinks/To Workspace', blk);
     end
+    set_param(blk, 'VariableName', signals{i,1});
+    try add_line(sig_root, signals{i,2}, [signals{i,1} '/1']); catch, end
 end
 
-% 时间记录
-add_block('simulink/Sinks/To Workspace', [sig_root '/tout_log']);
-set_param([sig_root '/tout_log'], 'VariableName', 'tout_log');
-add_block('simulink/Sources/Clock', [sig_root '/Clock_for_log']);
-add_line(sig_root, 'Clock_for_log/1', 'tout_log/1');
+% 时间记录 (skip if exists)
+try
+    add_block('simulink/Sinks/To Workspace', [sig_root '/tout_log']);
+    set_param([sig_root '/tout_log'], 'VariableName', 'tout_log');
+catch
+end
+try
+    add_block('simulink/Sources/Clock', [sig_root '/Clock_for_log']);
+    add_line(sig_root, 'Clock_for_log/1', 'tout_log/1');
+catch
+end
 
 fprintf('[OK] 已添加 %d 个信号记录块\n', size(signals,1));
 
