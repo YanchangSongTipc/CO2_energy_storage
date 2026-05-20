@@ -57,6 +57,9 @@ function build_CCES_model()
     set_param([model '/beta1_gain'], 'Gain', '1.185', 'Position', [50, 240, 90, 270]);
     add_block('simulink/Math Operations/Gain', [model '/beta2_gain']);
     set_param([model '/beta2_gain'], 'Gain', '2.307', 'Position', [50, 310, 90, 340]);
+    % Q 量纲 MJ→MWh
+    add_block('simulink/Math Operations/Gain', [model '/Q_MWh_gain']);
+    set_param([model '/Q_MWh_gain'], 'Gain', '1/3600', 'Position', [60, 500, 100, 530]);
 
     % Controller cmd → Gains → Storage/Thermal
     add_line(model, 'Controller/1', 'alpha1_gain/1');
@@ -86,19 +89,20 @@ function build_CCES_model()
     try add_line(model, 'norm_c/1', 'gate_Wc/1'); catch; end
     try add_line(model, 'Charging/2', 'gate_Wc/2'); catch; end
 
-    try add_line(model, 'Controller/2', 'norm_d/1'); catch; end
+    add_line(model, 'Controller/2', 'norm_d/1');
     try add_line(model, 'norm_d/1', 'gate_Wt/1'); catch; end
     try add_line(model, 'Discharging/1', 'gate_Wt/2'); catch; end
 
-    % === 反馈: Storage→Controller(P), Thermal→Controller(Q) ===
-    try add_line(model, 'Storage/1', 'Controller/1'); catch; end
-    try add_line(model, 'Q_MWh_gain/1', 'Controller/2'); catch; end
+    % === 反馈: Storage→Controller(P), Q_MWh→Controller(Q) ===
+    add_line(model, 'Storage/1', 'Controller/1');
+    try delete_line(model, 'Q_MWh_gain/1', 'Controller/2'); catch; end
+    add_line(model, 'Q_MWh_gain/1', 'Controller/2');
 
     % 子系统输出 → Results (门控后的信号)
     try add_line(model, 'gate_Wc/1', 'Results/1'); catch; end
     try add_line(model, 'gate_Wt/1', 'Results/2'); catch; end
     try add_line(model, 'Storage/1', 'Results/3'); catch; end
-    try add_line(model, 'Thermal/1', 'Results/4'); catch; end
+    % (Q_HTV 现在通过 Q_MWh_gain 转换后进入 Results, 不再直连)
 
     % 根级 Outport (门控后)
     for j = 1:4
@@ -108,12 +112,12 @@ function build_CCES_model()
     try add_line(model, 'gate_Wc/1', 'Out1/1'); catch; end
     try add_line(model, 'gate_Wt/1', 'Out2/1'); catch; end
     try add_line(model, 'Storage/1', 'Out3/1'); catch; end
-    % Q 量纲转换 MJ→MWh, 放顶层供 Results 和 Out4 共用
-    add_block('simulink/Math Operations/Gain', [model '/Q_MWh_gain']);
-    set_param([model '/Q_MWh_gain'], 'Gain', '1/3600', 'Position', [60, 500, 100, 530]);
-    try add_line(model, 'Thermal/1', 'Q_MWh_gain/1'); catch; end
-    try add_line(model, 'Q_MWh_gain/1', 'Results/4'); catch; end
-    try add_line(model, 'Q_MWh_gain/1', 'Out4/1'); catch; end
+    % Q_MWh_gain → Results & Out4
+    add_line(model, 'Thermal/1', 'Q_MWh_gain/1');
+    try delete_line(model, 'Q_MWh_gain/1', 'Results/4'); catch; end
+    add_line(model, 'Q_MWh_gain/1', 'Results/4');
+    try delete_line(model, 'Q_MWh_gain/1', 'Out4/1'); catch; end
+    add_line(model, 'Q_MWh_gain/1', 'Out4/1');
     set_param(model, 'SaveOutput', 'on', 'OutputSaveName', 'yout');
 
     save_system(model, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/CCES_CHP_System');
