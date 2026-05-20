@@ -73,10 +73,10 @@ end
 % 在顶层创建记录块
 sig_root = model;
 signals = {
-    'W_comp_log',  'Charging_System/2';   % 充电功率 [MW]
-    'W_turb_log',  'Discharging_System/2'; % 放电功率 [MW]
-    'P_HPT_log',   'Storage_Tanks/1';      % HPT 压力 [MPa]
-    'Q_HTV_log',   'Thermal_Oil_System/1'; % HTV 蓄热 [MJ]
+    'W_comp_log',  'Charging/2';   % 充电功率 [MW]
+    'W_turb_log',  'Discharging/2'; % 放电功率 [MW]
+    'P_HPT_log',   'Storage/1';      % HPT 压力 [MPa]
+    'Q_HTV_log',   'Thermal/1'; % HTV 蓄热 [MJ]
     'chg_cmd_log', 'Controller/1';         % 充电指令
     'dis_cmd_log', 'Controller/2';         % 放电指令
 };
