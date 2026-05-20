@@ -382,33 +382,30 @@ function build_thermal(parent)
     add_line(parent, 'Q_store/1', 'Q_MJ/1');
 end
 
-% ==================== 控制器 (时间驱动, 无 REFPROP 依赖) ====================
+% ==================== 控制器 (Pulse Generator, 24h 周期) ====================
 function build_control(parent)
     Simulink.SubSystem.deleteContents(parent);
     b = @(n) [parent '/' n];
 
-    add_block('simulink/Sources/Clock', b('Clock'));
-    set_param(b('Clock'), 'Position', [30, 100, 60, 120]);
+    % Charge: on 0-7.5h each day, amplitude=10 MW
+    add_block('simulink/Sources/Pulse Generator', b('chg_pulse'));
+    set_param(b('chg_pulse'), 'Position', [100, 50, 170, 90], ...
+        'Amplitude', '10', 'Period', '86400', ...
+        'PulseWidth', '31.25', 'PhaseDelay', '0');
 
-    % charge = mod(t/3600,24) < 7.5 → 10 MW, else 0
-    add_block('simulink/User-Defined Functions/Fcn', b('chg_fcn'));
-    set_param(b('chg_fcn'), 'Position', [150, 55, 250, 105], ...
-        'Expr', '10*(mod(u/3600,24)<7.5)');
-
-    % discharge = (12 <= hour < 17) → 10 MW, else 0
-    add_block('simulink/User-Defined Functions/Fcn', b('dis_fcn'));
-    set_param(b('dis_fcn'), 'Position', [150, 135, 250, 185], ...
-        'Expr', '10*(mod(u/3600,24)>=12)*(mod(u/3600,24)<17)');
+    % Discharge: on 12-17h each day, amplitude=10 MW
+    add_block('simulink/Sources/Pulse Generator', b('dis_pulse'));
+    set_param(b('dis_pulse'), 'Position', [100, 130, 170, 170], ...
+        'Amplitude', '10', 'Period', '86400', ...
+        'PulseWidth', '20.83', 'PhaseDelay', '43200');
 
     add_block('simulink/Ports & Subsystems/Out1', b('charge_cmd'));
-    set_param(b('charge_cmd'), 'Position', [370, 50, 400, 70], 'Port', '1');
+    set_param(b('charge_cmd'), 'Position', [300, 50, 330, 70], 'Port', '1');
     add_block('simulink/Ports & Subsystems/Out1', b('discharge_cmd'));
-    set_param(b('discharge_cmd'), 'Position', [370, 130, 400, 150], 'Port', '2');
+    set_param(b('discharge_cmd'), 'Position', [300, 130, 330, 150], 'Port', '2');
 
-    add_line(parent, 'Clock/1', 'chg_fcn/1');
-    add_line(parent, 'Clock/1', 'dis_fcn/1');
-    add_line(parent, 'chg_fcn/1', 'charge_cmd/1');
-    add_line(parent, 'dis_fcn/1', 'discharge_cmd/1');
+    add_line(parent, 'chg_pulse/1', 'charge_cmd/1');
+    add_line(parent, 'dis_pulse/1', 'discharge_cmd/1');
 end
 
 % ==================== 结果显示 ====================
