@@ -61,12 +61,13 @@ hold on; grid on;
 SOC_g = (P - 0.12) / (6.80 - 0.12) * 100;
 SOC_h = Q / 150 * 100;
 yyaxis left;
-plot(t, SOC_g, 'b-', 'LineWidth', 2);
+h1 = plot(t, SOC_g, 'b-', 'LineWidth', 2);
 ylabel('Gas SOC (%)'); ylim([-5 105]);
 yyaxis right;
-plot(t, SOC_h, 'r-', 'LineWidth', 2);
-ylabel('Heat SOC (%)'); ylim([-5 105]);
-xlabel('Time (h)'); title('Dual SOC');
+h2 = plot(t, SOC_h, 'r-', 'LineWidth', 2);
+ylabel('Heat SOC (%)'); ylim([-25 105]);
+xlabel('Time (h)'); title('Dual SOC: HPT Pressure & HTV Heat Storage');
+legend([h1 h2], {'Gas SOC = P_{HPT} range', 'Heat SOC = Q_{HTV} / 150 MWh'}, 'Location', 'best');
 xlim([0 24]);
 
 % ---- 底右: 累积能量 ----
