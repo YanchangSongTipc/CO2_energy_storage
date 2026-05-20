@@ -69,37 +69,21 @@ ylabel('Heat SOC (%)'); ylim([-5 105]);
 xlabel('Time (h)'); title('Dual SOC');
 xlim([0 24]);
 
-% ---- 底右: 累积能量 (含相变焓) ----
+% ---- 底右: 累积能量 ----
 ax4 = subplot(2,2,4);
 hold on; grid on;
 
-% 充电质量流量: m_dot = alpha1 * charge_cmd
-% CO2 气相→液相焓降: Δh = 505708 - 269875 = 235833 J/kg
-dh_phase = 235833;  % J/kg
-alpha1 = 2.744;     % kg/(s·MW)
+cum_Wc = cumtrapz(t, Wc);    % 压缩机耗电 [MWh_e]
+cum_Wt = cumtrapz(t, Wt);    % 透平发电 [MWh_e]
+cum_net = cum_Wc - cum_Wt;   % 净耗电
 
-% 从 controller 指令推算 mass flow
-charge_cmd = Wc / 9.39 * 10;  % Wc ∝ cmd, 9.39MW at 10MW cmd
-m_dot_ch = alpha1 * charge_cmd;  % kg/s
-
-% 相变储存功率: m_dot * dh_phase / 1e6 [MW]
-P_phase = m_dot_ch * dh_phase / 1e6;
-
-cum_Wc = cumtrapz(t, Wc);          % 电力 [MWh_e]
-cum_phase = cumtrapz(t, P_phase);   % 相变焓 [MWh_th]
-cum_stored = cum_Wc + cum_phase;    % 总储存 = 电 + 相变
-cum_Wt = cumtrapz(t, Wt);           % 放电 [MWh_e]
-
-% 主曲线: 总储存 vs 发电
-plot(t, cum_stored, 'Color', [0.5 0 0.5], 'LineWidth', 2.5);
-plot(t, cum_Wt, 'b-', 'LineWidth', 2.5);
-% 辅助虚线: 电力部分
-plot(t, cum_Wc, 'r--', 'LineWidth', 1);
-plot(t, cum_phase, 'r:', 'LineWidth', 1);
+plot(t, cum_Wc, 'r-', 'LineWidth', 2);
+plot(t, cum_Wt, 'b-', 'LineWidth', 2);
+plot(t, cum_net, 'k--', 'LineWidth', 1.5);
+yline(0, 'k-');
 xlabel('Time (h)'); ylabel('Energy (MWh)');
-title('Cumulative Energy Balance');
-legend('E_{stored} = elec+phase', 'E_{discharge}', ...
-       'E_{elec} (component)', 'E_{phase} (component)', 'Location', 'northwest');
+title('Cumulative Energy (HTV from empty)');
+legend('E_{comp} (电网入)', 'E_{turb} (发电出)', 'Net (入-出)', 'Location', 'northwest');
 xlim([0 24]); grid on;
 
 sgtitle('CCES-CHP 24h Dynamic Simulation', 'FontSize', 16, 'FontWeight', 'bold');

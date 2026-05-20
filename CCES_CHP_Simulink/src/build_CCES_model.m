@@ -410,7 +410,7 @@ function build_storage(parent)
 
     add_block('simulink/Continuous/Integrator', b('mass'));
     set_param(b('mass'), 'Position', [280, 100, 330, 140], ...
-        'InitialCondition', '340000');  % ~3.46 MPa init
+        'InitialCondition', '11284');  % P_min=0.102MPa → 11284 kg
 
     add_fcn(parent, 'pressure', 'u*188.9*298/6228/1e6', [420, 90, 500, 140]);
 
@@ -440,7 +440,7 @@ function build_thermal(parent)
 
     add_block('simulink/Continuous/Integrator', b('Q_store'));
     set_param(b('Q_store'), 'Position', [280, 100, 330, 140], ...
-        'InitialCondition', '270000');  % 75 MWh_th = 270000 MJ
+        'InitialCondition', '0');  % HTV 从空开始
 
     add_block('simulink/Ports & Subsystems/Out1', b('Q_MJ'));
     set_param(b('Q_MJ'), 'Position', [460, 80, 490, 100], 'Port', '1');
