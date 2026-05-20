@@ -47,20 +47,40 @@ function build_CCES_model()
     build_control(p('Controller'));
     build_results(p('Results'));
 
-    % 顶层连线: Controller → Charging/Discharging → Storage/Thermal → Results
-    % Controller cmd → subsystems
+    % 顶层闭环连线: Controller → 子系统 → Storage/Thermal → Results
+    % 添加耦合系数 Gain 块
+    % alpha1 = 2.744 kg/(s·MW), alpha2 = 4.117 kg/(s·MW)
+    % beta1 = 1.185 MW_th/MW, beta2 = 2.307 MW_th/MW
+
+    add_block('simulink/Math Operations/Gain', [model '/alpha1_gain']);
+    set_param([model '/alpha1_gain'], 'Gain', '2.744', 'Position', [50, 100, 90, 130]);
+    add_block('simulink/Math Operations/Gain', [model '/alpha2_gain']);
+    set_param([model '/alpha2_gain'], 'Gain', '4.117', 'Position', [50, 170, 90, 200]);
+    add_block('simulink/Math Operations/Gain', [model '/beta1_gain']);
+    set_param([model '/beta1_gain'], 'Gain', '1.185', 'Position', [50, 240, 90, 270]);
+    add_block('simulink/Math Operations/Gain', [model '/beta2_gain']);
+    set_param([model '/beta2_gain'], 'Gain', '2.307', 'Position', [50, 310, 90, 340]);
+
+    % Controller cmd → Gains → Storage/Thermal
+    add_line(model, 'Controller/1', 'alpha1_gain/1');  % charge cmd → m_dot_in scale
+    add_line(model, 'alpha1_gain/1', 'Storage/1');       % → Storage m_dot_in
+    add_line(model, 'Controller/2', 'alpha2_gain/1');  % disch cmd → m_dot_out scale
+    add_line(model, 'alpha2_gain/1', 'Storage/2');       % → Storage m_dot_out
+
+    add_line(model, 'Controller/1', 'beta1_gain/1');   % charge cmd → Q_in scale
+    add_line(model, 'beta1_gain/1', 'Thermal/1');        % → Thermal Q_in
+    add_line(model, 'Controller/2', 'beta2_gain/1');   % disch cmd → Q_out scale
+    add_line(model, 'beta2_gain/1', 'Thermal/2');        % → Thermal Q_out
+
+    % Controller cmd → subsystems (原连线)
     add_line(model, 'Controller/1', 'Charging/1');
     add_line(model, 'Controller/2', 'Discharging/1');
 
-    % Charging outputs → Results (W_comp=port2)
-    add_line(model, 'Charging/2', 'Results/1');
-    % Discharging outputs → Results (W_turb=port1)
-    add_line(model, 'Discharging/1', 'Results/2');
-
-    % Storage → Results (P_HPT=port1, P connects to Controller for feedback later)
-    add_line(model, 'Storage/1', 'Results/3');
-    % Thermal → Results (Q_HTV=port1)
-    add_line(model, 'Thermal/1', 'Results/4');
+    % 子系统输出 → Results
+    add_line(model, 'Charging/2', 'Results/1');      % W_comp
+    add_line(model, 'Discharging/1', 'Results/2');   % W_turb
+    add_line(model, 'Storage/1', 'Results/3');       % P_HPT
+    add_line(model, 'Thermal/1', 'Results/4');       % Q_HTV
 
     save_system(model, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/CCES_CHP_System');
     fprintf('CCES_CHP_System 构建完成（2-D LUT版本）。\n');
