@@ -107,7 +107,22 @@ end
 
 fprintf('[OK] 已添加 %d 个信号记录块\n', size(signals,1));
 
-%% 6. 运行仿真
+%% 6. 加载查找表到工作区 (编译前必须)
+fprintf('\n========== 加载查找表 ==========\n');
+lut_file = '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/REFPROP_lookup.mat';
+if exist(lut_file, 'file')
+    data = load(lut_file);
+    mw = get_param(model, 'ModelWorkspace');
+    for f = fieldnames(data)'
+        mw.assignin(f{1}, data.(f{1}));
+        assignin('base', f{1}, data.(f{1}));
+    end
+    fprintf('[OK] 查找表已加载到 Model Workspace 和 Base Workspace\n');
+else
+    fprintf('[FAIL] 查找表文件未找到: %s\n', lut_file);
+end
+
+%% 7. 运行仿真
 fprintf('\n========== 仿真中 (%.0f s) ... ==========\n', stop_time);
 t_start = tic;
 
@@ -121,7 +136,7 @@ catch ME
     % 即使出错也尝试分析已记录的数据
 end
 
-%% 7. 结果分析
+%% 8. 结果分析
 fprintf('\n========== 结果分析 ==========\n');
 
 % 检查各变量是否存在于工作区
@@ -138,7 +153,7 @@ for i = 1:length(vars_to_check)
     end
 end
 
-%% 8. 绘图
+%% 9. 绘图
 if evalin('base', 'exist(''W_comp_log'',''var'')')
     figure('Name', 'Simulink Debug Results', 'Color', 'w', 'Position', [100, 80, 1200, 600]);
 
