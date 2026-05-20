@@ -107,7 +107,12 @@ function build_CCES_model()
     try add_line(model, 'gate_Wc/1', 'Out1/1'); catch; end
     try add_line(model, 'gate_Wt/1', 'Out2/1'); catch; end
     try add_line(model, 'Storage/1', 'Out3/1'); catch; end
-    try add_line(model, 'Thermal/1', 'Out4/1'); catch; end
+    % Q 量纲转换 MJ→MWh, 放顶层供 Results 和 Out4 共用
+    add_block('simulink/Math Operations/Gain', [model '/Q_MWh_gain']);
+    set_param([model '/Q_MWh_gain'], 'Gain', '1/3600', 'Position', [60, 500, 100, 530]);
+    try add_line(model, 'Thermal/1', 'Q_MWh_gain/1'); catch; end
+    try add_line(model, 'Q_MWh_gain/1', 'Results/4'); catch; end
+    try add_line(model, 'Q_MWh_gain/1', 'Out4/1'); catch; end
     set_param(model, 'SaveOutput', 'on', 'OutputSaveName', 'yout');
 
     save_system(model, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/CCES_CHP_System');
@@ -512,11 +517,18 @@ function build_results(parent)
     add_block('simulink/Ports & Subsystems/In1', b('P_HPT'));   set_param(b('P_HPT'),   'Port', '3');
     add_block('simulink/Ports & Subsystems/In1', b('Q_HTV'));   set_param(b('Q_HTV'),   'Port', '4');
 
+    % Power Scope: W_comp + W_turb
     add_block('simulink/Sinks/Scope', b('PowerScope'));
     set_param(b('PowerScope'), 'Position', [200, 40, 500, 240], 'NumInputPorts', '2');
+
+    % Storage Scope: P_HPT (MPa) + Q_HTV (MWh) — 量纲对齐
+    add_block('simulink/Math Operations/Gain', b('Q_to_MWh'));
+    set_param(b('Q_to_MWh'), 'Gain', '1/3600', 'Position', [80, 320, 120, 350]);
     add_block('simulink/Sinks/Scope', b('StorageScope'));
     set_param(b('StorageScope'), 'Position', [200, 280, 500, 480], 'NumInputPorts', '2');
 
     add_line(parent, 'W_comp/1', 'PowerScope/1'); add_line(parent, 'W_turb/1', 'PowerScope/2');
-    add_line(parent, 'P_HPT/1', 'StorageScope/1'); add_line(parent, 'Q_HTV/1', 'StorageScope/2');
+    add_line(parent, 'Q_HTV/1', 'Q_to_MWh/1');
+    add_line(parent, 'P_HPT/1', 'StorageScope/1');
+    add_line(parent, 'Q_to_MWh/1', 'StorageScope/2');
 end
