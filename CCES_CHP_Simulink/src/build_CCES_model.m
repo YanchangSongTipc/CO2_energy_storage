@@ -61,8 +61,7 @@ function blk = add_lut2d(varargin)
     set_param(blk, 'Table', t);
     set_param(blk, 'BreakpointsForDimension1', b1);
     set_param(blk, 'BreakpointsForDimension2', b2);
-    set_param(blk, 'InterpolationMethod', 'Linear point-slope');
-    set_param(blk, 'ExtrapolationMethod', 'Clip');
+    % 使用默认线性插值
 end
 
 % ==================== helper: Fcn block ====================
