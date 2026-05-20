@@ -47,11 +47,8 @@ function build_CCES_model()
     build_control(p('Controller'));
     build_results(p('Results'));
 
-    % 顶层闭环连线: Controller → 子系统 → Storage/Thermal → Results
-    % 添加耦合系数 Gain 块
-    % alpha1 = 2.744 kg/(s·MW), alpha2 = 4.117 kg/(s·MW)
-    % beta1 = 1.185 MW_th/MW, beta2 = 2.307 MW_th/MW
-
+    % 顶层闭环连线: Controller → Gains → Storage/Thermal
+    % 耦合系数 Gain 块
     add_block('simulink/Math Operations/Gain', [model '/alpha1_gain']);
     set_param([model '/alpha1_gain'], 'Gain', '2.744', 'Position', [50, 100, 90, 130]);
     add_block('simulink/Math Operations/Gain', [model '/alpha2_gain']);
@@ -62,25 +59,56 @@ function build_CCES_model()
     set_param([model '/beta2_gain'], 'Gain', '2.307', 'Position', [50, 310, 90, 340]);
 
     % Controller cmd → Gains → Storage/Thermal
-    add_line(model, 'Controller/1', 'alpha1_gain/1');  % charge cmd → m_dot_in scale
-    add_line(model, 'alpha1_gain/1', 'Storage/1');       % → Storage m_dot_in
-    add_line(model, 'Controller/2', 'alpha2_gain/1');  % disch cmd → m_dot_out scale
-    add_line(model, 'alpha2_gain/1', 'Storage/2');       % → Storage m_dot_out
-
-    add_line(model, 'Controller/1', 'beta1_gain/1');   % charge cmd → Q_in scale
-    add_line(model, 'beta1_gain/1', 'Thermal/1');        % → Thermal Q_in
-    add_line(model, 'Controller/2', 'beta2_gain/1');   % disch cmd → Q_out scale
-    add_line(model, 'beta2_gain/1', 'Thermal/2');        % → Thermal Q_out
-
-    % Controller cmd → subsystems (原连线)
+    add_line(model, 'Controller/1', 'alpha1_gain/1');
+    add_line(model, 'alpha1_gain/1', 'Storage/1');
+    add_line(model, 'Controller/2', 'alpha2_gain/1');
+    add_line(model, 'alpha2_gain/1', 'Storage/2');
+    add_line(model, 'Controller/1', 'beta1_gain/1');
+    add_line(model, 'beta1_gain/1', 'Thermal/1');
+    add_line(model, 'Controller/2', 'beta2_gain/1');
+    add_line(model, 'beta2_gain/1', 'Thermal/2');
     add_line(model, 'Controller/1', 'Charging/1');
     add_line(model, 'Controller/2', 'Discharging/1');
 
-    % 子系统输出 → Results
-    add_line(model, 'Charging/2', 'Results/1');      % W_comp
-    add_line(model, 'Discharging/1', 'Results/2');   % W_turb
-    add_line(model, 'Storage/1', 'Results/3');       % P_HPT
-    add_line(model, 'Thermal/1', 'Results/4');       % Q_HTV
+    % === 功率门控: W * (cmd > 0) 使非激活时段功率为0 ===
+    add_block('simulink/Math Operations/Product', [model '/gate_Wc']);
+    set_param([model '/gate_Wc'], 'Inputs', '2', 'Position', [60, 400, 110, 440]);
+    add_block('simulink/Math Operations/Product', [model '/gate_Wt']);
+    set_param([model '/gate_Wt'], 'Inputs', '2', 'Position', [60, 470, 110, 510]);
+
+    % Controller cmd → gate (先除10归一化, 乘10还原功率)
+    add_block('simulink/Math Operations/Gain', [model '/norm_c']);
+    set_param([model '/norm_c'], 'Gain', '0.1', 'Position', [60, 360, 90, 380]);
+    add_block('simulink/Math Operations/Gain', [model '/norm_d']);
+    set_param([model '/norm_d'], 'Gain', '0.1', 'Position', [60, 430, 90, 450]);
+
+    try add_line(model, 'Controller/1', 'norm_c/1'); catch; end
+    try add_line(model, 'norm_c/1', 'gate_Wc/1'); catch; end
+    try add_line(model, 'Charging/2', 'gate_Wc/2'); catch; end
+
+    try add_line(model, 'Controller/2', 'norm_d/1'); catch; end
+    try add_line(model, 'norm_d/1', 'gate_Wt/1'); catch; end
+    try add_line(model, 'Discharging/1', 'gate_Wt/2'); catch; end
+
+    % === 压力反馈: Storage → Controller (In1 已在 build_control 内部创建) ===
+    try add_line(model, 'Storage/1', 'Controller/1'); catch; end
+
+    % 子系统输出 → Results (门控后的信号)
+    try add_line(model, 'gate_Wc/1', 'Results/1'); catch; end
+    try add_line(model, 'gate_Wt/1', 'Results/2'); catch; end
+    try add_line(model, 'Storage/1', 'Results/3'); catch; end
+    try add_line(model, 'Thermal/1', 'Results/4'); catch; end
+
+    % 根级 Outport (门控后)
+    for j = 1:4
+        oname = sprintf('Out%d', j);
+        add_block('simulink/Ports & Subsystems/Out1', [model '/' oname]);
+    end
+    try add_line(model, 'gate_Wc/1', 'Out1/1'); catch; end
+    try add_line(model, 'gate_Wt/1', 'Out2/1'); catch; end
+    try add_line(model, 'Storage/1', 'Out3/1'); catch; end
+    try add_line(model, 'Thermal/1', 'Out4/1'); catch; end
+    set_param(model, 'SaveOutput', 'on', 'OutputSaveName', 'yout');
 
     save_system(model, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/CCES_CHP_System');
     fprintf('CCES_CHP_System 构建完成（2-D LUT版本）。\n');
@@ -417,30 +445,61 @@ function build_thermal(parent)
     add_line(parent, 'Q_store/1', 'Q_MJ/1');
 end
 
-% ==================== 控制器 (Pulse Generator, 24h 周期) ====================
+% ==================== 控制器 (时间+压力双约束) ====================
 function build_control(parent)
     Simulink.SubSystem.deleteContents(parent);
     b = @(n) [parent '/' n];
 
-    % Charge: on 0-7.5h each day, amplitude=10 MW
+    % 压力反馈输入
+    add_block('simulink/Ports & Subsystems/In1', b('P_fb'));
+    set_param(b('P_fb'), 'Position', [30, 60, 60, 80], 'Port', '1');
+
+    % Charge Pulse: 0-7.5h
     add_block('simulink/Sources/Pulse Generator', b('chg_pulse'));
     set_param(b('chg_pulse'), 'Position', [100, 50, 170, 90], ...
         'Amplitude', '10', 'Period', '86400', ...
         'PulseWidth', '31.25', 'PhaseDelay', '0');
 
-    % Discharge: on 12-17h each day, amplitude=10 MW
+    % Discharge Pulse: 12-17h
     add_block('simulink/Sources/Pulse Generator', b('dis_pulse'));
-    set_param(b('dis_pulse'), 'Position', [100, 130, 170, 170], ...
+    set_param(b('dis_pulse'), 'Position', [100, 170, 170, 210], ...
         'Amplitude', '10', 'Period', '86400', ...
         'PulseWidth', '20.83', 'PhaseDelay', '43200');
+
+    % Constraint: charge OK when P < 6.70
+    add_block('simulink/Logic and Bit Operations/Relational Operator', b('chg_ok'));
+    set_param(b('chg_ok'), 'Position', [100, 110, 130, 130], 'Operator', '<');
+    add_block('simulink/Sources/Constant', b('P_max'));
+    set_param(b('P_max'), 'Value', '6.70', 'Position', [60, 115, 90, 135]);
+
+    % Constraint: discharge OK when P > 0.22
+    add_block('simulink/Logic and Bit Operations/Relational Operator', b('dis_ok'));
+    set_param(b('dis_ok'), 'Position', [100, 230, 130, 250], 'Operator', '>');
+    add_block('simulink/Sources/Constant', b('P_min'));
+    set_param(b('P_min'), 'Value', '0.22', 'Position', [60, 235, 90, 255]);
+
+    % Gate: charge_cmd = pulse * (P < P_max)
+    add_block('simulink/Math Operations/Product', b('chg_gate'));
+    set_param(b('chg_gate'), 'Inputs', '2', 'Position', [190, 50, 230, 90]);
+    % Gate: discharge_cmd = pulse * (P > P_min)
+    add_block('simulink/Math Operations/Product', b('dis_gate'));
+    set_param(b('dis_gate'), 'Inputs', '2', 'Position', [190, 170, 230, 210]);
 
     add_block('simulink/Ports & Subsystems/Out1', b('charge_cmd'));
     set_param(b('charge_cmd'), 'Position', [300, 50, 330, 70], 'Port', '1');
     add_block('simulink/Ports & Subsystems/Out1', b('discharge_cmd'));
-    set_param(b('discharge_cmd'), 'Position', [300, 130, 330, 150], 'Port', '2');
+    set_param(b('discharge_cmd'), 'Position', [300, 170, 330, 190], 'Port', '2');
 
-    add_line(parent, 'chg_pulse/1', 'charge_cmd/1');
-    add_line(parent, 'dis_pulse/1', 'discharge_cmd/1');
+    add_line(parent, 'P_fb/1', 'chg_ok/1');
+    add_line(parent, 'P_max/1', 'chg_ok/2');
+    add_line(parent, 'P_fb/1', 'dis_ok/1');
+    add_line(parent, 'P_min/1', 'dis_ok/2');
+    add_line(parent, 'chg_pulse/1', 'chg_gate/1');
+    add_line(parent, 'chg_ok/1', 'chg_gate/2');
+    add_line(parent, 'chg_gate/1', 'charge_cmd/1');
+    add_line(parent, 'dis_pulse/1', 'dis_gate/1');
+    add_line(parent, 'dis_ok/1', 'dis_gate/2');
+    add_line(parent, 'dis_gate/1', 'discharge_cmd/1');
 end
 
 % ==================== 结果显示 ====================

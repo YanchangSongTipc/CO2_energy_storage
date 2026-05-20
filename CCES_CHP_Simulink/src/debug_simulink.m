@@ -9,6 +9,7 @@ addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox
 addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox/internal')
 addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src')
 
+
 model = 'CCES_CHP_System';
 
 %% 2. 构建
