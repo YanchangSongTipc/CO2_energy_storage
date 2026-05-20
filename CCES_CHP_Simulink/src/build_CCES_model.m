@@ -39,38 +39,6 @@ function build_CCES_model()
     build_control(p('Controller'));
     build_results(p('Results'));
 
-    %% 修复块属性：声明输出维度和信号类型
-    all_int_blks = find_system(model, 'BlockType', 'SubSystem');
-    all_int_blks = [all_int_blks; find_system(model, 'LookupNDDirect', 'BlockType', ' Interpreted MATLAB Function')]; %#ok<AGROW>
-
-    % 找出所有 Interpreted MATLAB Fcn 和 Fcn 块，确保标量输出
-    imf_blks = find_system(model, 'FollowLinks', 'on', ...
-        'MaskType', 'Interpreted MATLAB Function');
-    for i = 1:length(imf_blks)
-        try
-            set_param(imf_blks{i}, 'OutputDimensions', '1');
-        catch
-        end
-    end
-
-    % 修复所有 Outport 维度和 Fcn 块
-    all_out = find_system(model, 'BlockType', 'Outport');
-    for i = 1:length(all_out)
-        try set_param(all_out{i}, 'OutputDimensions', '1'); catch, end
-    end
-
-    % 确保所有 Fcn 块输出标量
-    all_fcn = find_system(model, 'BlockType', 'Fcn');
-    for i = 1:length(all_fcn)
-        try set_param(all_fcn{i}, 'OutDataTypeStr', 'Inherit: Inherit via back propagation'); catch, end
-    end
-
-    % Mux/Demux 信号类型传播
-    all_mux = find_system(model, 'BlockType', 'Mux');
-    for i = 1:length(all_mux)
-        try set_param(all_mux{i}, 'OutDataTypeStr', 'Inherit: Inherit via back propagation'); catch, end
-    end
-
     %% 保存
     save_system(model, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/CCES_CHP_System');
     fprintf('CCES_CHP_System 构建完成。\n');
@@ -155,7 +123,6 @@ function build_charging(parent)
     add_line(parent, 'Sum_W/1', 'W_out/1', 'autorouting', 'smart');
     add_line(parent, 'Sum_Q/1', 'Q_out/1', 'autorouting', 'smart');
 
-    set_param(parent, 'TreatAsAtomicUnit', 'on');
 end
 
 % ==================== 压缩器 (全部使用 Mux+单输入块) ====================
@@ -175,7 +142,7 @@ function build_comp(parent, P_out, eta)
     set_param(b('m1'), 'Inputs', '2', 'Position', [110, 65, 125, 95]);
     add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_in'));
     set_param(b('h_in'), 'Position', [160, 55, 280, 105], ...
-        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI'')');
+        'MATLABFcn', 'double(getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI''))');
 
     % Mux: [T,P] → s_in(T,P)
     add_block('simulink/Signal Routing/Mux', b('m2'));
@@ -258,7 +225,7 @@ function build_hex(parent, T_out_target)
     set_param(b('m1'), 'Inputs', '2', 'Position', [120, 55, 135, 85]);
     add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_in_fn'));
     set_param(b('h_in_fn'), 'Position', [170, 45, 300, 95], ...
-        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI'')');
+        'MATLABFcn', 'double(getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI''))');
 
     add_block('simulink/Sources/Constant', b('T_target'));
     set_param(b('T_target'), 'Value', num2str(T_out_target), 'Position', [120, 120, 160, 140]);
@@ -267,7 +234,7 @@ function build_hex(parent, T_out_target)
     set_param(b('m2'), 'Inputs', '2', 'Position', [200, 115, 215, 145]);
     add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_out_fn'));
     set_param(b('h_out_fn'), 'Position', [250, 105, 380, 155], ...
-        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI'')');
+        'MATLABFcn', 'double(getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI''))');
 
     add_block('simulink/Signal Routing/Mux', b('m3'));
     set_param(b('m3'), 'Inputs', '3', 'Position', [420, 100, 435, 170]);
@@ -361,7 +328,6 @@ function build_discharging(parent)
 
     add_line(parent, 'Cooler/2', 'P_out/1', 'autorouting', 'smart');
 
-    set_param(parent, 'TreatAsAtomicUnit', 'on');
 end
 
 % ==================== 透平 (全部 Mux+Fcn) ====================
@@ -380,7 +346,7 @@ function build_turb(parent, P_out, eta)
     set_param(b('m1'), 'Inputs', '2', 'Position', [110, 65, 125, 95]);
     add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_in'));
     set_param(b('h_in'), 'Position', [160, 55, 280, 105], ...
-        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI'')');
+        'MATLABFcn', 'double(getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI''))');
 
     add_block('simulink/Signal Routing/Mux', b('m2'));
     set_param(b('m2'), 'Inputs', '2', 'Position', [110, 115, 125, 145]);
