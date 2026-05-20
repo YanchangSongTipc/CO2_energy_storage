@@ -126,91 +126,8 @@ function build_charging(parent)
     set_param(parent, 'TreatAsAtomicUnit', 'on');
 end
 
-% ==================== 压缩器 ====================
+% ==================== 压缩器 (全部使用 Mux+单输入块) ====================
 function build_comp(parent, P_out, eta)
-    Simulink.SubSystem.deleteContents(parent);
-    b = @(name) [parent '/' name];
-
-    add_block('simulink/Ports & Subsystems/In1', b('T_in'));
-    set_param(b('T_in'), 'Position', [30, 60, 60, 80], 'Port', '1');
-    add_block('simulink/Ports & Subsystems/In1', b('P_in'));
-    set_param(b('P_in'), 'Position', [30, 110, 60, 130], 'Port', '2');
-    add_block('simulink/Ports & Subsystems/In1', b('m_in'));
-    set_param(b('m_in'), 'Position', [30, 160, 60, 180], 'Port', '3');
-
-    % 物性通过 Interpreted MATLAB Fcn 调用 getFluidProperty
-    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_in'));
-    set_param(b('h_in'), 'Position', [120, 50, 220, 90], ...
-        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI'')');
-
-    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('s_in'));
-    set_param(b('s_in'), 'Position', [120, 110, 220, 150], ...
-        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''S'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI'')');
-
-    % h_out_is = f(P_out, s_in)
-    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_is'));
-    set_param(b('h_is'), 'Position', [300, 80, 420, 140], ...
-        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''P'',u(2),''S'',u(1),''CO2'',1,1,''MASS BASE SI'')');
-
-    add_block('simulink/Sources/Constant', b('P_target'));
-    set_param(b('P_target'), 'Value', num2str(P_out), 'Position', [300, 160, 340, 180]);
-
-    % Mux: [h_in, h_is] → h_out
-    add_block('simulink/Signal Routing/Mux', b('mux_h'));
-    set_param(b('mux_h'), 'Inputs', '2', 'Position', [480, 85, 495, 125]);
-
-    add_block('simulink/User-Defined Functions/Fcn', b('h_out'));
-    set_param(b('h_out'), 'Position', [540, 80, 640, 140], ...
-        'Expr', sprintf('u(1)+(u(2)-u(1))/%.4f', eta));
-
-    % 出口温度: T_out = f(P_out, h_out)
-    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('T_out_c'));
-    set_param(b('T_out_c'), 'Position', [720, 60, 840, 120], ...
-        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''T'',''P'',u(2),''H'',u(1),''CO2'',1,1,''MASS BASE SI'')');
-
-    % Mux: [m_dot, h_out, h_in] → W_calc
-    add_block('simulink/Signal Routing/Mux', b('mux_w'));
-    set_param(b('mux_w'), 'Inputs', '3', 'Position', [720, 155, 735, 205]);
-
-    add_block('simulink/User-Defined Functions/Fcn', b('W_calc'));
-    set_param(b('W_calc'), 'Position', [780, 150, 870, 210], ...
-        'Expr', 'u(1)*(u(2)-u(3))/1e6');
-
-    % 出口端口
-    add_block('simulink/Ports & Subsystems/Out1', b('T_out'));
-    set_param(b('T_out'), 'Position', [940, 60, 970, 80], 'Port', '1');
-    add_block('simulink/Ports & Subsystems/Out1', b('P_out'));
-    set_param(b('P_out'), 'Position', [940, 110, 970, 130], 'Port', '2');
-    add_block('simulink/Ports & Subsystems/Out1', b('W_out'));
-    set_param(b('W_out'), 'Position', [940, 160, 970, 180], 'Port', '3');
-    add_block('simulink/Ports & Subsystems/Out1', b('m_out'));
-    set_param(b('m_out'), 'Position', [940, 210, 970, 230], 'Port', '4');
-
-    % 连线: Interpreted MATLAB Fcn 支持多输入
-    add_line(parent, 'T_in/1', 'h_in/1');
-    add_line(parent, 'P_in/1', 'h_in/2');
-    add_line(parent, 'T_in/1', 's_in/1');
-    add_line(parent, 'P_in/1', 's_in/2');
-    add_line(parent, 's_in/1', 'h_is/1');
-    add_line(parent, 'P_target/1', 'h_is/2');
-    % 通过 Mux 进入 Fcn
-    add_line(parent, 'h_in/1', 'mux_h/1');
-    add_line(parent, 'h_is/1', 'mux_h/2');
-    add_line(parent, 'mux_h/1', 'h_out/1');
-    add_line(parent, 'h_out/1', 'T_out_c/1');
-    add_line(parent, 'P_target/1', 'T_out_c/2');
-    add_line(parent, 'm_in/1', 'mux_w/1');
-    add_line(parent, 'h_in/1', 'mux_w/2');
-    add_line(parent, 'h_out/1', 'mux_w/3');
-    add_line(parent, 'mux_w/1', 'W_calc/1');
-    add_line(parent, 'T_out_c/1', 'T_out/1');
-    add_line(parent, 'P_target/1', 'P_out/1');
-    add_line(parent, 'W_calc/1', 'W_out/1');
-    add_line(parent, 'm_in/1', 'm_out/1');
-end
-
-% ==================== 换热器 ====================
-function build_hex(parent, T_out_target)
     Simulink.SubSystem.deleteContents(parent);
     b = @(name) [parent '/' name];
 
@@ -221,49 +138,129 @@ function build_hex(parent, T_out_target)
     add_block('simulink/Ports & Subsystems/In1', b('m_in'));
     set_param(b('m_in'), 'Position', [30, 180, 60, 200], 'Port', '3');
 
-    % h_in = f(T,P)
-    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_in_fn'));
-    set_param(b('h_in_fn'), 'Position', [120, 50, 240, 90], ...
+    % Mux: [T,P] → h_in(T,P)
+    add_block('simulink/Signal Routing/Mux', b('m1'));
+    set_param(b('m1'), 'Inputs', '2', 'Position', [110, 65, 125, 95]);
+    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_in'));
+    set_param(b('h_in'), 'Position', [160, 55, 280, 105], ...
         'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI'')');
 
-    % h_out = f(T_target, P)
-    add_block('simulink/Sources/Constant', b('T_target'));
-    set_param(b('T_target'), 'Value', num2str(T_out_target), 'Position', [120, 130, 160, 150]);
-    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_out_fn'));
-    set_param(b('h_out_fn'), 'Position', [200, 130, 320, 170], ...
-        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI'')');
+    % Mux: [T,P] → s_in(T,P)
+    add_block('simulink/Signal Routing/Mux', b('m2'));
+    set_param(b('m2'), 'Inputs', '2', 'Position', [110, 115, 125, 145]);
+    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('s_in'));
+    set_param(b('s_in'), 'Position', [160, 105, 290, 155], ...
+        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''S'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI'')');
 
-    % Mux: [m_dot, h_in, h_out] → Q_calc
-    add_block('simulink/Signal Routing/Mux', b('mux_q'));
-    set_param(b('mux_q'), 'Inputs', '3', 'Position', [380, 95, 395, 145]);
+    % Mux: [s,P_target] → h_is(P_target,s)
+    add_block('simulink/Signal Routing/Mux', b('m3'));
+    set_param(b('m3'), 'Inputs', '2', 'Position', [300, 65, 315, 95]);
+    add_block('simulink/Sources/Constant', b('P_target'));
+    set_param(b('P_target'), 'Value', num2str(P_out), 'Position', [300, 160, 340, 180]);
+    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_is'));
+    set_param(b('h_is'), 'Position', [350, 55, 480, 125], ...
+        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''P'',u(2),''S'',u(1),''CO2'',1,1,''MASS BASE SI'')');
 
-    add_block('simulink/User-Defined Functions/Fcn', b('Q_calc'));
-    set_param(b('Q_calc'), 'Position', [430, 90, 530, 160], ...
-        'Expr', 'abs(u(1)*(u(2)-u(3)))/1e6');
+    % Mux: [h_in, h_is] → h_out
+    add_block('simulink/Signal Routing/Mux', b('m4'));
+    set_param(b('m4'), 'Inputs', '2', 'Position', [520, 65, 535, 95]);
+    add_block('simulink/User-Defined Functions/Fcn', b('h_out'));
+    set_param(b('h_out'), 'Position', [570, 60, 660, 110], ...
+        'Expr', sprintf('u(1)+(u(2)-u(1))/%.4f', eta));
 
-    % 出口
+    % Mux: [h_out, P_target] → T_out(P_target, h_out)
+    add_block('simulink/Signal Routing/Mux', b('m5'));
+    set_param(b('m5'), 'Inputs', '2', 'Position', [720, 65, 735, 95]);
+    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('T_out_c'));
+    set_param(b('T_out_c'), 'Position', [770, 55, 900, 125], ...
+        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''T'',''P'',u(2),''H'',u(1),''CO2'',1,1,''MASS BASE SI'')');
+
+    % Mux: [m_dot, h_in, h_out] → W
+    add_block('simulink/Signal Routing/Mux', b('m6'));
+    set_param(b('m6'), 'Inputs', '3', 'Position', [720, 135, 735, 195]);
+    add_block('simulink/User-Defined Functions/Fcn', b('W_calc'));
+    set_param(b('W_calc'), 'Position', [770, 135, 860, 185], ...
+        'Expr', 'u(1)*(u(2)-u(3))/1e6');
+
+    % Out ports
     add_block('simulink/Ports & Subsystems/Out1', b('T_out'));
-    set_param(b('T_out'), 'Position', [650, 60, 680, 80], 'Port', '1');
+    set_param(b('T_out'), 'Position', [940, 60, 970, 80], 'Port', '1');
     add_block('simulink/Ports & Subsystems/Out1', b('P_out'));
-    set_param(b('P_out'), 'Position', [650, 120, 680, 140], 'Port', '2');
-    add_block('simulink/Ports & Subsystems/Out1', b('Q_out'));
-    set_param(b('Q_out'), 'Position', [650, 180, 680, 200], 'Port', '3');
+    set_param(b('P_out'), 'Position', [940, 115, 970, 135], 'Port', '2');
+    add_block('simulink/Ports & Subsystems/Out1', b('W_out'));
+    set_param(b('W_out'), 'Position', [940, 170, 970, 190], 'Port', '3');
     add_block('simulink/Ports & Subsystems/Out1', b('m_out'));
-    set_param(b('m_out'), 'Position', [650, 240, 680, 260], 'Port', '4');
+    set_param(b('m_out'), 'Position', [940, 225, 970, 245], 'Port', '4');
 
-    % 连线
-    add_line(parent, 'T_in/1', 'h_in_fn/1');
-    add_line(parent, 'P_in/1', 'h_in_fn/2');
-    add_line(parent, 'T_target/1', 'h_out_fn/1');
-    add_line(parent, 'P_in/1', 'h_out_fn/2');
-    add_line(parent, 'm_in/1', 'mux_q/1');
-    add_line(parent, 'h_in_fn/1', 'mux_q/2');
-    add_line(parent, 'h_out_fn/1', 'mux_q/3');
-    add_line(parent, 'mux_q/1', 'Q_calc/1');
-    add_line(parent, 'T_target/1', 'T_out/1');
-    add_line(parent, 'P_in/1', 'P_out/1');
-    add_line(parent, 'Q_calc/1', 'Q_out/1');
-    add_line(parent, 'm_in/1', 'm_out/1');
+    % Wiring
+    add_line(parent, 'T_in/1', 'm1/1'); add_line(parent, 'P_in/1', 'm1/2');
+    add_line(parent, 'm1/1', 'h_in/1');
+    add_line(parent, 'T_in/1', 'm2/1'); add_line(parent, 'P_in/1', 'm2/2');
+    add_line(parent, 'm2/1', 's_in/1');
+    add_line(parent, 's_in/1', 'm3/1'); add_line(parent, 'P_target/1', 'm3/2');
+    add_line(parent, 'm3/1', 'h_is/1');
+    add_line(parent, 'h_in/1', 'm4/1'); add_line(parent, 'h_is/1', 'm4/2');
+    add_line(parent, 'm4/1', 'h_out/1');
+    add_line(parent, 'h_out/1', 'm5/1'); add_line(parent, 'P_target/1', 'm5/2');
+    add_line(parent, 'm5/1', 'T_out_c/1');
+    add_line(parent, 'm_in/1', 'm6/1');
+    add_line(parent, 'h_in/1', 'm6/2'); add_line(parent, 'h_out/1', 'm6/3');
+    add_line(parent, 'm6/1', 'W_calc/1');
+    add_line(parent, 'T_out_c/1', 'T_out/1'); add_line(parent, 'P_target/1', 'P_out/1');
+    add_line(parent, 'W_calc/1', 'W_out/1'); add_line(parent, 'm_in/1', 'm_out/1');
+end
+
+% ==================== 换热器 (全部 Mux+Fcn) ====================
+function build_hex(parent, T_out_target)
+    Simulink.SubSystem.deleteContents(parent);
+    b = @(name) [parent '/' name];
+
+    add_block('simulink/Ports & Subsystems/In1', b('T_in'));
+    set_param(b('T_in'), 'Position', [30, 60, 60, 80], 'Port', '1');
+    add_block('simulink/Ports & Subsystems/In1', b('P_in'));
+    set_param(b('P_in'), 'Position', [30, 130, 60, 150], 'Port', '2');
+    add_block('simulink/Ports & Subsystems/In1', b('m_in'));
+    set_param(b('m_in'), 'Position', [30, 200, 60, 220], 'Port', '3');
+
+    add_block('simulink/Signal Routing/Mux', b('m1'));
+    set_param(b('m1'), 'Inputs', '2', 'Position', [120, 55, 135, 85]);
+    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_in_fn'));
+    set_param(b('h_in_fn'), 'Position', [170, 45, 300, 95], ...
+        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI'')');
+
+    add_block('simulink/Sources/Constant', b('T_target'));
+    set_param(b('T_target'), 'Value', num2str(T_out_target), 'Position', [120, 120, 160, 140]);
+
+    add_block('simulink/Signal Routing/Mux', b('m2'));
+    set_param(b('m2'), 'Inputs', '2', 'Position', [200, 115, 215, 145]);
+    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_out_fn'));
+    set_param(b('h_out_fn'), 'Position', [250, 105, 380, 155], ...
+        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI'')');
+
+    add_block('simulink/Signal Routing/Mux', b('m3'));
+    set_param(b('m3'), 'Inputs', '3', 'Position', [420, 100, 435, 170]);
+    add_block('simulink/User-Defined Functions/Fcn', b('Q_calc'));
+    set_param(b('Q_calc'), 'Position', [470, 100, 570, 170]);
+    set_param(b('Q_calc'), 'Expr', 'abs(u(1)*(u(2)-u(3)))/1e6');
+
+    add_block('simulink/Ports & Subsystems/Out1', b('T_out'));
+    set_param(b('T_out'), 'Position', [680, 55, 710, 75], 'Port', '1');
+    add_block('simulink/Ports & Subsystems/Out1', b('P_out'));
+    set_param(b('P_out'), 'Position', [680, 115, 710, 135], 'Port', '2');
+    add_block('simulink/Ports & Subsystems/Out1', b('Q_out'));
+    set_param(b('Q_out'), 'Position', [680, 175, 710, 195], 'Port', '3');
+    add_block('simulink/Ports & Subsystems/Out1', b('m_out'));
+    set_param(b('m_out'), 'Position', [680, 235, 710, 255], 'Port', '4');
+
+    add_line(parent, 'T_in/1', 'm1/1'); add_line(parent, 'P_in/1', 'm1/2');
+    add_line(parent, 'm1/1', 'h_in_fn/1');
+    add_line(parent, 'T_target/1', 'm2/1'); add_line(parent, 'P_in/1', 'm2/2');
+    add_line(parent, 'm2/1', 'h_out_fn/1');
+    add_line(parent, 'm_in/1', 'm3/1');
+    add_line(parent, 'h_in_fn/1', 'm3/2'); add_line(parent, 'h_out_fn/1', 'm3/3');
+    add_line(parent, 'm3/1', 'Q_calc/1');
+    add_line(parent, 'T_target/1', 'T_out/1'); add_line(parent, 'P_in/1', 'P_out/1');
+    add_line(parent, 'Q_calc/1', 'Q_out/1'); add_line(parent, 'm_in/1', 'm_out/1');
 end
 
 % ==================== 放电系统 ====================
@@ -335,7 +332,7 @@ function build_discharging(parent)
     set_param(parent, 'TreatAsAtomicUnit', 'on');
 end
 
-% ==================== 透平 ====================
+% ==================== 透平 (全部 Mux+Fcn) ====================
 function build_turb(parent, P_out, eta)
     Simulink.SubSystem.deleteContents(parent);
     b = @(name) [parent '/' name];
@@ -347,69 +344,68 @@ function build_turb(parent, P_out, eta)
     add_block('simulink/Ports & Subsystems/In1', b('m_in'));
     set_param(b('m_in'), 'Position', [30, 180, 60, 200], 'Port', '3');
 
+    add_block('simulink/Signal Routing/Mux', b('m1'));
+    set_param(b('m1'), 'Inputs', '2', 'Position', [110, 65, 125, 95]);
     add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_in'));
-    set_param(b('h_in'), 'Position', [120, 50, 220, 90], ...
+    set_param(b('h_in'), 'Position', [160, 55, 280, 105], ...
         'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI'')');
 
+    add_block('simulink/Signal Routing/Mux', b('m2'));
+    set_param(b('m2'), 'Inputs', '2', 'Position', [110, 115, 125, 145]);
     add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('s_in'));
-    set_param(b('s_in'), 'Position', [120, 110, 220, 150], ...
+    set_param(b('s_in'), 'Position', [160, 105, 290, 155], ...
         'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''S'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI'')');
 
-    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_is'));
-    set_param(b('h_is'), 'Position', [300, 80, 420, 140], ...
-        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''P'',u(2),''S'',u(1),''CO2'',1,1,''MASS BASE SI'')');
-
+    add_block('simulink/Signal Routing/Mux', b('m3'));
+    set_param(b('m3'), 'Inputs', '2', 'Position', [300, 65, 315, 95]);
     add_block('simulink/Sources/Constant', b('P_target'));
     set_param(b('P_target'), 'Value', num2str(P_out), 'Position', [300, 160, 340, 180]);
+    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_is'));
+    set_param(b('h_is'), 'Position', [350, 55, 480, 125], ...
+        'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''H'',''P'',u(2),''S'',u(1),''CO2'',1,1,''MASS BASE SI'')');
 
-    % Mux: [h_in, h_is] → h_out
-    add_block('simulink/Signal Routing/Mux', b('mux_h'));
-    set_param(b('mux_h'), 'Inputs', '2', 'Position', [480, 85, 495, 125]);
-
+    add_block('simulink/Signal Routing/Mux', b('m4'));
+    set_param(b('m4'), 'Inputs', '2', 'Position', [520, 65, 535, 95]);
     add_block('simulink/User-Defined Functions/Fcn', b('h_out'));
-    set_param(b('h_out'), 'Position', [540, 80, 640, 140], ...
+    set_param(b('h_out'), 'Position', [570, 60, 660, 110], ...
         'Expr', sprintf('u(1)-%.4f*(u(1)-u(2))', eta));
 
+    add_block('simulink/Signal Routing/Mux', b('m5'));
+    set_param(b('m5'), 'Inputs', '2', 'Position', [720, 65, 735, 95]);
     add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('T_out_c'));
-    set_param(b('T_out_c'), 'Position', [720, 60, 840, 120], ...
+    set_param(b('T_out_c'), 'Position', [770, 55, 900, 125], ...
         'MATLABFcn', 'getFluidProperty(''/opt/refprop/'',''T'',''P'',u(2),''H'',u(1),''CO2'',1,1,''MASS BASE SI'')');
 
-    % Mux: [m_dot, h_in, h_out] → W_calc
-    add_block('simulink/Signal Routing/Mux', b('mux_w'));
-    set_param(b('mux_w'), 'Inputs', '3', 'Position', [720, 155, 735, 205]);
-
+    add_block('simulink/Signal Routing/Mux', b('m6'));
+    set_param(b('m6'), 'Inputs', '3', 'Position', [720, 135, 735, 195]);
     add_block('simulink/User-Defined Functions/Fcn', b('W_calc'));
-    set_param(b('W_calc'), 'Position', [780, 150, 870, 210], ...
+    set_param(b('W_calc'), 'Position', [770, 135, 860, 185], ...
         'Expr', 'u(1)*(u(2)-u(3))/1e6');
 
     add_block('simulink/Ports & Subsystems/Out1', b('T_out'));
     set_param(b('T_out'), 'Position', [940, 60, 970, 80], 'Port', '1');
     add_block('simulink/Ports & Subsystems/Out1', b('P_out'));
-    set_param(b('P_out'), 'Position', [940, 120, 970, 140], 'Port', '2');
+    set_param(b('P_out'), 'Position', [940, 115, 970, 135], 'Port', '2');
     add_block('simulink/Ports & Subsystems/Out1', b('W_out'));
-    set_param(b('W_out'), 'Position', [940, 180, 970, 200], 'Port', '3');
+    set_param(b('W_out'), 'Position', [940, 170, 970, 190], 'Port', '3');
     add_block('simulink/Ports & Subsystems/Out1', b('m_out'));
-    set_param(b('m_out'), 'Position', [940, 240, 970, 260], 'Port', '4');
+    set_param(b('m_out'), 'Position', [940, 225, 970, 245], 'Port', '4');
 
-    add_line(parent, 'T_in/1', 'h_in/1');
-    add_line(parent, 'P_in/1', 'h_in/2');
-    add_line(parent, 'T_in/1', 's_in/1');
-    add_line(parent, 'P_in/1', 's_in/2');
-    add_line(parent, 's_in/1', 'h_is/1');
-    add_line(parent, 'P_target/1', 'h_is/2');
-    add_line(parent, 'h_in/1', 'mux_h/1');
-    add_line(parent, 'h_is/1', 'mux_h/2');
-    add_line(parent, 'mux_h/1', 'h_out/1');
-    add_line(parent, 'h_out/1', 'T_out_c/1');
-    add_line(parent, 'P_target/1', 'T_out_c/2');
-    add_line(parent, 'm_in/1', 'mux_w/1');
-    add_line(parent, 'h_in/1', 'mux_w/2');
-    add_line(parent, 'h_out/1', 'mux_w/3');
-    add_line(parent, 'mux_w/1', 'W_calc/1');
-    add_line(parent, 'T_out_c/1', 'T_out/1');
-    add_line(parent, 'P_target/1', 'P_out/1');
-    add_line(parent, 'W_calc/1', 'W_out/1');
-    add_line(parent, 'm_in/1', 'm_out/1');
+    add_line(parent, 'T_in/1', 'm1/1'); add_line(parent, 'P_in/1', 'm1/2');
+    add_line(parent, 'm1/1', 'h_in/1');
+    add_line(parent, 'T_in/1', 'm2/1'); add_line(parent, 'P_in/1', 'm2/2');
+    add_line(parent, 'm2/1', 's_in/1');
+    add_line(parent, 's_in/1', 'm3/1'); add_line(parent, 'P_target/1', 'm3/2');
+    add_line(parent, 'm3/1', 'h_is/1');
+    add_line(parent, 'h_in/1', 'm4/1'); add_line(parent, 'h_is/1', 'm4/2');
+    add_line(parent, 'm4/1', 'h_out/1');
+    add_line(parent, 'h_out/1', 'm5/1'); add_line(parent, 'P_target/1', 'm5/2');
+    add_line(parent, 'm5/1', 'T_out_c/1');
+    add_line(parent, 'm_in/1', 'm6/1');
+    add_line(parent, 'h_in/1', 'm6/2'); add_line(parent, 'h_out/1', 'm6/3');
+    add_line(parent, 'm6/1', 'W_calc/1');
+    add_line(parent, 'T_out_c/1', 'T_out/1'); add_line(parent, 'P_target/1', 'P_out/1');
+    add_line(parent, 'W_calc/1', 'W_out/1'); add_line(parent, 'm_in/1', 'm_out/1');
 end
 
 % ==================== 储罐 ====================
