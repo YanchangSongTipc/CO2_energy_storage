@@ -39,6 +39,38 @@ function build_CCES_model()
     build_control(p('Controller'));
     build_results(p('Results'));
 
+    %% 修复块属性：声明输出维度和信号类型
+    all_int_blks = find_system(model, 'BlockType', 'SubSystem');
+    all_int_blks = [all_int_blks; find_system(model, 'LookupNDDirect', 'BlockType', ' Interpreted MATLAB Function')]; %#ok<AGROW>
+
+    % 找出所有 Interpreted MATLAB Fcn 和 Fcn 块，确保标量输出
+    imf_blks = find_system(model, 'FollowLinks', 'on', ...
+        'MaskType', 'Interpreted MATLAB Function');
+    for i = 1:length(imf_blks)
+        try
+            set_param(imf_blks{i}, 'OutputDimensions', '1');
+        catch
+        end
+    end
+
+    % 修复所有 Outport 维度和 Fcn 块
+    all_out = find_system(model, 'BlockType', 'Outport');
+    for i = 1:length(all_out)
+        try set_param(all_out{i}, 'OutputDimensions', '1'); catch, end
+    end
+
+    % 确保所有 Fcn 块输出标量
+    all_fcn = find_system(model, 'BlockType', 'Fcn');
+    for i = 1:length(all_fcn)
+        try set_param(all_fcn{i}, 'OutDataTypeStr', 'Inherit: Inherit via back propagation'); catch, end
+    end
+
+    % Mux/Demux 信号类型传播
+    all_mux = find_system(model, 'BlockType', 'Mux');
+    for i = 1:length(all_mux)
+        try set_param(all_mux{i}, 'OutDataTypeStr', 'Inherit: Inherit via back propagation'); catch, end
+    end
+
     %% 保存
     save_system(model, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/CCES_CHP_System');
     fprintf('CCES_CHP_System 构建完成。\n');
