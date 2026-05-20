@@ -90,12 +90,16 @@ cum_phase = cumtrapz(t, P_phase);   % 相变焓 [MWh_th]
 cum_stored = cum_Wc + cum_phase;    % 总储存 = 电 + 相变
 cum_Wt = cumtrapz(t, Wt);           % 放电 [MWh_e]
 
-plot(t, cum_Wc, 'r-', 'LineWidth', 1.5);
-plot(t, cum_stored, 'm-', 'LineWidth', 2);
-plot(t, cum_Wt, 'b-', 'LineWidth', 1.5);
+% 主曲线: 总储存 vs 发电
+plot(t, cum_stored, 'Color', [0.5 0 0.5], 'LineWidth', 2.5);
+plot(t, cum_Wt, 'b-', 'LineWidth', 2.5);
+% 辅助虚线: 电力部分
+plot(t, cum_Wc, 'r--', 'LineWidth', 1);
+plot(t, cum_phase, 'r:', 'LineWidth', 1);
 xlabel('Time (h)'); ylabel('Energy (MWh)');
-title('Cumulative Energy (incl. phase change)');
-legend('E_{elec}', 'E_{stored}=elec+phase', 'E_{discharge}', 'Location', 'best');
+title('Cumulative Energy Balance');
+legend('E_{stored} = elec+phase', 'E_{discharge}', ...
+       'E_{elec} (component)', 'E_{phase} (component)', 'Location', 'northwest');
 xlim([0 24]); grid on;
 
 sgtitle('CCES-CHP 24h Dynamic Simulation', 'FontSize', 16, 'FontWeight', 'bold');
