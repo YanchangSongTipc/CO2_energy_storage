@@ -14,9 +14,9 @@ Fluid  = 'CO2';
 T_vec = [260:2:320, 325:5:550];  % 260-320K 细网格(临界区), 以上粗网格
 T_vec = unique(T_vec);
 
-% 压力网格 [MPa]: 覆盖 0.1-7.5 MPa
-P_vec = [0.1:0.05:2.0, 2.1:0.2:5.0, 5.2:0.3:7.5];
-P_vec = unique(P_vec);
+% 压力网格 [Pa]: 覆盖 0.1-7.5 MPa (getFluidProperty 要求 Pa)
+P_vec_MPa = [0.1:0.05:2.0, 2.1:0.2:5.0, 5.2:0.3:7.5];
+P_vec = unique(P_vec_MPa) * 1e6;
 
 nT = length(T_vec);
 nP = length(P_vec);
@@ -92,8 +92,8 @@ fprintf('验证图已保存\n');
 %% 6. 关键状态点对照校验 (与 Cycle.m 结果对比)
 fprintf('\n=== 关键状态点校验 ===\n');
 fprintf('节点1 (298K,0.102MPa) H=%.1f J/kg (期望 ~506650)\n', ...
-    interp2(P_vec, T_vec, H_table, 0.102, 298));
+    interp2(P_vec, T_vec, H_table, 0.102e6, 298));
 fprintf('节点5 (500K,6.9MPa)  H=%.1f J/kg (期望 ~695060)\n', ...
-    interp2(P_vec, T_vec, H_table, 6.9, 500));
+    interp2(P_vec, T_vec, H_table, 6.9e6, 500));
 fprintf('节点7 (298K,6.8MPa)  H=%.1f J/kg (期望 ~506650)\n', ...
-    interp2(P_vec, T_vec, H_table, 6.8, 298));
+    interp2(P_vec, T_vec, H_table, 6.8e6, 298));
