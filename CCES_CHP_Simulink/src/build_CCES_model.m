@@ -233,7 +233,7 @@ function build_comp(parent, P_out, eta)
     % W = m*(h_in - h_out)/1e6  [3-input → Mux → Fcn]
     add_block('simulink/Signal Routing/Mux', b('mx2'));
     set_param(b('mx2'), 'Inputs', '3', 'Position', [660, 140, 675, 200]);
-    add_fcn(parent, 'W_calc', 'u(1)*(u(2)-u(3))/1e6', [710, 140, 790, 190]);
+    add_fcn(parent, 'W_calc', 'abs(u(1)*(u(2)-u(3)))/1e6', [710, 140, 790, 190]);
 
     add_block('simulink/Ports & Subsystems/Out1', b('T_out'));
     set_param(b('T_out'), 'Position', [850, 50, 880, 70], 'Port', '1');
@@ -366,7 +366,7 @@ function build_turb(parent, P_out, eta)
 
     add_block('simulink/Signal Routing/Mux', b('mx2'));
     set_param(b('mx2'), 'Inputs', '3', 'Position', [660, 140, 675, 200]);
-    add_fcn(parent, 'W_calc', 'u(1)*(u(2)-u(3))/1e6', [710, 140, 790, 190]);
+    add_fcn(parent, 'W_calc', 'abs(u(1)*(u(2)-u(3)))/1e6', [710, 140, 790, 190]);
 
     add_block('simulink/Ports & Subsystems/Out1', b('T_out'));
     set_param(b('T_out'), 'Position', [850, 50, 880, 70], 'Port', '1');
