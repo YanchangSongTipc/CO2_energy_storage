@@ -69,16 +69,33 @@ ylabel('Heat SOC (%)'); ylim([-5 105]);
 xlabel('Time (h)'); title('Dual SOC');
 xlim([0 24]);
 
-% ---- 底右: 累积能量 ----
+% ---- 底右: 累积能量 (含相变焓) ----
 ax4 = subplot(2,2,4);
 hold on; grid on;
-cum_Wc = cumtrapz(t, Wc);
-cum_Wt = cumtrapz(t, Wt);
-plot(t, cum_Wc, 'r-', 'LineWidth', 2);
-plot(t, cum_Wt, 'b-', 'LineWidth', 2);
-xlabel('Time (h)'); ylabel('Energy (MWh_e)');
-title('Cumulative Energy');
-legend('E_{charge}', 'E_{discharge}', 'Location', 'best');
+
+% 充电质量流量: m_dot = alpha1 * charge_cmd
+% CO2 气相→液相焓降: Δh = 505708 - 269875 = 235833 J/kg
+dh_phase = 235833;  % J/kg
+alpha1 = 2.744;     % kg/(s·MW)
+
+% 从 controller 指令推算 mass flow
+charge_cmd = Wc / 9.39 * 10;  % Wc ∝ cmd, 9.39MW at 10MW cmd
+m_dot_ch = alpha1 * charge_cmd;  % kg/s
+
+% 相变储存功率: m_dot * dh_phase / 1e6 [MW]
+P_phase = m_dot_ch * dh_phase / 1e6;
+
+cum_Wc = cumtrapz(t, Wc);          % 电力 [MWh_e]
+cum_phase = cumtrapz(t, P_phase);   % 相变焓 [MWh_th]
+cum_stored = cum_Wc + cum_phase;    % 总储存 = 电 + 相变
+cum_Wt = cumtrapz(t, Wt);           % 放电 [MWh_e]
+
+plot(t, cum_Wc, 'r-', 'LineWidth', 1.5);
+plot(t, cum_stored, 'm-', 'LineWidth', 2);
+plot(t, cum_Wt, 'b-', 'LineWidth', 1.5);
+xlabel('Time (h)'); ylabel('Energy (MWh)');
+title('Cumulative Energy (incl. phase change)');
+legend('E_{elec}', 'E_{stored}=elec+phase', 'E_{discharge}', 'Location', 'best');
 xlim([0 24]); grid on;
 
 sgtitle('CCES-CHP 24h Dynamic Simulation', 'FontSize', 16, 'FontWeight', 'bold');
