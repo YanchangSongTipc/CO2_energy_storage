@@ -90,8 +90,9 @@ function build_CCES_model()
     try add_line(model, 'norm_d/1', 'gate_Wt/1'); catch; end
     try add_line(model, 'Discharging/1', 'gate_Wt/2'); catch; end
 
-    % === 压力反馈: Storage → Controller (In1 已在 build_control 内部创建) ===
+    % === 反馈: Storage→Controller(P), Thermal→Controller(Q) ===
     try add_line(model, 'Storage/1', 'Controller/1'); catch; end
+    try add_line(model, 'Q_MWh_gain/1', 'Controller/2'); catch; end
 
     % 子系统输出 → Results (门控后的信号)
     try add_line(model, 'gate_Wc/1', 'Results/1'); catch; end
@@ -450,60 +451,76 @@ function build_thermal(parent)
     add_line(parent, 'Q_store/1', 'Q_MJ/1');
 end
 
-% ==================== 控制器 (时间+压力双约束) ====================
+% ==================== 控制器 (时间+P+Q三重约束) ====================
 function build_control(parent)
     Simulink.SubSystem.deleteContents(parent);
     b = @(n) [parent '/' n];
 
-    % 压力反馈输入
+    % 反馈输入
     add_block('simulink/Ports & Subsystems/In1', b('P_fb'));
-    set_param(b('P_fb'), 'Position', [30, 60, 60, 80], 'Port', '1');
+    set_param(b('P_fb'), 'Position', [30, 30, 60, 50], 'Port', '1');
+    add_block('simulink/Ports & Subsystems/In1', b('Q_fb'));
+    set_param(b('Q_fb'), 'Position', [30, 80, 60, 100], 'Port', '2');
 
     % Charge Pulse: 0-7.5h
     add_block('simulink/Sources/Pulse Generator', b('chg_pulse'));
-    set_param(b('chg_pulse'), 'Position', [100, 50, 170, 90], ...
+    set_param(b('chg_pulse'), 'Position', [100, 40, 170, 80], ...
         'Amplitude', '10', 'Period', '86400', ...
         'PulseWidth', '31.25', 'PhaseDelay', '0');
 
     % Discharge Pulse: 12-17h
     add_block('simulink/Sources/Pulse Generator', b('dis_pulse'));
-    set_param(b('dis_pulse'), 'Position', [100, 170, 170, 210], ...
+    set_param(b('dis_pulse'), 'Position', [100, 200, 170, 240], ...
         'Amplitude', '10', 'Period', '86400', ...
         'PulseWidth', '20.83', 'PhaseDelay', '43200');
 
-    % Constraint: charge OK when P < 6.70
-    add_block('simulink/Logic and Bit Operations/Relational Operator', b('chg_ok'));
-    set_param(b('chg_ok'), 'Position', [100, 110, 130, 130], 'Operator', '<');
+    % P constraints
     add_block('simulink/Sources/Constant', b('P_max'));
-    set_param(b('P_max'), 'Value', '6.70', 'Position', [60, 115, 90, 135]);
-
-    % Constraint: discharge OK when P > 0.22
-    add_block('simulink/Logic and Bit Operations/Relational Operator', b('dis_ok'));
-    set_param(b('dis_ok'), 'Position', [100, 230, 130, 250], 'Operator', '>');
+    set_param(b('P_max'), 'Value', '6.70', 'Position', [60, 115, 80, 135]);
+    add_block('simulink/Logic and Bit Operations/Relational Operator', b('chg_P_ok'));
+    set_param(b('chg_P_ok'), 'Position', [100, 105, 130, 125], 'Operator', '<');
     add_block('simulink/Sources/Constant', b('P_min'));
-    set_param(b('P_min'), 'Value', '0.22', 'Position', [60, 235, 90, 255]);
+    set_param(b('P_min'), 'Value', '0.22', 'Position', [60, 145, 80, 165]);
+    add_block('simulink/Logic and Bit Operations/Relational Operator', b('dis_P_ok'));
+    set_param(b('dis_P_ok'), 'Position', [100, 145, 130, 165], 'Operator', '>');
 
-    % Gate: charge_cmd = pulse * (P < P_max)
+    % Q constraints: charge OK if Q < 150, discharge OK if Q > 0
+    add_block('simulink/Sources/Constant', b('Q_max'));
+    set_param(b('Q_max'), 'Value', '150', 'Position', [60, 175, 80, 195]);
+    add_block('simulink/Logic and Bit Operations/Relational Operator', b('chg_Q_ok'));
+    set_param(b('chg_Q_ok'), 'Position', [100, 175, 130, 195], 'Operator', '<');
+    add_block('simulink/Sources/Constant', b('Q_min'));
+    set_param(b('Q_min'), 'Value', '0', 'Position', [60, 205, 80, 225]);
+    add_block('simulink/Logic and Bit Operations/Relational Operator', b('dis_Q_ok'));
+    set_param(b('dis_Q_ok'), 'Position', [100, 205, 130, 225], 'Operator', '>');
+
+    % 3-input Product gates: pulse * P_ok * Q_ok
     add_block('simulink/Math Operations/Product', b('chg_gate'));
-    set_param(b('chg_gate'), 'Inputs', '2', 'Position', [190, 50, 230, 90]);
-    % Gate: discharge_cmd = pulse * (P > P_min)
+    set_param(b('chg_gate'), 'Inputs', '3', 'Position', [190, 40, 230, 90]);
     add_block('simulink/Math Operations/Product', b('dis_gate'));
-    set_param(b('dis_gate'), 'Inputs', '2', 'Position', [190, 170, 230, 210]);
+    set_param(b('dis_gate'), 'Inputs', '3', 'Position', [190, 190, 230, 240]);
 
     add_block('simulink/Ports & Subsystems/Out1', b('charge_cmd'));
-    set_param(b('charge_cmd'), 'Position', [300, 50, 330, 70], 'Port', '1');
+    set_param(b('charge_cmd'), 'Position', [300, 40, 330, 60], 'Port', '1');
     add_block('simulink/Ports & Subsystems/Out1', b('discharge_cmd'));
-    set_param(b('discharge_cmd'), 'Position', [300, 170, 330, 190], 'Port', '2');
+    set_param(b('discharge_cmd'), 'Position', [300, 190, 330, 210], 'Port', '2');
 
-    add_line(parent, 'P_fb/1', 'chg_ok/1');
-    add_line(parent, 'P_max/1', 'chg_ok/2');
-    add_line(parent, 'P_fb/1', 'dis_ok/1');
-    add_line(parent, 'P_min/1', 'dis_ok/2');
+    % 连线
+    add_line(parent, 'P_fb/1', 'chg_P_ok/1');
+    add_line(parent, 'P_max/1', 'chg_P_ok/2');
+    add_line(parent, 'P_fb/1', 'dis_P_ok/1');
+    add_line(parent, 'P_min/1', 'dis_P_ok/2');
+    add_line(parent, 'Q_fb/1', 'chg_Q_ok/1');
+    add_line(parent, 'Q_max/1', 'chg_Q_ok/2');
+    add_line(parent, 'Q_fb/1', 'dis_Q_ok/1');
+    add_line(parent, 'Q_min/1', 'dis_Q_ok/2');
     add_line(parent, 'chg_pulse/1', 'chg_gate/1');
-    add_line(parent, 'chg_ok/1', 'chg_gate/2');
+    add_line(parent, 'chg_P_ok/1', 'chg_gate/2');
+    add_line(parent, 'chg_Q_ok/1', 'chg_gate/3');
     add_line(parent, 'chg_gate/1', 'charge_cmd/1');
     add_line(parent, 'dis_pulse/1', 'dis_gate/1');
-    add_line(parent, 'dis_ok/1', 'dis_gate/2');
+    add_line(parent, 'dis_P_ok/1', 'dis_gate/2');
+    add_line(parent, 'dis_Q_ok/1', 'dis_gate/3');
     add_line(parent, 'dis_gate/1', 'discharge_cmd/1');
 end
 
