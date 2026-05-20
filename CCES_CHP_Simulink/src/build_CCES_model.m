@@ -480,19 +480,29 @@ function build_control(parent)
     add_block('simulink/Sources/Clock', b('Clock'));
     set_param(b('Clock'), 'Position', [30, 140, 60, 160]);
 
+    % Mux: [P_HPT, t] → logic (2 inputs → 1 vector)
+    add_block('simulink/Signal Routing/Mux', b('mux_in'));
+    set_param(b('mux_in'), 'Inputs', '2', 'Position', [120, 70, 135, 130]);
+
     add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('logic'));
-    set_param(b('logic'), 'Position', [180, 80, 330, 140], ...
+    set_param(b('logic'), 'Position', [180, 70, 310, 140], ...
         'MATLABFcn', 'cces_controller(u(1),u(2))');
 
-    add_block('simulink/Ports & Subsystems/Out1', b('charge_cmd'));
-    set_param(b('charge_cmd'), 'Position', [480, 60, 510, 80], 'Port', '1');
-    add_block('simulink/Ports & Subsystems/Out1', b('discharge_cmd'));
-    set_param(b('discharge_cmd'), 'Position', [480, 140, 510, 160], 'Port', '2');
+    % Demux: logic output [charge_cmd, discharge_cmd] → 2 signals
+    add_block('simulink/Signal Routing/Demux', b('dmux'));
+    set_param(b('dmux'), 'Outputs', '2', 'Position', [370, 50, 380, 160]);
 
-    add_line(parent, 'P_HPT/1', 'logic/1', 'autorouting', 'smart');
-    add_line(parent, 'Clock/1', 'logic/2', 'autorouting', 'smart');
-    add_line(parent, 'logic/1', 'charge_cmd/1', 'autorouting', 'smart');
-    add_line(parent, 'logic/2', 'discharge_cmd/1', 'autorouting', 'smart');
+    add_block('simulink/Ports & Subsystems/Out1', b('charge_cmd'));
+    set_param(b('charge_cmd'), 'Position', [460, 50, 490, 70], 'Port', '1');
+    add_block('simulink/Ports & Subsystems/Out1', b('discharge_cmd'));
+    set_param(b('discharge_cmd'), 'Position', [460, 130, 490, 150], 'Port', '2');
+
+    add_line(parent, 'P_HPT/1', 'mux_in/1');
+    add_line(parent, 'Clock/1', 'mux_in/2');
+    add_line(parent, 'mux_in/1', 'logic/1');
+    add_line(parent, 'logic/1', 'dmux/1');
+    add_line(parent, 'dmux/1', 'charge_cmd/1');
+    add_line(parent, 'dmux/2', 'discharge_cmd/1');
 end
 
 % ==================== 结果显示 ====================
