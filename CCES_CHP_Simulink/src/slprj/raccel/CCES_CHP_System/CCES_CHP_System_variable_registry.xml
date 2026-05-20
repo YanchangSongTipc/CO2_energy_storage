@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MF0 version="1.1" packageUris="http://schema.mathworks.com/mf0/slsa_mm_parameter_tuning/R2021b">
+  <slsa.mm.parametertuning.VariableRegistry type="slsa.mm.parametertuning.VariableRegistry" uuid="e4f7a666-1920-4515-8db7-e7b3a2de0ad7">
+    <name>CCES_CHP_System</name>
+  </slsa.mm.parametertuning.VariableRegistry>
+</MF0>

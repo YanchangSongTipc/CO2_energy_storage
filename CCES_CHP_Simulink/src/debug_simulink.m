@@ -49,7 +49,13 @@ catch ME
     return;
 end
 
-%% 5. 运行 60 秒仿真
+%% 5. 添加输出端口用于数据记录
+fprintf('\n========== 添加输出端口 ==========\n');
+% 给各子系统 Outport 挂 scope 以便调试
+all_scopes = find_system(model, 'BlockType', 'Scope');
+fprintf('  已存在 Scope: %d 个\n', length(all_scopes));
+
+%% 6. 运行 60 秒仿真
 fprintf('\n========== 运行仿真 (60s) ==========\n');
 set_param(model, 'StopTime', '60', 'MaxStep', '10');
 t_start = tic;
@@ -59,11 +65,23 @@ try
     fprintf('[OK] 仿真完成 (%.1f s)\n', t_elapsed);
 catch ME
     fprintf('[FAIL] 仿真错误: %s\n', ME.message);
+    fprintf('完整错误信息:\n');
+    for i = 1:length(ME.cause)
+        fprintf('  cause{%d}: %s\n', i, ME.cause{i}.message);
+    end
     return;
 end
 
-%% 6. 简要结果
-fprintf('\n========== 结果 ==========\n');
-fprintf('仿真时间: %.1f s\n', t_elapsed);
-fprintf('模型应能正常运行。\n');
-fprintf('下一步: 用 open_system(''%s'') 查看 Scope 波形\n', model);
+%% 7. 读取 scope 数据
+fprintf('\n========== Scope 数据 ==========\n');
+scopes = find_system(model, 'BlockType', 'Scope');
+for i = 1:length(scopes)
+    name = get_param(scopes{i}, 'Name');
+    try
+        % 获取 scope 数据
+        scopeConfig = get_param(scopes{i}, 'ScopeConfiguration');
+        ds = scopeConfig.DataLogging;
+        fprintf('  %s: %s\n', name, ds);
+    catch
+    end
+end

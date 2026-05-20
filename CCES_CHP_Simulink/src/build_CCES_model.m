@@ -47,6 +47,21 @@ function build_CCES_model()
     build_control(p('Controller'));
     build_results(p('Results'));
 
+    % 顶层连线: Controller → Charging/Discharging → Storage/Thermal → Results
+    % Controller cmd → subsystems
+    add_line(model, 'Controller/1', 'Charging/1');
+    add_line(model, 'Controller/2', 'Discharging/1');
+
+    % Charging outputs → Results (W_comp=port2)
+    add_line(model, 'Charging/2', 'Results/1');
+    % Discharging outputs → Results (W_turb=port1)
+    add_line(model, 'Discharging/1', 'Results/2');
+
+    % Storage → Results (P_HPT=port1, P connects to Controller for feedback later)
+    add_line(model, 'Storage/1', 'Results/3');
+    % Thermal → Results (Q_HTV=port1)
+    add_line(model, 'Thermal/1', 'Results/4');
+
     save_system(model, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/CCES_CHP_System');
     fprintf('CCES_CHP_System 构建完成（2-D LUT版本）。\n');
     open_system(model);
