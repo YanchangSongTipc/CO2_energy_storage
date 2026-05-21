@@ -59,7 +59,7 @@ xlim([0 24]);
 ax2 = subplot(2,2,2);
 hold on; grid on;
 stairs(t, Wc, 'r', 'LineWidth', 1.5);
-stairs(t, -Wt, 'b', 'LineWidth', 1.5);
+stairs(t, Wt, 'b', 'LineWidth', 1.5);
 xlabel('Time (h)'); ylabel('Power (MW)');
 title('Charge / Discharge Power');
 legend('W_{comp} (charge)', 'W_{turb} (discharge)', 'Location', 'best');
