@@ -105,5 +105,5 @@ legend('E_{comp}', 'E_{turb}', 'Location', 'northwest');
 xlim([0 t_sim/86400]);
 
 sgtitle(sprintf('CCES-CHP %.0f-Day Simulation (ODE)', t_sim/86400), 'FontSize', 14, 'FontWeight', 'bold');
-saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode_simulation.png');
+saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode/ode_simulation.png');
 fprintf('Chart saved.\n');

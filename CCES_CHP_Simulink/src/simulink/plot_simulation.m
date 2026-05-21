@@ -100,5 +100,5 @@ legend('E_{comp} (电网入)', 'E_{turb} (发电出)', 'Net (入-出)', 'Locatio
 xlim([0 24]); grid on;
 
 sgtitle('CCES-CHP 24h Dynamic Simulation', 'FontSize', 16, 'FontWeight', 'bold');
-saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/24h_dual_axis.png');
+saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/simulink/24h_dual_axis.png');
 fprintf('图表已保存。\n');

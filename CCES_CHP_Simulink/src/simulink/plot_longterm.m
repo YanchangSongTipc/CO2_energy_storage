@@ -131,5 +131,5 @@ sgtitle(sprintf('CCES-CHP 7-Day Long-Term Dynamics (T drift: %.0f K, Capacity: -
     T_avg(1)-T_avg(end), (1-E_c(end)/E_c(1))*100), ...
     'FontSize', 14, 'FontWeight', 'bold');
 
-saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/7day_longterm.png');
+saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/simulink/7day_longterm.png');
 fprintf('Chart saved to output/7day_longterm.png\n');
