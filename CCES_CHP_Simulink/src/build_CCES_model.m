@@ -72,6 +72,8 @@ function build_CCES_model()
     add_line(model, 'beta2_gain/1', 'Thermal/2');
     add_line(model, 'Controller/1', 'Charging/1');
     add_line(model, 'Controller/2', 'Discharging/1');
+    % HPT罐温→放电入口: T从Storage馈入Discharging替代固定296K
+    add_line(model, 'Storage/3', 'Discharging/2');
 
     % === 功率门控: W * (cmd > 0) 使非激活时段功率为0 ===
     add_block('simulink/Math Operations/Product', [model '/gate_Wc']);
@@ -314,7 +316,8 @@ function build_discharging(parent)
 
     add_block('simulink/Ports & Subsystems/In1', b('cmd'));
     set_param(b('cmd'), 'Position', [30, 90, 60, 110], 'Port', '1');
-    add_const(parent, 'T_in', '296',       [30, 160, 80, 180]);
+    add_block('simulink/Ports & Subsystems/In1', b('T_HPT_in'));
+    set_param(b('T_HPT_in'), 'Position', [30, 160, 60, 180], 'Port', '2');
     add_const(parent, 'P_in', '6.65e6',    [30, 210, 80, 230]);
     add_const(parent, 'm_dot', '40.3',     [30, 260, 80, 280]);
 
@@ -342,7 +345,7 @@ function build_discharging(parent)
     add_block('simulink/Ports & Subsystems/Out1', b('P_out'));
     set_param(b('P_out'), 'Position', [1280, 200, 1310, 220], 'Port', '2');
 
-    add_line(parent, 'T_in/1', 'T1/1'); add_line(parent, 'P_in/1', 'T1/2'); add_line(parent, 'm_dot/1', 'T1/3');
+    add_line(parent, 'T_HPT_in/1', 'T1/1'); add_line(parent, 'P_in/1', 'T1/2'); add_line(parent, 'm_dot/1', 'T1/3');
     add_line(parent, 'T1/1', 'Heater/1'); add_line(parent, 'T1/2', 'Heater/2'); add_line(parent, 'T1/4', 'Heater/3');
     add_line(parent, 'Heater/1', 'T2/1'); add_line(parent, 'Heater/2', 'T2/2'); add_line(parent, 'Heater/4', 'T2/3');
     add_line(parent, 'T2/1', 'Cooler/1'); add_line(parent, 'T2/2', 'Cooler/2'); add_line(parent, 'T2/4', 'Cooler/3');
