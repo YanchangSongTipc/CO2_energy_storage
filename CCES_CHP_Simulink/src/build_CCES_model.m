@@ -52,7 +52,7 @@ function build_CCES_model()
     add_block('simulink/Math Operations/Gain', [model '/alpha1_gain']);
     set_param([model '/alpha1_gain'], 'Gain', '2.744', 'Position', [50, 100, 90, 130]);
     add_block('simulink/Math Operations/Gain', [model '/alpha2_gain']);
-    set_param([model '/alpha2_gain'], 'Gain', '4.117', 'Position', [50, 170, 90, 200]);
+    set_param([model '/alpha2_gain'], 'Gain', '2.744', 'Position', [50, 170, 90, 200]);
     add_block('simulink/Math Operations/Gain', [model '/beta1_gain']);
     set_param([model '/beta1_gain'], 'Gain', '1.185', 'Position', [50, 240, 90, 270]);
     add_block('simulink/Math Operations/Gain', [model '/beta2_gain']);
@@ -319,7 +319,7 @@ function build_discharging(parent)
     add_block('simulink/Ports & Subsystems/In1', b('T_HPT_in'));
     set_param(b('T_HPT_in'), 'Position', [30, 160, 60, 180], 'Port', '2');
     add_const(parent, 'P_in', '6.65e6',    [30, 210, 80, 230]);
-    add_const(parent, 'm_dot', '40.3',     [30, 260, 80, 280]);
+    add_const(parent, 'm_dot', '26.9',     [30, 260, 80, 280]);
 
     add_block('simulink/Ports & Subsystems/Subsystem', b('T1'));
     set_param(b('T1'), 'Position', [240, 60, 390, 300]);
