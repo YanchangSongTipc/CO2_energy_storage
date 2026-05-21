@@ -74,6 +74,7 @@ function build_CCES_model()
     add_line(model, 'Controller/2', 'Discharging/1');
     % HPT罐温→放电入口: T从Storage馈入Discharging替代固定296K
     add_line(model, 'Storage/3', 'Discharging/2');
+    add_line(model, 'Q_MWh_gain/1', 'Discharging/3');
 
     % === 功率门控: W * (cmd > 0) 使非激活时段功率为0 ===
     add_block('simulink/Math Operations/Product', [model '/gate_Wc']);
@@ -270,7 +271,7 @@ function build_comp(parent, P_out, eta)
     add_line(parent, 'W_calc/1', 'W_out/1'); add_line(parent, 'm_in/1', 'm_out/1');
 end
 
-% ==================== 换热器 ====================
+% ==================== 换热器 (固定出口温度) ====================
 function build_hex(parent, T_out_target)
     Simulink.SubSystem.deleteContents(parent);
     b = @(n) [parent '/' n];
@@ -282,9 +283,68 @@ function build_hex(parent, T_out_target)
     add_block('simulink/Ports & Subsystems/In1', b('m_in'));
     set_param(b('m_in'), 'Position', [30, 200, 60, 220], 'Port', '3');
 
+    add_block('simulink/Signal Routing/Mux', b('m1'));
+    set_param(b('m1'), 'Inputs', '2', 'Position', [120, 55, 135, 85]);
+    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_in_fn'));
+    set_param(b('h_in_fn'), 'Position', [170, 45, 300, 95], ...
+        'MATLABFcn', 'double(getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI''))');
+
+    add_block('simulink/Sources/Constant', b('T_target'));
+    set_param(b('T_target'), 'Value', num2str(T_out_target), 'Position', [120, 120, 160, 140]);
+
+    add_block('simulink/Signal Routing/Mux', b('m2'));
+    set_param(b('m2'), 'Inputs', '2', 'Position', [200, 115, 215, 145]);
+    add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_out_fn'));
+    set_param(b('h_out_fn'), 'Position', [250, 105, 380, 155], ...
+        'MATLABFcn', 'double(getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI''))');
+
+    add_block('simulink/Signal Routing/Mux', b('m3'));
+    set_param(b('m3'), 'Inputs', '3', 'Position', [420, 100, 435, 170]);
+    add_block('simulink/User-Defined Functions/Fcn', b('Q_calc'));
+    set_param(b('Q_calc'), 'Position', [470, 100, 570, 170]);
+    set_param(b('Q_calc'), 'Expr', 'abs(u(1)*(u(2)-u(3)))/1e6');
+
+    add_block('simulink/Ports & Subsystems/Out1', b('T_out'));
+    set_param(b('T_out'), 'Position', [680, 55, 710, 75], 'Port', '1');
+    add_block('simulink/Ports & Subsystems/Out1', b('P_out'));
+    set_param(b('P_out'), 'Position', [680, 115, 710, 135], 'Port', '2');
+    add_block('simulink/Ports & Subsystems/Out1', b('Q_out'));
+    set_param(b('Q_out'), 'Position', [680, 175, 710, 195], 'Port', '3');
+    add_block('simulink/Ports & Subsystems/Out1', b('m_out'));
+    set_param(b('m_out'), 'Position', [680, 235, 710, 255], 'Port', '4');
+
+    add_line(parent, 'T_in/1', 'm1/1'); add_line(parent, 'P_in/1', 'm1/2');
+    add_line(parent, 'm1/1', 'h_in_fn/1');
+    add_line(parent, 'T_target/1', 'm2/1'); add_line(parent, 'P_in/1', 'm2/2');
+    add_line(parent, 'm2/1', 'h_out_fn/1');
+    add_line(parent, 'm_in/1', 'm3/1');
+    add_line(parent, 'h_in_fn/1', 'm3/2'); add_line(parent, 'h_out_fn/1', 'm3/3');
+    add_line(parent, 'm3/1', 'Q_calc/1');
+    add_line(parent, 'T_target/1', 'T_out/1'); add_line(parent, 'P_in/1', 'P_out/1');
+    add_line(parent, 'Q_calc/1', 'Q_out/1'); add_line(parent, 'm_in/1', 'm_out/1');
+end
+
+% ==================== 加热器 (Q决定加热温度) ====================
+function build_heater_Q(parent)
+    Simulink.SubSystem.deleteContents(parent);
+    b = @(n) [parent '/' n];
+
+    add_block('simulink/Ports & Subsystems/In1', b('T_in'));
+    set_param(b('T_in'), 'Position', [30, 60, 60, 80], 'Port', '1');
+    add_block('simulink/Ports & Subsystems/In1', b('P_in'));
+    set_param(b('P_in'), 'Position', [30, 130, 60, 150], 'Port', '2');
+    add_block('simulink/Ports & Subsystems/In1', b('m_in'));
+    set_param(b('m_in'), 'Position', [30, 200, 60, 220], 'Port', '3');
+    add_block('simulink/Ports & Subsystems/In1', b('Q_in'));
+    set_param(b('Q_in'), 'Position', [30, 270, 60, 290], 'Port', '4');
+
+    % T_heater = 298 + 185*Q/(Q+50), Q in MWh
+    add_block('simulink/User-Defined Functions/Fcn', b('T_calc'));
+    set_param(b('T_calc'), 'Position', [120, 270, 240, 320], ...
+        'Expr', '298+185*u/(u+50)');
+
     add_lut2d(parent, 'h_in_lut', 'H_table', 'T_vec', 'P_vec', [120, 50, 210, 90]);
     add_lut2d(parent, 'h_out_lut', 'H_table', 'T_vec', 'P_vec', [120, 120, 210, 160]);
-    add_const(parent, 'T_target', num2str(T_out_target), [120, 190, 160, 210]);
 
     % Q = abs(m*(h_in - h_out))/1e6
     add_block('simulink/Signal Routing/Mux', b('mx'));
@@ -300,12 +360,13 @@ function build_hex(parent, T_out_target)
     add_block('simulink/Ports & Subsystems/Out1', b('m_out'));
     set_param(b('m_out'), 'Position', [560, 230, 590, 250], 'Port', '4');
 
+    add_line(parent, 'Q_in/1', 'T_calc/1');
     add_line(parent, 'T_in/1', 'h_in_lut/1'); add_line(parent, 'P_in/1', 'h_in_lut/2');
-    add_line(parent, 'T_target/1', 'h_out_lut/1'); add_line(parent, 'P_in/1', 'h_out_lut/2');
+    add_line(parent, 'T_calc/1', 'h_out_lut/1'); add_line(parent, 'P_in/1', 'h_out_lut/2');
     add_line(parent, 'm_in/1', 'mx/1');
     add_line(parent, 'h_in_lut/1', 'mx/2'); add_line(parent, 'h_out_lut/1', 'mx/3');
     add_line(parent, 'mx/1', 'Q_calc/1');
-    add_line(parent, 'T_target/1', 'T_out/1'); add_line(parent, 'P_in/1', 'P_out/1');
+    add_line(parent, 'T_calc/1', 'T_out/1'); add_line(parent, 'P_in/1', 'P_out/1');
     add_line(parent, 'Q_calc/1', 'Q_out/1'); add_line(parent, 'm_in/1', 'm_out/1');
 end
 
@@ -318,16 +379,22 @@ function build_discharging(parent)
     set_param(b('cmd'), 'Position', [30, 90, 60, 110], 'Port', '1');
     add_block('simulink/Ports & Subsystems/In1', b('T_HPT_in'));
     set_param(b('T_HPT_in'), 'Position', [30, 160, 60, 180], 'Port', '2');
-    add_const(parent, 'P_in', '6.65e6',    [30, 210, 80, 230]);
-    add_const(parent, 'm_dot', '26.9',     [30, 260, 80, 280]);
+    add_block('simulink/Ports & Subsystems/In1', b('Q_HTV_in'));
+    set_param(b('Q_HTV_in'), 'Position', [30, 220, 60, 240], 'Port', '3');
+    add_const(parent, 'P_in', '6.65e6',    [30, 280, 80, 300]);
+    add_const(parent, 'm_dot', '26.9',     [30, 340, 80, 360]);
 
     add_block('simulink/Ports & Subsystems/Subsystem', b('T1'));
     set_param(b('T1'), 'Position', [240, 60, 390, 300]);
     build_turb(b('T1'), 0.70e6, 0.88);
 
+    % 加热器: Q_HTV决定能达到的温度
     add_block('simulink/Ports & Subsystems/Subsystem', b('Heater'));
-    set_param(b('Heater'), 'Position', [480, 60, 600, 200]);
-    build_hex(b('Heater'), 483);
+    set_param(b('Heater'), 'Position', [480, 60, 600, 220]);
+    build_heater_Q(b('Heater'));
+
+    % Q feedback → Heater
+    add_line(parent, 'Q_HTV_in/1', 'Heater/4');
 
     add_block('simulink/Ports & Subsystems/Subsystem', b('T2'));
     set_param(b('T2'), 'Position', [690, 60, 840, 300]);
