@@ -52,7 +52,7 @@ params.T_HPT_store = 298;   % HPT 存储温度 [K]
 
 %% 蓄热系统参数
 params.Q_HTV_capacity = 150 * 3600;  % HTV 蓄热容量 [MJ_th] (=150 MWh_th)
-params.Q_HTV_initial   = 0;           % 初始蓄热量 [MJ_th] (从空开始)
+params.Q_HTV_initial   = 75 * 3600;   % 初始蓄热量 [MJ_th] (=75 MWh_th, 50% SOC)
 params.T_HTV_max = 573;    % 导热油最高温度 [K]
 params.T_ATV = 298;        % 冷导热油温度 [K]
 

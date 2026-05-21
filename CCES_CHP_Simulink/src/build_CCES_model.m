@@ -418,7 +418,7 @@ function build_storage(parent)
     set_param(b('net_m'), 'Position', [130, 60, 160, 100], 'Inputs', '+-', 'IconShape', 'round');
     add_block('simulink/Continuous/Integrator', b('mass'));
     set_param(b('mass'), 'Position', [240, 60, 290, 100], ...
-        'InitialCondition', '11284');
+        'InitialCondition', '383000');  % 50% SOC ~3.46 MPa
 
     % 潜热 1-D LUT: L_kJkg(T)
     add_block('simulink/Lookup Tables/1-D Lookup Table', b('L_lut'));
@@ -491,7 +491,7 @@ function build_thermal(parent)
 
     add_block('simulink/Continuous/Integrator', b('Q_store'));
     set_param(b('Q_store'), 'Position', [280, 100, 330, 140], ...
-        'InitialCondition', '0');  % HTV 从空开始
+        'InitialCondition', '270000');  % 75 MWh_th = 270000 MJ (50% SOC)
 
     add_block('simulink/Ports & Subsystems/Out1', b('Q_MJ'));
     set_param(b('Q_MJ'), 'Position', [460, 80, 490, 100], 'Port', '1');
@@ -518,11 +518,11 @@ function build_control(parent)
         'Amplitude', '10', 'Period', '86400', ...
         'PulseWidth', '31.25', 'PhaseDelay', '0');
 
-    % Discharge Pulse: 12-17h
+    % Discharge Pulse: 12-15h (3h, 可持续)
     add_block('simulink/Sources/Pulse Generator', b('dis_pulse'));
     set_param(b('dis_pulse'), 'Position', [100, 200, 170, 240], ...
         'Amplitude', '10', 'Period', '86400', ...
-        'PulseWidth', '20.83', 'PhaseDelay', '43200');
+        'PulseWidth', '12.50', 'PhaseDelay', '43200');
 
     % P constraints
     add_block('simulink/Sources/Constant', b('P_max'));
