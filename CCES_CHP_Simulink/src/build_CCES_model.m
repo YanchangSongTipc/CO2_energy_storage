@@ -403,42 +403,56 @@ function build_turb(parent, P_out, eta)
     add_line(parent, 'W_calc/1', 'W_out/1'); add_line(parent, 'm_in/1', 'm_out/1');
 end
 
-% ==================== 储罐 (T=298K恒定, P=mRT/V) ====================
+% ==================== 储罐 (T动态, 随净流量波动, 闲置回298K) ====================
 function build_storage(parent)
     Simulink.SubSystem.deleteContents(parent);
     b = @(n) [parent '/' n];
 
     add_block('simulink/Ports & Subsystems/In1', b('m_dot_in'));
-    set_param(b('m_dot_in'), 'Position', [30, 60, 60, 80], 'Port', '1');
+    set_param(b('m_dot_in'), 'Position', [30, 50, 60, 70], 'Port', '1');
     add_block('simulink/Ports & Subsystems/In1', b('m_dot_out'));
-    set_param(b('m_dot_out'), 'Position', [30, 150, 60, 170], 'Port', '2');
+    set_param(b('m_dot_out'), 'Position', [30, 120, 60, 140], 'Port', '2');
 
+    % 质量积分
     add_block('simulink/Math Operations/Sum', b('net_m'));
-    set_param(b('net_m'), 'Position', [130, 80, 160, 120], 'Inputs', '+-', 'IconShape', 'round');
+    set_param(b('net_m'), 'Position', [130, 60, 160, 100], 'Inputs', '+-', 'IconShape', 'round');
     add_block('simulink/Continuous/Integrator', b('mass'));
-    set_param(b('mass'), 'Position', [230, 80, 280, 120], ...
+    set_param(b('mass'), 'Position', [230, 60, 280, 100], ...
         'InitialCondition', '383000');
 
-    % P = m*R*T/V, T=298K constant
-    add_fcn(parent, 'pressure', 'u*188.9*298/6228/1e6', [380, 80, 460, 120]);
+    % T dynamics: [m_in, m_out, T] → dT/dt
+    add_block('simulink/Signal Routing/Mux', b('mux_t'));
+    set_param(b('mux_t'), 'Inputs', '3', 'Position', [230, 190, 245, 260]);
+    add_block('simulink/User-Defined Functions/Fcn', b('dTdt'));
+    set_param(b('dTdt'), 'Position', [280, 180, 420, 240], ...
+        'Expr', 'u(1)*(298-u(3))/500000 - u(2)*0.00004 + (298-u(3))/100000');
+    add_block('simulink/Continuous/Integrator', b('T_tank'));
+    set_param(b('T_tank'), 'Position', [430, 190, 480, 230], ...
+        'InitialCondition', '298');
+
+    % P = m*R*T/V
+    add_block('simulink/Signal Routing/Mux', b('mux_p'));
+    set_param(b('mux_p'), 'Inputs', '2', 'Position', [370, 55, 385, 95]);
+    add_fcn(parent, 'pressure', 'u(1)*188.9*u(2)/6228/1e6', [420, 55, 500, 105]);
 
     add_block('simulink/Ports & Subsystems/Out1', b('P_MPa'));
-    set_param(b('P_MPa'), 'Position', [560, 60, 590, 80], 'Port', '1');
+    set_param(b('P_MPa'), 'Position', [600, 50, 630, 70], 'Port', '1');
     add_block('simulink/Ports & Subsystems/Out1', b('m_kg'));
-    set_param(b('m_kg'), 'Position', [560, 130, 590, 150], 'Port', '2');
+    set_param(b('m_kg'), 'Position', [600, 120, 630, 140], 'Port', '2');
     add_block('simulink/Ports & Subsystems/Out1', b('T_out'));
-    set_param(b('T_out'), 'Position', [560, 200, 590, 220], 'Port', '3');
-
-    % T constant = 298K
-    add_block('simulink/Sources/Constant', b('T_const'));
-    set_param(b('T_const'), 'Value', '298', 'Position', [380, 180, 420, 200]);
+    set_param(b('T_out'), 'Position', [600, 190, 630, 210], 'Port', '3');
 
     add_line(parent, 'm_dot_in/1', 'net_m/1'); add_line(parent, 'm_dot_out/1', 'net_m/2');
     add_line(parent, 'net_m/1', 'mass/1');
-    add_line(parent, 'mass/1', 'pressure/1');
+    add_line(parent, 'mass/1', 'mux_p/1'); add_line(parent, 'T_tank/1', 'mux_p/2');
+    add_line(parent, 'mux_p/1', 'pressure/1');
     add_line(parent, 'pressure/1', 'P_MPa/1');
     add_line(parent, 'mass/1', 'm_kg/1');
-    add_line(parent, 'T_const/1', 'T_out/1');
+    add_line(parent, 'T_tank/1', 'T_out/1');
+    % T Mux: u1=m_in, u2=m_out, u3=T
+    add_line(parent, 'm_dot_in/1', 'mux_t/1'); add_line(parent, 'm_dot_out/1', 'mux_t/2');
+    add_line(parent, 'T_tank/1', 'mux_t/3');
+    add_line(parent, 'mux_t/1', 'dTdt/1'); add_line(parent, 'dTdt/1', 'T_tank/1');
 end
 
 % ==================== 蓄热 ====================
