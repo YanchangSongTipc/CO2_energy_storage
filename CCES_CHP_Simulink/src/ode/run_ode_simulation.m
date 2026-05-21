@@ -4,6 +4,7 @@
 
 clc; clear; close all;
 addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src')
+addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src/ode')
 
 %% 参数
 V_HPT = 6228;  Rg = 188.9;  T_amb = 298;

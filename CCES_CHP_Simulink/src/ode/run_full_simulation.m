@@ -9,6 +9,7 @@ clc; clear; close all;
 addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox')
 addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox/internal')
 addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src')
+addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src/ode')
 CCES_parameters;
 
 %% 1. 24小时多循环调度场景配置
