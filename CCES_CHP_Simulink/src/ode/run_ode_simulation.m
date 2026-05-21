@@ -5,6 +5,8 @@
 clc; clear; close all;
 addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src')
 addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src/ode')
+addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox')
+addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox/internal')
 
 %% 参数
 V_HPT = 6228;  Rg = 188.9;  T_amb = 298;
@@ -19,10 +21,10 @@ m_HPT_0 = 0.5 * (m_min + m_max);
 x0 = [m_HPT_0; Q_init];
 
 %% 仿真
-dt = 60;  t_sim = 7 * 86400;  tspan = 0:dt:t_sim;
-fprintf('CCES-CHP ODE仿真 (7天): 充电7.5h, 放电3h\n');
+dt = 60;  t_sim = 1 * 86400;  tspan = 0:dt:t_sim;
+fprintf('CCES-CHP ODE仿真 (1天, REFPROP): 充电7.5h, 放电3h\n');
 
-opts = odeset('RelTol', 1e-6, 'MaxStep', 120);
+opts = odeset('RelTol', 1e-4, 'MaxStep', 300);
 [t, x] = ode45(@ode_dynamics, tspan, x0, opts);
 
 %% 后处理
