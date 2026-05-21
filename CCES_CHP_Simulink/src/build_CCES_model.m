@@ -431,10 +431,10 @@ function build_storage(parent)
     set_param(b('mux_t'), 'Inputs', '4', 'Position', [260, 150, 275, 250]);
 
     % dT/dt = (m_in*(298-T) + k_amb*(298-T) - m_out*L*1000/cp) / M_char
-    % M_char=2e6 kg 热惯性, k_amb=0.1 MW/K 环境传热
+    % M_char=2e6 kg, k_amb=0.5 MW/K (增强环境换热, 模拟储罐换热器)
     add_block('simulink/User-Defined Functions/Fcn', b('dTdt'));
-    set_param(b('dTdt'), 'Position', [310, 180, 430, 240], ...
-        'Expr', '(u(1)*(298-u(4))+0.1*(298-u(4))-u(2)*u(3)*1000/2500)/2000000');
+    set_param(b('dTdt'), 'Position', [310, 180, 440, 240], ...
+        'Expr', '(u(1)*(298-u(4))+0.5*(298-u(4))-u(2)*u(3)*1000/2500)/2000000');
 
     add_block('simulink/Continuous/Integrator', b('T_tank'));
     set_param(b('T_tank'), 'Position', [460, 190, 510, 230], ...
