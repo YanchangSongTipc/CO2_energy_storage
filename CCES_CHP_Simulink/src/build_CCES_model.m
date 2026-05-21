@@ -400,34 +400,77 @@ function build_turb(parent, P_out, eta)
     add_line(parent, 'W_calc/1', 'W_out/1'); add_line(parent, 'm_in/1', 'm_out/1');
 end
 
-% ==================== 储罐 ====================
+% ==================== 储罐 (含蒸发降温) ====================
 function build_storage(parent)
     Simulink.SubSystem.deleteContents(parent);
     b = @(n) [parent '/' n];
 
     add_block('simulink/Ports & Subsystems/In1', b('m_dot_in'));
-    set_param(b('m_dot_in'), 'Position', [30, 80, 60, 100], 'Port', '1');
+    set_param(b('m_dot_in'), 'Position', [30, 50, 60, 70], 'Port', '1');
     add_block('simulink/Ports & Subsystems/In1', b('m_dot_out'));
-    set_param(b('m_dot_out'), 'Position', [30, 180, 60, 200], 'Port', '2');
+    set_param(b('m_dot_out'), 'Position', [30, 120, 60, 140], 'Port', '2');
 
+    % 质量积分
     add_block('simulink/Math Operations/Sum', b('net_m'));
-    set_param(b('net_m'), 'Position', [150, 100, 180, 140], 'Inputs', '+-', 'IconShape', 'round');
-
+    set_param(b('net_m'), 'Position', [130, 60, 160, 100], 'Inputs', '+-', 'IconShape', 'round');
     add_block('simulink/Continuous/Integrator', b('mass'));
-    set_param(b('mass'), 'Position', [280, 100, 330, 140], ...
-        'InitialCondition', '11284');  % P_min=0.102MPa → 11284 kg
+    set_param(b('mass'), 'Position', [240, 60, 290, 100], ...
+        'InitialCondition', '11284');
 
-    add_fcn(parent, 'pressure', 'u*188.9*298/6228/1e6', [420, 90, 500, 140]);
+    % 潜热 1-D LUT: L_kJkg(T)
+    add_block('simulink/Lookup Tables/1-D Lookup Table', b('L_lut'));
+    set_param(b('L_lut'), 'Position', [130, 190, 200, 230]);
+    set_param(b('L_lut'), 'Table', 'L_kJkg');
+    set_param(b('L_lut'), 'BreakpointsForDimension1', 'T_sat');
+
+    % Mux: [m_in, m_out, L_kJkg, T] → dTdt Fcn
+    add_block('simulink/Signal Routing/Mux', b('mux_t'));
+    set_param(b('mux_t'), 'Inputs', '4', 'Position', [260, 150, 275, 250]);
+
+    % dT/dt = (m_in*(298-T) + k_amb*(298-T) - m_out*L*1000/cp) / M_char
+    % M_char=2e6 kg 热惯性, k_amb=0.1 MW/K 环境传热
+    add_block('simulink/User-Defined Functions/Fcn', b('dTdt'));
+    set_param(b('dTdt'), 'Position', [310, 180, 430, 240], ...
+        'Expr', '(u(1)*(298-u(4))+0.1*(298-u(4))-u(2)*u(3)*1000/2500)/2000000');
+
+    add_block('simulink/Continuous/Integrator', b('T_tank'));
+    set_param(b('T_tank'), 'Position', [460, 190, 510, 230], ...
+        'InitialCondition', '298');
+
+    % 混合压力: P = m*R*T/V, inputs via Mux
+    add_block('simulink/Signal Routing/Mux', b('mux_p'));
+    set_param(b('mux_p'), 'Inputs', '2', 'Position', [310, 55, 325, 95]);
+    add_block('simulink/User-Defined Functions/Fcn', b('pressure'));
+    set_param(b('pressure'), 'Position', [360, 55, 460, 105], ...
+        'Expr', 'u(1)*188.9*u(2)/6228/1e6');
 
     add_block('simulink/Ports & Subsystems/Out1', b('P_MPa'));
-    set_param(b('P_MPa'), 'Position', [600, 80, 630, 100], 'Port', '1');
+    set_param(b('P_MPa'), 'Position', [640, 60, 670, 80], 'Port', '1');
     add_block('simulink/Ports & Subsystems/Out1', b('m_kg'));
-    set_param(b('m_kg'), 'Position', [600, 180, 630, 200], 'Port', '2');
+    set_param(b('m_kg'), 'Position', [640, 140, 670, 160], 'Port', '2');
+    add_block('simulink/Ports & Subsystems/Out1', b('T_out'));
+    set_param(b('T_out'), 'Position', [640, 220, 670, 240], 'Port', '3');
 
+    % 连线
     add_line(parent, 'm_dot_in/1', 'net_m/1'); add_line(parent, 'm_dot_out/1', 'net_m/2');
     add_line(parent, 'net_m/1', 'mass/1');
-    add_line(parent, 'mass/1', 'pressure/1');
-    add_line(parent, 'pressure/1', 'P_MPa/1'); add_line(parent, 'mass/1', 'm_kg/1');
+    % P = m*R*T/V via Mux: u1=mass, u2=T
+    add_line(parent, 'mass/1', 'mux_p/1');
+    add_line(parent, 'T_tank/1', 'mux_p/2');
+    add_line(parent, 'pressure/1', 'P_MPa/1');
+    add_line(parent, 'mux_p/1', 'pressure/1');
+    try delete_line(parent, 'pressure/1', 'P_MPa/1'); catch; end
+    add_line(parent, 'pressure/1', 'P_MPa/1');
+    add_line(parent, 'mass/1', 'm_kg/1'); add_line(parent, 'T_tank/1', 'T_out/1');
+
+    % Mux: u1=m_in, u2=m_out, u3=L, u4=T
+    add_line(parent, 'm_dot_in/1', 'mux_t/1');
+    add_line(parent, 'm_dot_out/1', 'mux_t/2');
+    add_line(parent, 'T_tank/1', 'L_lut/1');
+    add_line(parent, 'L_lut/1', 'mux_t/3');
+    add_line(parent, 'T_tank/1', 'mux_t/4');
+    add_line(parent, 'mux_t/1', 'dTdt/1');
+    add_line(parent, 'dTdt/1', 'T_tank/1');
 end
 
 % ==================== 蓄热 ====================
