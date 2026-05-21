@@ -29,7 +29,12 @@ Wc = so.yout.get(1).Values.Data;
 Wt = so.yout.get(2).Values.Data;
 P  = so.yout.get(3).Values.Data;
 Q  = so.yout.get(4).Values.Data;
-T_hpt = so.yout.get(5).Values.Data;
+T_hpt_raw = so.yout.get(5).Values.Data;
+if length(T_hpt_raw) == 1
+    T_hpt = T_hpt_raw * ones(size(P));
+else
+    T_hpt = T_hpt_raw;
+end
 
 close_system('CCES_CHP_System', 0);
 
