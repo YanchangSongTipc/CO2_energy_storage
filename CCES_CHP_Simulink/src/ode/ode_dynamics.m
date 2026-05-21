@@ -1,21 +1,20 @@
 function [dx, W_comp, Q_IC, W_turb, Q_HR, T_heat, mode] = ode_dynamics(t, x)
 % REFPROP-based ODE: 每步精确计算物性
-% x(1)=m_HPT [kg], x(2)=Q_HTV [MJ]
+% x(1)=m_HPT [kg], x(2)=Q_HTV [MJ], x(3)=T_tank [K]
 persistent lib Fluid
 
 if isempty(lib)
     lib = '/opt/refprop/';  Fluid = 'CO2';
 end
 
-m_HPT = x(1);  Q_HTV_MJ = x(2);
-T_tank = 298;  % 简化: 恒温 (已讨论过无漂移)
+m_HPT = x(1);  Q_HTV_MJ = x(2);  T_tank = x(3);
 P_MPa = m_HPT * 188.9 * T_tank / 6228 / 1e6;
 
 % 调度
 t_h = mod(t/3600, 24);
 if t_h < 7.5;       mode = 1;
-elseif t_h < 11.5;   mode = 0;  % 闲置 (含4h充放间隔)
-elseif t_h < 14.5;   mode = -1; % 放电3h (11.5-14.5)
+elseif t_h < 11.5;   mode = 0;
+elseif t_h < 14.5;   mode = -1;
 else;                mode = 0;
 end
 
@@ -28,32 +27,37 @@ Q_ok_dis = Q_MWh > 2;
 T_heat = 298 + 185 * Q_MWh / (Q_MWh + 20);
 
 W_design = 10;  % MW
+dT = 0;  % default: no T change (will be overridden)
 
 if mode == 1 && P_ok_ch && Q_ok_ch
     % ===== 充电: 压缩链 C1→IC1→C2→IC2→LHE =====
     [w_comp_kJ, q_IC_kJ] = charge_per_kg(lib, Fluid);
-    m_dot = W_design * 1e6 / (w_comp_kJ * 1000);  % kg/s
+    m_dot = W_design * 1e6 / (w_comp_kJ * 1000);
     dm_HPT = m_dot;
-    dQ_HTV = q_IC_kJ * m_dot / 1000;  % MJ/s = MW_th
+    dQ_HTV = q_IC_kJ * m_dot / 1000;
+    dT = m_dot * (298 - T_tank) / 500000;  % 流入298K CO2温热罐体
     W_comp = W_design;  Q_IC = q_IC_kJ * m_dot / 1000;
     W_turb = 0;  Q_HR = 0;
 
 elseif mode == -1 && P_ok_dis && Q_ok_dis
     % ===== 放电: 膨胀链 T1→Heater→T2 =====
     [w_turb_kJ, q_HR_kJ] = discharge_per_kg(lib, Fluid, T_tank, T_heat);
-    W_T = W_design * w_turb_kJ / charge_per_kg(lib, Fluid); % 等质量流量功率
+    W_T = W_design * w_turb_kJ / charge_per_kg(lib, Fluid);
     m_dot = W_T * 1e6 / (w_turb_kJ * 1000);
     dm_HPT = -m_dot;
     dQ_HTV = -q_HR_kJ * m_dot / 1000;
+    % 蒸发降温: 液态CO2抽出→部分闪蒸→吸收潜热
+    dT = -m_dot * 3e-5;  % K/s, ~3K/h降温
     W_comp = 0;  Q_IC = 0;
     W_turb = W_T;  Q_HR = q_HR_kJ * m_dot / 1000;
 
 else
     dm_HPT = 0;  dQ_HTV = 0;
+    dT = (298 - T_tank) / 50000;  % 环境回温, tau≈14h
     W_comp = 0;  Q_IC = 0;  W_turb = 0;  Q_HR = 0;
 end
 
-dx = [dm_HPT; dQ_HTV];
+dx = [dm_HPT; dQ_HTV; dT];
 end
 
 %% 充电: 返回 [压缩机总功 kJ/kg, IC回收热 kJ/kg]

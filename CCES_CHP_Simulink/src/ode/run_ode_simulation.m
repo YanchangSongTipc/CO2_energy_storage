@@ -18,18 +18,19 @@ Q_init =  75 * 3600;
 
 %% 初始状态
 m_HPT_0 = 0.5 * (m_min + m_max);
-x0 = [m_HPT_0; Q_init];
+T_tank_0 = 298;
+x0 = [m_HPT_0; Q_init; T_tank_0];
 
 %% 仿真
 dt = 60;  t_sim = 1 * 86400;  tspan = 0:dt:t_sim;
-fprintf('CCES-CHP ODE仿真 (1天, REFPROP): 充电7.5h, 放电3h\n');
+fprintf('CCES-CHP ODE仿真 (1天, REFPROP+动态T): 充电7.5h, 放电3h\n');
 
 opts = odeset('RelTol', 1e-4, 'MaxStep', 300);
 [t, x] = ode45(@ode_dynamics, tspan, x0, opts);
 
 %% 后处理
-m_HPT = x(:,1);  Q_HTV = x(:,2);
-P_HPT = m_HPT * Rg * T_amb / V_HPT / 1e6;
+m_HPT = x(:,1);  Q_HTV = x(:,2);  T_tank = x(:,3);
+P_HPT = m_HPT .* Rg .* T_tank / V_HPT / 1e6;
 
 n = length(t);
 W_comp = zeros(n,1);  W_turb = zeros(n,1);
@@ -54,6 +55,7 @@ fprintf('E_charge:    %.1f MWh\n', E_ch);
 fprintf('E_discharge: %.1f MWh\n', E_dis);
 fprintf('RTE:         %.1f %%\n', E_dis/E_ch*100);
 fprintf('P_HPT:  %.2f - %.2f MPa\n', min(P_HPT), max(P_HPT));
+fprintf('T_tank: %.1f - %.1f K\n', min(T_tank), max(T_tank));
 fprintf('Q_HTV:  %.0f - %.0f MWh_th\n', min(Q_HTV)/3600, max(Q_HTV)/3600);
 fprintf('SOC_gas:  %.0f - %.0f %%\n', min(SOC_gas), max(SOC_gas));
 fprintf('SOC_heat: %.0f - %.0f %%\n', min(SOC_heat), max(SOC_heat));
