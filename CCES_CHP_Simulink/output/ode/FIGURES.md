@@ -1,6 +1,6 @@
 # CCES-CHP ODE 仿真图表说明
 
-7 天动态仿真，模型：3 状态 ODE（HPT 质量、HTV 蓄热、储罐温度），物性由 REFPROP 实时计算。
+21 天动态仿真，模型：3 状态 ODE（HPT 质量、HTV 蓄热、储罐温度），物性由 REFPROP 实时计算。
 
 ---
 
