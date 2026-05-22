@@ -61,53 +61,71 @@ fprintf('SOC_gas:  %.0f - %.0f %%\n', min(SOC_gas), max(SOC_gas));
 fprintf('SOC_heat: %.0f - %.0f %%\n', min(SOC_heat), max(SOC_heat));
 fprintf('========================================\n');
 
-%% 可视化
-figure('Name','CCES-CHP ODE Simulation','Color','w','Position',[40,40,1450,750]);
-
-% (a) HPT 压力 + HTV 蓄热
-subplot(2,2,1); hold on; grid on;
-yyaxis left;
-plot(t_day, P_HPT, 'b-', 'LineWidth', 1.5);
-yline(P_max/1e6, 'b--'); yline(P_min/1e6, 'b--');
-ylabel('P_{HPT} (MPa)');
-yyaxis right;
-plot(t_day, Q_HTV/3600, 'r-', 'LineWidth', 1.5);
-ylabel('Q_{HTV} (MWh_{th})');
-xlabel('Time (days)'); title('HPT Pressure & HTV Heat');
-xlim([0 t_sim/86400]);
-
-% (b) 功率
-subplot(2,2,2); hold on; grid on;
-stairs(t_day, W_comp, 'r', 'LineWidth', 1);
-stairs(t_day, W_turb, 'b', 'LineWidth', 1);
-xlabel('Time (days)'); ylabel('Power (MW)');
-title('Power');
-legend('W_{comp}', 'W_{turb}', 'Location', 'best');
-xlim([0 t_sim/86400]);
-
-% (c) Dual SOC
-subplot(2,2,3); hold on; grid on;
-yyaxis left;
-h1 = plot(t_day, SOC_gas, 'b-', 'LineWidth', 1.5);
-ylabel('Gas SOC (%)'); ylim([-5 105]);
-yyaxis right;
-h2 = plot(t_day, SOC_heat, 'r-', 'LineWidth', 1.5);
-ylabel('Heat SOC (%)'); ylim([-5 105]);
-xlabel('Time (days)'); title('Dual SOC');
-legend([h1 h2], {'Gas SOC', 'Heat SOC'}, 'Location', 'best');
-xlim([0 t_sim/86400]);
-
-% (d) 累积能量
-subplot(2,2,4); hold on; grid on;
+outDir = '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode';
 cum_Wc = cumtrapz(t_hr, W_comp);
 cum_Wt = cumtrapz(t_hr, W_turb);
-plot(t_day, cum_Wc, 'r-', 'LineWidth', 2);
-plot(t_day, cum_Wt, 'b-', 'LineWidth', 2);
-xlabel('Time (days)'); ylabel('Cumulative Energy (MWh)');
-title(sprintf('Energy: RTE=%.1f%%', E_dis/E_ch*100));
-legend('E_{comp}', 'E_{turb}', 'Location', 'northwest');
+
+%% Fig 1: HPT 压力 + 温度 (左右双面板)
+figure('Color','w','Position',[60,200,1300,480]);
+subplot(1,2,1); hold on; grid on;
+plot(t_day, P_HPT, 'b-', 'LineWidth', 1.8);
+yline(P_max/1e6, 'r--', 'P_{max} 6.80'); yline(P_min/1e6, 'g--', 'P_{min} 0.10');
+xlabel('Time (days)'); ylabel('Pressure (MPa)');
+title('HPT CO_2 Pressure'); xlim([0 t_sim/86400]);
+
+subplot(1,2,2); hold on; grid on;
+plot(t_day, T_tank, 'r-', 'LineWidth', 1.8);
+yline(298, 'k--', 'T_{amb} 298K');
+xlabel('Time (days)'); ylabel('Temperature (K)');
+title('HPT Tank Temperature'); xlim([0 t_sim/86400]);
+
+sgtitle('HPT Storage State', 'FontSize', 14, 'FontWeight', 'bold');
+saveas(gcf, fullfile(outDir, 'fig01_pressure_temp.png'));
+
+%% Fig 2: 功率 + 累积能量 (上下布局)
+figure('Color','w','Position',[60,200,1000,650]);
+subplot(2,1,1); hold on; grid on;
+stairs(t_day, W_comp, 'r', 'LineWidth', 1.5);
+stairs(t_day, W_turb, 'b', 'LineWidth', 1.5);
+xlabel('Time (days)'); ylabel('Power (MW)');
+title('Compressor & Turbine Power');
+legend('W_{comp} (charge)', 'W_{turb} (discharge)', 'Location', 'best');
 xlim([0 t_sim/86400]);
 
-sgtitle(sprintf('CCES-CHP %.0f-Day Simulation (ODE)', t_sim/86400), 'FontSize', 14, 'FontWeight', 'bold');
-saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode/ode_simulation.png');
-fprintf('Chart saved.\n');
+subplot(2,1,2); hold on; grid on;
+plot(t_day, cum_Wc, 'r-', 'LineWidth', 2);
+plot(t_day, cum_Wt, 'b-', 'LineWidth', 2);
+plot(t_day, cum_Wc - cum_Wt, 'k--', 'LineWidth', 1.2);
+yline(0, 'k-');
+xlabel('Time (days)'); ylabel('Cumulative Energy (MWh)');
+title(sprintf('Energy Balance (RTE = %.1f%%)', E_dis/E_ch*100));
+legend('E_{comp}', 'E_{turb}', 'Net', 'Location', 'northwest');
+xlim([0 t_sim/86400]);
+
+sgtitle('Power & Energy', 'FontSize', 14, 'FontWeight', 'bold');
+saveas(gcf, fullfile(outDir, 'fig02_power_energy.png'));
+
+%% Fig 3: 双 SOC + HTV 蓄热
+figure('Color','w','Position',[60,200,1300,480]);
+subplot(1,2,1); hold on; grid on;
+yyaxis left;
+h1 = plot(t_day, SOC_gas, 'b-', 'LineWidth', 1.8);
+ylabel('Gas SOC (%)'); ylim([-5 105]);
+yyaxis right;
+h2 = plot(t_day, SOC_heat, 'r-', 'LineWidth', 1.8);
+ylabel('Heat SOC (%)'); ylim([-5 105]);
+xlabel('Time (days)'); title('Dual State-of-Charge');
+legend([h1 h2], {'Gas SOC (P_{HPT})', 'Heat SOC (Q_{HTV})'}, 'Location', 'best');
+xlim([0 t_sim/86400]);
+
+subplot(1,2,2); hold on; grid on;
+plot(t_day, Q_HTV/3600, 'r-', 'LineWidth', 1.8);
+yline(150, 'r--', 'Q_{max} 150'); yline(0, 'k--', 'Q_{min} 0');
+xlabel('Time (days)'); ylabel('Q_{HTV} (MWh_{th})');
+title('HTV Thermal Storage');
+xlim([0 t_sim/86400]);
+
+sgtitle('Storage State-of-Charge', 'FontSize', 14, 'FontWeight', 'bold');
+saveas(gcf, fullfile(outDir, 'fig03_soc_heat.png'));
+
+fprintf('Charts saved to %s/\n', outDir);
