@@ -35,7 +35,7 @@ if mode == 1 && P_ok_ch && Q_ok_ch
     m_dot = W_design * 1e6 / (w_comp_kJ * 1000);
     dm_HPT = m_dot;
     dQ_HTV = q_IC_kJ * m_dot / 1000;
-    dT = m_dot * (298 - T_tank) / 500000;  % 流入298K CO2温热罐体
+    dT = (298 - T_tank) / 600;  % 快速热平衡: 流入298K液态CO2直接混合
     W_comp = W_design;  Q_IC = q_IC_kJ * m_dot / 1000;
     W_turb = 0;  Q_HR = 0;
 
