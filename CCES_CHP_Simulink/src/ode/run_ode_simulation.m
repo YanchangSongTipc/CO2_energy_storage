@@ -22,10 +22,10 @@ T_tank_0 = 298;
 x0 = [m_HPT_0; Q_init; T_tank_0];
 
 %% 仿真
-dt = 60;  t_sim = 2 * 86400;  tspan = 0:dt:t_sim;
-fprintf('CCES-CHP ODE仿真 (2天, REFPROP+动态T): 充电7.5h, 放电3h\n');
+dt = 120;  t_sim = 7 * 86400;  tspan = 0:dt:t_sim;
+fprintf('CCES-CHP ODE仿真 (7天, REFPROP+动态T): 充电7.5h, 放电3h\n');
 
-opts = odeset('RelTol', 1e-4, 'MaxStep', 300);
+opts = odeset('RelTol', 1e-4, 'MaxStep', 600);
 [t, x] = ode45(@ode_dynamics, tspan, x0, opts);
 
 %% 后处理
