@@ -6,10 +6,10 @@
 clc; clear; close all;
 
 %% 0. 环境设置
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox')
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox/internal')
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src')
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src/ode')
+
+
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..'))
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..', 'ode'))
 
 %% 1. 负荷与风电数据 (来自论文 Fig. 8)
 % 热负荷 [MW] — 典型供暖日
@@ -295,10 +295,10 @@ title('(h) HTV Thermal Storage');
 xlim([1 24]);
 
 sgtitle('CCES-CHP 24h Dispatch — Paper Load Curves', 'FontSize', 16, 'FontWeight', 'bold');
-saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode/paper_dispatch_results.png');
+saveas(gcf, fullfile(fileparts(mfilename('fullpath')), '../../..', 'output/ode/paper_dispatch_results.png'));
 
 %% 9. 导出数据
-save('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode/paper_dispatch_data.mat', ...
+save(fullfile(fileparts(mfilename('fullpath')), '../../..', 'output/ode/paper_dispatch_data.mat'), ...
      't_hours', 'Heat_Load', 'Elec_Load', 'Wind_Power', ...
      'CCHP_Heat', 'CCHP_Elec', 'Heat_Dispatch', 'Elec_Dispatch', ...
      'W_C_hourly', 'W_T_hourly', 'Q_heat_hourly', 'Mode', ...

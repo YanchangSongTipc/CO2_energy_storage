@@ -6,7 +6,9 @@
 clc; clear; close all;
 
 %% 1. 系统边界条件与设计参数
-libLoc = '/opt/refprop/'; % 请根据您电脑上的实际安装路径修改
+addpath(fullfile(fileparts(mfilename('fullpath')), '..'));
+cfg = config_paths();
+libLoc = cfg.REFPROP_LIB;
 Fluid = 'CO2';
 
 eta_c = 0.85;       % 压气机等熵效率

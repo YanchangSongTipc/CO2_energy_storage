@@ -39,7 +39,9 @@ TEXT_FONT  = {'FontSize', 8};
 %% ========================================================================
 % 1. 系统边界条件与设计参数 (Table 1)
 % =========================================================================
-libLoc = 'D:\Program Files\REFPROP\'; % 请根据您电脑上的实际安装路径修改
+addpath(fullfile(fileparts(mfilename('fullpath')), '..'));  % 根目录
+cfg = config_paths();
+libLoc = cfg.REFPROP_LIB;
 Fluid = 'CO2';
 
 % --- 环境与设计参数 ---

@@ -6,10 +6,10 @@
 clc; clear; close all;
 
 %% 0. 环境与参数加载
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox')
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox/internal')
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src')
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src/ode')
+
+
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..'))
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..', 'ode'))
 CCES_parameters;
 
 %% 1. 24小时多循环调度场景配置
@@ -238,10 +238,10 @@ xlim([0 24]); grid on;
 sgtitle('CCES-CHP System: 24-Hour Multi-Cycle Dynamic Simulation', ...
        'FontSize', 16, 'FontWeight', 'bold');
 
-saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode/24h_simulation_results.png');
+saveas(gcf, fullfile(fileparts(mfilename('fullpath')), '../../..', 'output/ode/24h_simulation_results.png'));
 
 %% 7. 导出数据
-save('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode/24h_simulation_data.mat', ...
+save(fullfile(fileparts(mfilename('fullpath')), '../../..', 'output/ode/24h_simulation_data.mat'), ...
      't_ode', 't_hr', 'm_HPT', 'Q_HTV', 'm_LPT', 'P_HPT', 'P_LPT', ...
      'SOC_gas', 'SOC_heat', 'W_comp', 'W_turb', 'Q_IC', 'Q_HR', ...
      'Q_heat_out', 'mode_hist', 'E_charge_elec', 'E_disch_elec', ...

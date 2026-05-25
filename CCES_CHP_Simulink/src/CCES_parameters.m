@@ -4,7 +4,9 @@
 
 %% 工作流体与物性接口
 params.Fluid = 'CO2';
-params.libLoc = '/opt/refprop/';
+addpath(fullfile(fileparts(mfilename('fullpath')), '..', '..'));
+cfg = config_paths();
+params.libLoc = cfg.REFPROP_LIB;
 
 %% 设计点参数（来自 Cycle.m 标定工况，全部使用 SI 单位）
 params.T_amb   = 298;         % 环境温度 [K]

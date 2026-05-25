@@ -5,6 +5,10 @@
 % =========================================================================
 
 function build_CCES_model()
+    addpath(fullfile(fileparts(mfilename('fullpath')), '..', '..'));
+    cfg = config_paths();
+    libLoc = cfg.REFPROP_LIB;
+
     model = 'CCES_CHP_System';
     if bdIsLoaded(model), close_system(model, 0); end
     new_system(model, 'Model');
@@ -13,10 +17,11 @@ function build_CCES_model()
         'StopTime', '86400', 'StartTime', '0', 'RelTol', '1e-4');
 
     % 加载查找表到 Model Workspace
-    if ~exist('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/REFPROP_lookup.mat', 'file')
+    lutFile = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'data', 'REFPROP_lookup.mat');
+    if ~exist(lutFile, 'file')
         error('请先运行 generate_lookup_tables.m 和 generate_reverse_lookup.m');
     end
-    data = load('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/REFPROP_lookup.mat');
+    data = load(lutFile);
     mw = get_param(model, 'ModelWorkspace');
     for f = fieldnames(data)'
         mw.assignin(f{1}, data.(f{1}));
@@ -123,7 +128,7 @@ function build_CCES_model()
     add_line(model, 'Q_MWh_gain/1', 'Out4/1');
     set_param(model, 'SaveOutput', 'on', 'OutputSaveName', 'yout');
 
-    save_system(model, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/CCES_CHP_System');
+    save_system(model, fullfile(fileparts(mfilename('fullpath')), '..', '..', 'data', 'CCES_CHP_System'));
     fprintf('CCES_CHP_System 构建完成（2-D LUT版本）。\n');
     open_system(model);
 end
@@ -287,7 +292,7 @@ function build_hex(parent, T_out_target)
     set_param(b('m1'), 'Inputs', '2', 'Position', [120, 55, 135, 85]);
     add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_in_fn'));
     set_param(b('h_in_fn'), 'Position', [170, 45, 300, 95], ...
-        'MATLABFcn', 'double(getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI''))');
+        'MATLABFcn', sprintf('double(getFluidProperty(''''%s'''',''''H'''',''''T'''',u(1),''''P'''',u(2),''''CO2'''',1,1,''''MASS BASE SI''''))', libLoc));
 
     add_block('simulink/Sources/Constant', b('T_target'));
     set_param(b('T_target'), 'Value', num2str(T_out_target), 'Position', [120, 120, 160, 140]);
@@ -296,7 +301,7 @@ function build_hex(parent, T_out_target)
     set_param(b('m2'), 'Inputs', '2', 'Position', [200, 115, 215, 145]);
     add_block('simulink/User-Defined Functions/Interpreted MATLAB Function', b('h_out_fn'));
     set_param(b('h_out_fn'), 'Position', [250, 105, 380, 155], ...
-        'MATLABFcn', 'double(getFluidProperty(''/opt/refprop/'',''H'',''T'',u(1),''P'',u(2),''CO2'',1,1,''MASS BASE SI''))');
+        'MATLABFcn', sprintf('double(getFluidProperty(''''%s'''',''''H'''',''''T'''',u(1),''''P'''',u(2),''''CO2'''',1,1,''''MASS BASE SI''''))', libLoc));
 
     add_block('simulink/Signal Routing/Mux', b('m3'));
     set_param(b('m3'), 'Inputs', '3', 'Position', [420, 100, 435, 170]);

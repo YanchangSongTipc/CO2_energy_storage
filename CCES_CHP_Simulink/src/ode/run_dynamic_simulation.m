@@ -6,10 +6,10 @@
 clc; clear; close all;
 
 %% 0. 环境设置
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox')
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox/internal')
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src')
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src/ode')
+
+
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..'))
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..', 'ode'))
 CCES_parameters;
 
 %% 1. 仿真时间轴定义
@@ -177,7 +177,7 @@ title('Dual State of Charge');
 ylim([0 110]); xlim([0 t_total/3600]);
 
 sgtitle('CCES-CHP System Dynamic Simulation', 'FontSize', 16, 'FontWeight', 'bold');
-saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode/dynamic_simulation_results.png');
+saveas(gcf, fullfile(fileparts(mfilename('fullpath')), '../../..', 'output/ode/dynamic_simulation_results.png'));
 
 %% 6. 性能摘要
 fprintf('==================================================================\n');
@@ -199,7 +199,7 @@ fprintf('HTV 蓄热范围:     %.1f - %.1f MWh_th\n', min(Q_HTV)/3600, max(Q_HTV
 fprintf('==================================================================\n');
 
 %% 7. 保存仿真结果
-save('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode/simulation_results.mat', ...
+save(fullfile(fileparts(mfilename('fullpath')), '../../..', 'output/ode/simulation_results.mat'), ...
      't_ode', 'm_HPT', 'Q_HTV', 'm_LPT', 'P_HPT', 'P_LPT', ...
      'W_comp', 'W_turb', 'Q_IC', 'Q_HR', 'SOC_heat', 'SOC_gas', 'mode_hist');
 fprintf('结果已保存至 simulation_results.mat\n');

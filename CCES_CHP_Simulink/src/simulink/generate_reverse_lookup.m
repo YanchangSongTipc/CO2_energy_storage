@@ -4,7 +4,7 @@
 % =========================================================================
 
 fprintf('加载现有查找表...\n');
-load('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/REFPROP_lookup.mat');
+load(fullfile(fileparts(mfilename('fullpath')), '../../..', 'data/REFPROP_lookup.mat'));
 
 %% 1. 定义反向表网格
 % H(P,S) — 等熵过程: 给定 P_out 和 s_in, 返回 h_is
@@ -66,7 +66,7 @@ for i = 1:nH
 end
 
 %% 3. 保存
-save('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/REFPROP_lookup.mat', ...
+save(fullfile(fileparts(mfilename('fullpath')), '../../..', 'data/REFPROP_lookup.mat'), ...
      'T_vec', 'P_vec', 'H_table', 'S_table', 'D_table', 'nT', 'nP', ...
      'S_PS_vec', 'P_PS_vec', 'H_PS_table', ...
      'H_PH_vec', 'P_PH_vec', 'T_PH_table', '-append');

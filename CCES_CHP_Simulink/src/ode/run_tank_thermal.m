@@ -7,13 +7,12 @@
 clc; clear; close all;
 
 %% 0. 环境与参数
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox')
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox/internal')
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src')
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src/ode')
-CCES_parameters;
 
-libLoc = '/opt/refprop/';
+
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..'))
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..', 'ode'))
+CCES_parameters;
+libLoc = params.libLoc;  % 使用统一配置的路径
 Fluid  = 'CO2';
 
 V_HPT = 500;         % m³ (实际罐容)
@@ -277,10 +276,10 @@ legend('Q_{env} (gain)', 'Q_{latent} (evap loss)', 'Location', 'best');
 sgtitle('HPT CO_2 Tank — Evaporative Cooling During Discharge', ...
        'FontSize', 15, 'FontWeight', 'bold');
 
-saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode/tank_thermal_results.png');
+saveas(gcf, fullfile(fileparts(mfilename('fullpath')), '../../..', 'output/ode/tank_thermal_results.png'));
 
 %% 6. 导出数据
-save('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode/tank_thermal_data.mat', ...
+save(fullfile(fileparts(mfilename('fullpath')), '../../..', 'output/ode/tank_thermal_data.mat'), ...
      't_vec', 'T_tank', 'P_tank', 'x_qual', 'm_total', 'm_liq', 'm_vap', ...
      'U_total', 'Q_env', 'h_outflow', 'dT_total', 'dP_total');
 fprintf('数据已导出至 tank_thermal_data.mat\n');

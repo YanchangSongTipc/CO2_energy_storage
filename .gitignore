@@ -1,0 +1,12 @@
+# Local path overrides (not tracked)
+config_local.m
+
+# MATLAB temporary files
+*.asv
+*.m~
+*.slxc
+slprj/
+
+# Python
+__pycache__/
+*.pyc

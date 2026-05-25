@@ -8,7 +8,9 @@
 clc; clear; close all;
 
 %% 1. REFPROP 配置与系统参数 (与 PaperReproduction 一致)
-libLoc = 'D:\Program Files\REFPROP\';
+addpath(fullfile(fileparts(mfilename('fullpath')), '..', '..'));
+cfg = config_paths();
+libLoc = cfg.REFPROP_LIB;
 Fluid = 'CO2';
 
 % 设计参数

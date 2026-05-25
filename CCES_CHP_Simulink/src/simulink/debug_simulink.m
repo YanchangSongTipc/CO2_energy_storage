@@ -5,10 +5,10 @@
 clc; clear; close all;
 
 %% 1. 环境
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox')
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox/internal')
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src')
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src/simulink')
+
+
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..'))
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..', 'simulink'))
 
 
 model = 'CCES_CHP_System';
@@ -25,7 +25,7 @@ end
 
 %% 3. 加载查找表
 fprintf('\n========== 加载查找表 ==========\n');
-lut_file = '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/REFPROP_lookup.mat';
+lut_file = fullfile(fileparts(mfilename('fullpath')), '../../..', 'data/REFPROP_lookup.mat');
 data = load(lut_file);
 mw = get_param(model, 'ModelWorkspace');
 for f = fieldnames(data)'

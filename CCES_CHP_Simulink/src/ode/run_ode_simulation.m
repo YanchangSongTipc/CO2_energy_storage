@@ -3,34 +3,56 @@
 % =========================================================================
 
 clc; clear; close all;
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src')
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src/ode')
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox')
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox/internal')
+rootDir = fullfile(fileparts(mfilename('fullpath')), '..');
+addpath(rootDir);
+addpath(fullfile(rootDir, 'ode'));
+energyRoot = fullfile(fileparts(mfilename('fullpath')), '..', '..');
+addpath(genpath(energyRoot));
+cfg = config_paths();
 
-%% 参数
+%% 参数 (两相储罐: ode_dynamics 启动时自动获取 rho_liq/rho_vap)
 V_HPT = 6228;  Rg = 188.9;  T_amb = 298;
-P_min = 0.102e6;  P_max = 6.80e6;
-m_min = P_min * V_HPT / (Rg * T_amb);
-m_max = P_max * V_HPT / (Rg * T_amb);
+% 用 REFPROP 获取真实液体/气体密度
+rho_liq = getFluidProperty(cfg.REFPROP_LIB, 'D', 'T', T_amb, 'Q', 0, ...
+    'CO2', 1, 1, 'MASS BASE SI');
+rho_vap = getFluidProperty(cfg.REFPROP_LIB, 'D', 'T', T_amb, 'Q', 1, ...
+    'CO2', 1, 1, 'MASS BASE SI');
+m_sat_liq = rho_liq * V_HPT;   % 满液质量
+m_sat_vap = rho_vap * V_HPT;   % 全气相质量
+m_max = m_sat_liq;  m_min = m_sat_vap * 0.3;  % P≈0.2MPa 对应更低密度
+m_HPT_0 = 0.3 * m_sat_liq + 0.7 * m_sat_vap;  % 初始~30%液态充装
 Q_cap  = 150 * 3600;
 Q_init =  75 * 3600;
 
+fprintf('HPT两相模型: rho_liq=%.0f rho_vap=%.0f kg/m3\n', rho_liq, rho_vap);
+fprintf('  m_sat_liq=%.0f  m_sat_vap=%.0f  m_init=%.0f kg\n', m_sat_liq, m_sat_vap, m_HPT_0);
+fprintf('  可充空间: %.0f kg (7.5h需~%.0f kg)\n', m_sat_liq - m_HPT_0, 26.9*7.5*3600);
+
 %% 初始状态
-m_HPT_0 = 0.5 * (m_min + m_max);
 T_tank_0 = 298;
 x0 = [m_HPT_0; Q_init; T_tank_0];
 
 %% 仿真
 dt = 180;  t_sim = 21 * 86400;  tspan = 0:dt:t_sim;
-fprintf('CCES-CHP ODE仿真 (21天, REFPROP+动态T): 充电7.5h, 放电3h\n');
+fprintf('CCES-CHP ODE仿真 (21天, REFPROP+动态T): 充电7.5h, 放电5h\n');
 
 opts = odeset('RelTol', 2e-4, 'MaxStep', 900);
 [t, x] = ode45(@ode_dynamics, tspan, x0, opts);
 
 %% 后处理
 m_HPT = x(:,1);  Q_HTV = x(:,2);  T_tank = x(:,3);
-P_HPT = m_HPT .* Rg .* T_tank / V_HPT / 1e6;
+% 两相模型压力 (与 ode_dynamics 一致)
+P_HPT = zeros(size(m_HPT));
+for i = 1:length(m_HPT)
+    if m_HPT(i) >= m_sat_liq
+        overfill = (m_HPT(i) - m_sat_liq) / m_sat_liq;
+        P_HPT(i) = 6.41 + overfill * 1000;
+    elseif m_HPT(i) > m_sat_vap
+        P_HPT(i) = 6.41;
+    else
+        P_HPT(i) = m_HPT(i) * Rg * T_tank(i) / V_HPT / 1e6;
+    end
+end
 
 n = length(t);
 W_comp = zeros(n,1);  W_turb = zeros(n,1);
@@ -75,7 +97,7 @@ for d = 1:n_days
 end
 fprintf('========================================\n');
 
-outDir = '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode';
+outDir = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'output', 'ode');
 cum_Wc = cumtrapz(t_hr, W_comp);
 cum_Wt = cumtrapz(t_hr, W_turb);
 
@@ -83,7 +105,7 @@ cum_Wt = cumtrapz(t_hr, W_turb);
 figure('Color','w','Position',[60,200,1300,480]);
 subplot(1,2,1); hold on; grid on;
 plot(t_day, P_HPT, 'b-', 'LineWidth', 1.8);
-yline(P_max/1e6, 'r--', 'P_{max} 6.80'); yline(P_min/1e6, 'g--', 'P_{min} 0.10');
+yline(6.80, 'r--', 'P_{max} 6.80'); yline(0.10, 'g--', 'P_{min} 0.10');
 xlabel('Time (days)'); ylabel('Pressure (MPa)');
 title('HPT CO_2 Pressure'); xlim([0 t_sim/86400]);
 

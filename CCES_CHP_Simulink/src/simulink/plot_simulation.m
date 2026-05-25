@@ -2,12 +2,12 @@
 % plot_simulation.m — 24h 仿真结果双 y 轴可视化
 % =========================================================================
 
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src')
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src/simulink')
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox')
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox/internal')
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..'))
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..', 'simulink'))
 
-tmp = load('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/REFPROP_lookup.mat');
+
+
+tmp = load(fullfile(fileparts(mfilename('fullpath')), '../../..', 'data/REFPROP_lookup.mat'));
 fns = fieldnames(tmp);
 for k = 1:length(fns); assignin('base', fns{k}, tmp.(fns{k})); end
 
@@ -100,5 +100,5 @@ legend('E_{comp} (电网入)', 'E_{turb} (发电出)', 'Net (入-出)', 'Locatio
 xlim([0 24]); grid on;
 
 sgtitle('CCES-CHP 24h Dynamic Simulation', 'FontSize', 16, 'FontWeight', 'bold');
-saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/simulink/24h_dual_axis.png');
+saveas(gcf, fullfile(fileparts(mfilename('fullpath')), '../../..', 'output/simulink/24h_dual_axis.png'));
 fprintf('图表已保存。\n');

@@ -2,12 +2,12 @@
 % plot_longterm.m — 7天仿真: HPT温度/压力/效率长期漂移
 % =========================================================================
 
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src')
-addpath('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/src/simulink')
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox')
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox/internal')
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..'))
+addpath(fullfile(fileparts(mfilename('fullpath')), '../../..', 'simulink'))
 
-tmp = load('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/REFPROP_lookup.mat');
+
+
+tmp = load(fullfile(fileparts(mfilename('fullpath')), '../../..', 'data/REFPROP_lookup.mat'));
 fns = fieldnames(tmp);
 for k = 1:length(fns); assignin('base', fns{k}, tmp.(fns{k})); end
 
@@ -131,5 +131,5 @@ sgtitle(sprintf('CCES-CHP 7-Day Long-Term Dynamics (T drift: %.0f K, Capacity: -
     T_avg(1)-T_avg(end), (1-E_c(end)/E_c(1))*100), ...
     'FontSize', 14, 'FontWeight', 'bold');
 
-saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/simulink/7day_longterm.png');
+saveas(gcf, fullfile(fileparts(mfilename('fullpath')), '../../..', 'output/simulink/7day_longterm.png'));
 fprintf('Chart saved to output/7day_longterm.png\n');

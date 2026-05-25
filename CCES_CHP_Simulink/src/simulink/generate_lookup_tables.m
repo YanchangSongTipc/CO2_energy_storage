@@ -3,10 +3,10 @@
 % 基于 REFPROP 生成 T,P → h,s,rho 的二维网格表
 % =========================================================================
 
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox')
-addpath('/home/lab206/code/Matlab/matlab-interface-refprop-coolprop-main/toolbox/internal')
 
-libLoc = '/opt/refprop/';
+addpath(fullfile(fileparts(mfilename('fullpath')), '..', '..'));
+cfg = config_paths();
+libLoc = cfg.REFPROP_LIB;
 Fluid  = 'CO2';
 
 %% 1. 定义物性网格范围
@@ -54,7 +54,7 @@ elapsed = toc(tStart);
 fprintf('\n计算完成，耗时 %.1f 秒\n', elapsed);
 
 %% 4. 保存查找表数据
-save('/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/REFPROP_lookup.mat', ...
+save(fullfile(fileparts(mfilename('fullpath')), '../../..', 'data/REFPROP_lookup.mat'), ...
      'T_vec', 'P_vec', 'H_table', 'S_table', 'D_table', 'nT', 'nP');
 
 fprintf('查找表已保存至 REFPROP_lookup.mat\n');
@@ -86,7 +86,7 @@ legend(arrayfun(@(p) sprintf('%.1f MPa', p), P_vec(P_vec>=2 & P_vec<=7), 'Unifor
        'Location', 'best', 'FontSize', 7);
 grid on;
 
-saveas(gcf, '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/data/lookup_grid_validation.png');
+saveas(gcf, fullfile(fileparts(mfilename('fullpath')), '../../..', 'data/lookup_grid_validation.png'));
 fprintf('验证图已保存\n');
 
 %% 6. 关键状态点对照校验 (与 Cycle.m 结果对比)

@@ -27,7 +27,9 @@
       "Bash(python train_ml_models.py)",
       "Bash(python dispatch_optimization.py)",
       "Bash(python -m pip install --no-cache-dir matplotlib)",
-      "Bash(/opt/MATLAB/R2024a/bin/matlab -batch \"license\\('checkout','Simulink'\\); ver\\('Simulink'\\)\")"
+      "Bash(/opt/MATLAB/R2024a/bin/matlab -batch \"license\\('checkout','Simulink'\\); ver\\('Simulink'\\)\")",
+      "mcp__matlab__evaluate_matlab_code",
+      "mcp__matlab__run_matlab_file"
     ],
     "deny": [
       "Bash(rm -rf:*)",
