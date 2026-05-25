@@ -59,6 +59,20 @@ fprintf('T_tank: %.1f - %.1f K\n', min(T_tank), max(T_tank));
 fprintf('Q_HTV:  %.0f - %.0f MWh_th\n', min(Q_HTV)/3600, max(Q_HTV)/3600);
 fprintf('SOC_gas:  %.0f - %.0f %%\n', min(SOC_gas), max(SOC_gas));
 fprintf('SOC_heat: %.0f - %.0f %%\n', min(SOC_heat), max(SOC_heat));
+fprintf('----------------------------------------\n');
+fprintf('          每日循环能量 (MWh)\n');
+fprintf(' Day   Charge   Disch     RTE   Q_start  Q_end\n');
+n_days = floor(t_sim/86400);
+for d = 1:n_days
+    idx = t_day >= (d-1) & t_day < d;
+    if any(idx)
+        Ec_d = trapz(t_hr(idx), W_comp(idx));
+        Ed_d = trapz(t_hr(idx), W_turb(idx));
+        ii = find(idx);
+        fprintf(' %2d    %6.1f  %6.1f   %5.1f%%   %6.0f  %6.0f\n', ...
+            d, Ec_d, Ed_d, Ed_d/(Ec_d+eps)*100, Q_HTV(ii(1))/3600, Q_HTV(ii(end))/3600);
+    end
+end
 fprintf('========================================\n');
 
 outDir = '/home/lab206/code/CO2_energy_storage/CCES_CHP_Simulink/output/ode';
