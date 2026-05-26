@@ -10,7 +10,7 @@ function cfg = config_paths()
         cfg.OUTPUT_DIR  = fullfile(fileparts(mfilename('fullpath')), 'output_figures');
     elseif isunix  % Ubuntu
         cfg.REFPROP_LIB = '/opt/refprop/';
-        cfg.MATLAB_BIN  = '/usr/local/MATLAB/R2024a/bin/matlab';
+        cfg.MATLAB_BIN  = '/opt/MATLAB/R2024a/bin/matlab';
         cfg.DATA_DIR    = fullfile(fileparts(mfilename('fullpath')), 'data');
         cfg.OUTPUT_DIR  = fullfile(fileparts(mfilename('fullpath')), 'output_figures');
     else

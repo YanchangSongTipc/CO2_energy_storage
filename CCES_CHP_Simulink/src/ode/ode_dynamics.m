@@ -1,36 +1,40 @@
 function [dx, W_comp, Q_IC, W_turb, Q_HR, T_heat, mode] = ode_dynamics(t, x)
 % 两相储罐 ODE: HPT液态CO2 + 饱和压力模型
 % x(1)=m_HPT [kg], x(2)=Q_HTV [MJ], x(3)=T_tank [K]
-persistent lib Fluid rho_liq rho_vap V_HPT P_sat0
+persistent lib Fluid T_sat_vec P_sat_vec V_HPT
 
 if isempty(lib)
     addpath(fullfile(fileparts(mfilename('fullpath')), '..', '..'));
     cfg = config_paths();
     lib = cfg.REFPROP_LIB;  Fluid = 'CO2';
-    % HPT两相参数 (298K参考值)
-    rho_liq = getFP(lib, 'D', 'T', 298, 'Q', 0, Fluid);  % 饱和液密度 kg/m³
-    rho_vap = getFP(lib, 'D', 'T', 298, 'Q', 1, Fluid);  % 饱和汽密度 kg/m³
-    P_sat0  = getFP(lib, 'P', 'T', 298, 'Q', 0, Fluid);  % 饱和压力 Pa
-    V_HPT   = 6228;
-    fprintf('HPT两相模型: rho_liq=%.0f, rho_vap=%.0f kg/m3, P_sat=%.2f MPa\n', ...
-        rho_liq, rho_vap, P_sat0/1e6);
+    V_HPT = 6228;
+    % 预计算饱和曲线 (260-304K)
+    T_sat_vec = (260:0.5:304)';
+    P_sat_vec = zeros(size(T_sat_vec));
+    for i = 1:length(T_sat_vec)
+        P_sat_vec(i) = getFP(lib, 'P', 'T', T_sat_vec(i), 'Q', 0, Fluid);
+    end
+    fprintf('HPT两相模型: P_sat LUT %d pts (%.0f-%.0fK)\n', length(T_sat_vec), T_sat_vec(1), T_sat_vec(end));
 end
 
 m_HPT = x(1);  Q_HTV_MJ = x(2);  T_tank = x(3);
 
-% ==== 两相储罐压力模型 ====
-m_sat_liq = rho_liq * V_HPT;   % 满液质量
-m_sat_vap = rho_vap * V_HPT;   % 全气相质量(饱和态)
+% 当前温度下的饱和压力和密度 (夹在260-304K范围内)
+T_clamp = max(260, min(304, T_tank));
+P_sat_T = interp1(T_sat_vec, P_sat_vec, T_clamp, 'linear');
+rho_liq_T = getFP(lib, 'D', 'T', T_clamp, 'Q', 0, Fluid);
+rho_vap_T = getFP(lib, 'D', 'T', T_clamp, 'Q', 1, Fluid);
+
+% ==== 两相储罐压力模型 (温度相关) ====
+m_sat_liq = rho_liq_T * V_HPT;
+m_sat_vap = rho_vap_T * V_HPT;
 
 if m_HPT >= m_sat_liq
-    % 过满: 纯液相, 不可压缩 → P急剧上升 (按液体压缩性估算 ~0.01 MPa per ‰)
     overfill_frac = (m_HPT - m_sat_liq) / m_sat_liq;
-    P_MPa = P_sat0/1e6 + overfill_frac * 1000;  % 1%满 → +10 MPa
+    P_MPa = P_sat_T/1e6 + overfill_frac * 1000;
 elseif m_HPT > m_sat_vap
-    % 两相区: 压力=饱和压力 (仅由T决定, 与充装量无关)
-    P_MPa = P_sat0 / 1e6;
+    P_MPa = P_sat_T / 1e6;
 else
-    % 液相耗尽, 全气相: 理想气体近似
     P_MPa = m_HPT * 188.9 * T_tank / V_HPT / 1e6;
 end
 
@@ -53,26 +57,28 @@ T_heat = 298 + 185 * Q_MWh / (Q_MWh + 20);
 W_design = 10;  % MW
 
 if mode == 1 && P_ok_ch && Q_ok_ch
-    % ===== 充电: C1→IC1→C2→IC2→LHE =====
+    % ===== 充电 =====
+    alpha_ch = 2.744;  % kg/(s·MW)
+    m_dot = alpha_ch * W_design;                    % 27.44 kg/s
     [w_comp_kJ, q_IC_kJ] = charge_per_kg(lib, Fluid);
-    m_dot = W_design * 1e6 / (w_comp_kJ * 1000);   % kg/s
     dm_HPT = m_dot;
-    dQ_HTV = q_IC_kJ * m_dot / 1000;               % MJ/s
+    dQ_HTV = q_IC_kJ * m_dot / 1000;
     dT = (298 - T_tank) / 600;
-    W_comp = W_design;  Q_IC = q_IC_kJ * m_dot / 1000;
+    W_C_actual = m_dot * w_comp_kJ / 1000;         % ~9.74 MW
+    W_comp = W_C_actual;  Q_IC = q_IC_kJ * m_dot / 1000;
     W_turb = 0;  Q_HR = 0;
 
 elseif mode == -1 && P_ok_dis && Q_ok_dis
-    % ===== 放电: EHE→T1→HR2→T2 =====
+    % ===== 放电: 透平按设计额定功率运行 =====
+    alpha_dis = 4.117;  % kg/(s·MW)
+    W_T_design = 10.12; % MW (Cycle.m: T1 5.49 + T2 4.63)
+    m_dot = alpha_dis * W_T_design;                % ~41.7 kg/s
     [w_turb_kJ, q_HR_kJ] = discharge_per_kg(lib, Fluid, T_tank, T_heat);
-    W_T = W_design * w_turb_kJ / charge_per_kg(lib, Fluid);
-    m_dot = W_T * 1e6 / (w_turb_kJ * 1000);
     dm_HPT = -m_dot;
     dQ_HTV = -q_HR_kJ * m_dot / 1000;
-    % 蒸发降温: 液相抽出→闪蒸
     dT = -m_dot * 3e-5;
     W_comp = 0;  Q_IC = 0;
-    W_turb = W_T;  Q_HR = q_HR_kJ * m_dot / 1000;
+    W_turb = W_T_design;  Q_HR = q_HR_kJ * m_dot / 1000;
 
 else
     % ===== 待机: 环境回温 =====
