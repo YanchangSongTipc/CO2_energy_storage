@@ -19,20 +19,20 @@ end
 
 m_HPT = x(1);  Q_HTV_MJ = x(2);  T_tank = x(3);
 
-% 当前温度下的饱和压力和密度 (夹在260-304K范围内)
+% 当前温度饱和压力 + 密度
 T_clamp = max(260, min(304, T_tank));
 P_sat_T = interp1(T_sat_vec, P_sat_vec, T_clamp, 'linear');
 rho_liq_T = getFP(lib, 'D', 'T', T_clamp, 'Q', 0, Fluid);
 rho_vap_T = getFP(lib, 'D', 'T', T_clamp, 'Q', 1, Fluid);
 
-% ==== 两相储罐压力模型 (温度相关) ====
+% ==== 两相压力: 有液时 P=P_sat(T), 排空时 P=mRT/V ====
 m_sat_liq = rho_liq_T * V_HPT;
 m_sat_vap = rho_vap_T * V_HPT;
 
 if m_HPT >= m_sat_liq
-    overfill_frac = (m_HPT - m_sat_liq) / m_sat_liq;
-    P_MPa = P_sat_T/1e6 + overfill_frac * 1000;
-elseif m_HPT > m_sat_vap
+    overfill = (m_HPT - m_sat_liq) / m_sat_liq;
+    P_MPa = P_sat_T/1e6 + overfill * 1000;
+elseif m_HPT > m_sat_vap * 0.05
     P_MPa = P_sat_T / 1e6;
 else
     P_MPa = m_HPT * 188.9 * T_tank / V_HPT / 1e6;

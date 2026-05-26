@@ -10,23 +10,17 @@ energyRoot = fullfile(fileparts(mfilename('fullpath')), '..', '..');
 addpath(genpath(energyRoot));
 cfg = config_paths();
 
-%% 参数 (两相储罐: ode_dynamics 启动时自动获取 rho_liq/rho_vap)
-V_HPT = 6228;  Rg = 188.9;  T_amb = 298;
-% 用 REFPROP 获取真实液体/气体密度
-rho_liq = getFluidProperty(cfg.REFPROP_LIB, 'D', 'T', T_amb, 'Q', 0, ...
-    'CO2', 1, 1, 'MASS BASE SI');
-rho_vap = getFluidProperty(cfg.REFPROP_LIB, 'D', 'T', T_amb, 'Q', 1, ...
-    'CO2', 1, 1, 'MASS BASE SI');
-m_sat_liq = rho_liq * V_HPT;   % 满液质量
-m_sat_vap = rho_vap * V_HPT;   % 全气相质量
-m_max = m_sat_liq;  m_min = m_sat_vap * 0.3;  % P≈0.2MPa 对应更低密度
-m_HPT_0 = 0.3 * m_sat_liq + 0.7 * m_sat_vap;  % 初始~30%液态充装
+%% 参数 (过冷液态 HPT)
+V_HPT = 6228;  T_amb = 298;
+rho_liq = getFluidProperty(cfg.REFPROP_LIB, 'D', 'T', T_amb, 'P', 6.80e6, ...
+    'CO2', 1, 1, 'MASS BASE SI');  % 过冷液密度 ~713 kg/m3
+m_full = rho_liq * V_HPT;    % 满液质量 ~4,439 t
+m_HPT_0 = 0.5 * m_full;      % 初始50%充装
 Q_cap  = 150 * 3600;
 Q_init =  75 * 3600;
 
-fprintf('HPT两相模型: rho_liq=%.0f rho_vap=%.0f kg/m3\n', rho_liq, rho_vap);
-fprintf('  m_sat_liq=%.0f  m_sat_vap=%.0f  m_init=%.0f kg\n', m_sat_liq, m_sat_vap, m_HPT_0);
-fprintf('  可充空间: %.0f kg (7.5h需~%.0f kg)\n', m_sat_liq - m_HPT_0, 26.9*7.5*3600);
+fprintf('HPT过冷液模型: rho=%.0f kg/m3, 满液=%.0f t, 初始=%.0f t\n', ...
+    rho_liq, m_full/1000, m_HPT_0/1000);
 
 %% 初始状态
 T_tank_0 = 298;
@@ -34,25 +28,16 @@ x0 = [m_HPT_0; Q_init; T_tank_0];
 
 %% 仿真
 dt = 180;  t_sim = 21 * 86400;  tspan = 0:dt:t_sim;
-fprintf('CCES-CHP ODE仿真 (21天, REFPROP+动态T): 充电7.5h, 放电5h\n');
+fprintf('CCES-CHP ODE仿真 (21天): 充电7.5h 放电5h\n');
 
 opts = odeset('RelTol', 2e-4, 'MaxStep', 900);
 [t, x] = ode45(@ode_dynamics, tspan, x0, opts);
 
 %% 后处理
 m_HPT = x(:,1);  Q_HTV = x(:,2);  T_tank = x(:,3);
-% 两相模型压力 (与 ode_dynamics 一致)
-P_HPT = zeros(size(m_HPT));
-for i = 1:length(m_HPT)
-    if m_HPT(i) >= m_sat_liq
-        overfill = (m_HPT(i) - m_sat_liq) / m_sat_liq;
-        P_HPT(i) = 6.41 + overfill * 1000;
-    elseif m_HPT(i) > m_sat_vap
-        P_HPT(i) = 6.41;
-    else
-        P_HPT(i) = m_HPT(i) * Rg * T_tank(i) / V_HPT / 1e6;
-    end
-end
+% HPT压力: 有液时6.80 MPa, 排空时降压
+P_HPT = 6.80 * ones(size(m_HPT));
+P_HPT(m_HPT < m_full * 0.05) = m_HPT(m_HPT < m_full * 0.05) .* 188.9 .* T_tank(m_HPT < m_full * 0.05) / V_HPT / 1e6;
 
 n = length(t);
 W_comp = zeros(n,1);  W_turb = zeros(n,1);
@@ -69,7 +54,7 @@ t_day = t / 86400;
 t_hr  = t / 3600;
 E_ch = trapz(t_hr, W_comp);
 E_dis = trapz(t_hr, W_turb);
-SOC_gas = (m_HPT - m_min) / (m_max - m_min) * 100;
+SOC_gas = m_HPT / m_full * 100;  % 充装率%
 SOC_heat = Q_HTV / Q_cap * 100;
 
 fprintf('========================================\n');
@@ -105,7 +90,7 @@ cum_Wt = cumtrapz(t_hr, W_turb);
 figure('Color','w','Position',[60,200,1300,480]);
 subplot(1,2,1); hold on; grid on;
 plot(t_day, P_HPT, 'b-', 'LineWidth', 1.8);
-yline(6.80, 'r--', 'P_{max} 6.80'); yline(0.10, 'g--', 'P_{min} 0.10');
+yline(6.80, 'r--', 'P_{design} 6.80');
 xlabel('Time (days)'); ylabel('Pressure (MPa)');
 title('HPT CO_2 Pressure'); xlim([0 t_sim/86400]);
 
