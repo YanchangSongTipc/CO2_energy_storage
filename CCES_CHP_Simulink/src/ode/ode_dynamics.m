@@ -1,93 +1,91 @@
 function [dx, W_comp, Q_IC, W_turb, Q_HR, T_heat, mode] = ode_dynamics(t, x)
-% 两相储罐 ODE: HPT液态CO2 + 饱和压力模型
-% x(1)=m_HPT [kg], x(2)=Q_HTV [MJ], x(3)=T_tank [K]
-persistent lib Fluid T_sat_vec P_sat_vec V_HPT
+% 两相HPT + 导热油HTV详细模型
+% x(1)=m_HPT [kg], x(2)=T_HTV [K], x(3)=T_tank [K]
+persistent lib Fluid T_sat_vec P_sat_vec V_HPT mcp_oil UA_loss T_amb T_max
 
 if isempty(lib)
     addpath(fullfile(fileparts(mfilename('fullpath')), '..', '..'));
     cfg = config_paths();
     lib = cfg.REFPROP_LIB;  Fluid = 'CO2';
-    V_HPT = 6228;
-    % 预计算饱和曲线 (260-304K)
+    V_HPT = 6228;  T_amb = 298;  T_max = 573;
+    % HPT 饱和曲线 LUT
     T_sat_vec = (260:0.5:304)';
     P_sat_vec = zeros(size(T_sat_vec));
     for i = 1:length(T_sat_vec)
         P_sat_vec(i) = getFP(lib, 'P', 'T', T_sat_vec(i), 'Q', 0, Fluid);
     end
-    fprintf('HPT两相模型: P_sat LUT %d pts (%.0f-%.0fK)\n', length(T_sat_vec), T_sat_vec(1), T_sat_vec(end));
+    % HTV 导热油: Q_cap=150MWh_th, ΔT_max=275K, m*cp=Q_cap/ΔT
+    mcp_oil = 150*3600 / (T_max - T_amb);  % ≈1964 MJ/K
+    UA_loss = 0.005;  % MW/K, 工业保温罐散热系数
+    fprintf('HTV导热油: m*cp=%.0f MJ/K, Tmax=%.0fK, UA=%.3f MW/K\n', mcp_oil, T_max, UA_loss);
+    fprintf('HPT两相: P_sat LUT %dpts (%.0f-%.0fK)\n', length(T_sat_vec), T_sat_vec(1), T_sat_vec(end));
 end
 
-m_HPT = x(1);  Q_HTV_MJ = x(2);  T_tank = x(3);
+m_HPT = x(1);  T_HTV = x(2);  T_tank = x(3);
+Q_HTV_MJ = mcp_oil * max(0, T_HTV - T_amb);  % 蓄热量 [MJ]
 
-% 当前温度饱和压力 + 密度
+% HPT 两相压力
 T_clamp = max(260, min(304, T_tank));
 P_sat_T = interp1(T_sat_vec, P_sat_vec, T_clamp, 'linear');
 rho_liq_T = getFP(lib, 'D', 'T', T_clamp, 'Q', 0, Fluid);
 rho_vap_T = getFP(lib, 'D', 'T', T_clamp, 'Q', 1, Fluid);
-
-% ==== 两相压力: 有液时 P=P_sat(T), 排空时 P=mRT/V ====
 m_sat_liq = rho_liq_T * V_HPT;
 m_sat_vap = rho_vap_T * V_HPT;
-
 if m_HPT >= m_sat_liq
-    overfill = (m_HPT - m_sat_liq) / m_sat_liq;
-    P_MPa = P_sat_T/1e6 + overfill * 1000;
+    P_MPa = P_sat_T/1e6 + (m_HPT - m_sat_liq)/m_sat_liq * 1000;
 elseif m_HPT > m_sat_vap * 0.05
     P_MPa = P_sat_T / 1e6;
 else
     P_MPa = m_HPT * 188.9 * T_tank / V_HPT / 1e6;
 end
 
-% ==== 调度 (每日循环: 充电7.5h + 放电5h) ====
+% 调度
 t_h = mod(t/3600, 24);
-if t_h < 7.5;       mode = 1;   % 充电
-elseif t_h < 11.5;   mode = 0;   % 待机
-elseif t_h < 16.5;   mode = -1;  % 放电 (3h→5h)
-else;                mode = 0;   % 待机
+if t_h < 7.5;       mode = 1;
+elseif t_h < 11.5;   mode = 0;
+elseif t_h < 16.5;   mode = -1;
+else;                mode = 0;
 end
 
-% ==== 约束条件 ====
-Q_MWh = max(0, Q_HTV_MJ/3600);
-P_ok_ch  = m_HPT < m_sat_liq * 0.995;    % 不满液时可充
-P_ok_dis = m_HPT > m_sat_vap * 1.05;     % 有液相时可放
-Q_ok_ch  = Q_MWh < 148;
-Q_ok_dis = Q_MWh > 2;
-T_heat = 298 + 185 * Q_MWh / (Q_MWh + 20);
-
-W_design = 10;  % MW
+% 约束 (基于油温)
+P_ok_ch  = m_HPT < m_sat_liq * 0.995;
+P_ok_dis = m_HPT > m_sat_vap * 1.05;
+Q_ok_ch  = T_HTV < T_max - 5;
+Q_ok_dis = T_HTV > T_amb + 10;
+T_heat = max(T_amb, min(T_max, T_HTV));  % CO2加热=当前油温
 
 if mode == 1 && P_ok_ch && Q_ok_ch
     % ===== 充电 =====
-    alpha_ch = 2.744;  % kg/(s·MW)
-    m_dot = alpha_ch * W_design;                    % 27.44 kg/s
-    [w_comp_kJ, q_IC_kJ] = charge_per_kg(lib, Fluid);
+    alpha_ch = 2.744;  m_dot = alpha_ch * 10;
+    [~, q_IC_kJ] = charge_per_kg(lib, Fluid);
     dm_HPT = m_dot;
-    dQ_HTV = q_IC_kJ * m_dot / 1000;
-    dT = (298 - T_tank) / 600;
-    W_C_actual = m_dot * w_comp_kJ / 1000;         % ~9.74 MW
-    W_comp = W_C_actual;  Q_IC = q_IC_kJ * m_dot / 1000;
-    W_turb = 0;  Q_HR = 0;
+    Q_IC_MW = q_IC_kJ * m_dot / 1000;
+    dT_HTV = (Q_IC_MW - UA_loss*(T_HTV-T_amb)) / mcp_oil;
+    dT_tank = (298 - T_tank) / 600;
+    W_comp = m_dot * charge_per_kg(lib, Fluid) / 1000;  % MW
+    Q_IC = Q_IC_MW;  W_turb = 0;  Q_HR = 0;
 
 elseif mode == -1 && P_ok_dis && Q_ok_dis
-    % ===== 放电: 透平按设计额定功率运行 =====
-    alpha_dis = 4.117;  % kg/(s·MW)
-    W_T_design = 10.12; % MW (Cycle.m: T1 5.49 + T2 4.63)
-    m_dot = alpha_dis * W_T_design;                % ~41.7 kg/s
-    [w_turb_kJ, q_HR_kJ] = discharge_per_kg(lib, Fluid, T_tank, T_heat);
+    % ===== 放电 =====
+    alpha_dis = 4.117;  W_T = 10.12;
+    m_dot = alpha_dis * W_T;
+    [~, q_HR_kJ] = discharge_per_kg(lib, Fluid, T_tank, T_heat);
     dm_HPT = -m_dot;
-    dQ_HTV = -q_HR_kJ * m_dot / 1000;
-    dT = -m_dot * 3e-5;
+    Q_HR_MW = q_HR_kJ * m_dot / 1000;
+    dT_HTV = (-Q_HR_MW - UA_loss*(T_HTV-T_amb)) / mcp_oil;
+    dT_tank = -m_dot * 3e-5;
     W_comp = 0;  Q_IC = 0;
-    W_turb = W_T_design;  Q_HR = q_HR_kJ * m_dot / 1000;
+    W_turb = W_T;  Q_HR = Q_HR_MW;
 
 else
-    % ===== 待机: 环境回温 =====
-    dm_HPT = 0;  dQ_HTV = 0;
-    dT = (298 - T_tank) / 50000;
+    % ===== 待机 =====
+    dm_HPT = 0;
+    dT_HTV = -UA_loss*(T_HTV-T_amb) / mcp_oil;
+    dT_tank = (T_amb - T_tank) / 50000;
     W_comp = 0;  Q_IC = 0;  W_turb = 0;  Q_HR = 0;
 end
 
-dx = [dm_HPT; dQ_HTV; dT];
+dx = [dm_HPT; dT_HTV; dT_tank];
 end
 
 %% ==== 充电: 单位工质压缩机总功 + IC回收热 [kJ/kg] ====
