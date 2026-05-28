@@ -1,17 +1,13 @@
 function [dx, W_comp, Q_IC, W_turb, Q_HR, T_heat, mode] = ode_dynamics(t, x)
 % HPT + 双罐HTV (充电8h固定, 放电时长可调)
 % x(1)=m_HPT [kg], x(2)=V_hot [m³], x(3)=T_tank [K]
-persistent lib Fluid T_sat_vec P_sat_vec V_HPT rho_cp T_hot T_cold V_total a_ch a_dis Wc Wt t_chg t_disch
+persistent lib Fluid V_HPT rho_cp T_hot T_cold V_total a_ch a_dis Wc Wt t_chg t_disch
 
 if isempty(lib)
     addpath(fullfile(fileparts(mfilename('fullpath')), '..', '..'));
     cfg=config_paths(); lib=cfg.REFPROP_LIB; Fluid='CO2';
     V_HPT=6228; T_hot=483; T_cold=298; rho_cp=850*2.5;
     V_total=150*3600*1000/(rho_cp*(T_hot-T_cold));
-    T_sat_vec=(260:0.5:304)'; P_sat_vec=zeros(size(T_sat_vec));
-    for i=1:length(T_sat_vec)
-        P_sat_vec(i)=getFP(lib,'P','T',T_sat_vec(i),'Q',0,Fluid);
-    end
     a_ch=2.744; a_dis=4.117; Wc=9.74; Wt=10.12;
     t_chg=8.0; t_disch=4.0;  % 充电8h, 放电4h (可调)
     fprintf('HTV: Th=%.0fK V=%.0fm3 | 充电%.1fh 放电%.1fh\n',T_hot,V_total,t_chg,t_disch);
@@ -19,14 +15,9 @@ end
 
 m_HPT=x(1); V_hot=max(0,min(V_total,x(2))); T_tank=x(3);
 
-% HPT压力
-Tc=max(260,min(304,T_tank)); Ps=interp1(T_sat_vec,P_sat_vec,Tc,'linear');
-rl=getFP(lib,'D','T',Tc,'Q',0,Fluid); rv=getFP(lib,'D','T',Tc,'Q',1,Fluid);
+% HPT约束边界 (饱和密度近似298K定值, 避免每步REFPROP)
+rl=getFP(lib,'D','T',298,'Q',0,Fluid); rv=getFP(lib,'D','T',298,'Q',1,Fluid);
 msl=rl*V_HPT; msv=rv*V_HPT;
-if m_HPT>=msl,       P_MPa=Ps/1e6+(m_HPT-msl)/msl*1000;
-elseif m_HPT>msv*.05, P_MPa=Ps/1e6;
-else,                 P_MPa=m_HPT*188.9*T_tank/V_HPT/1e6;
-end
 
 % 调度
 t_h=mod(t/3600,24);  t_idle=(24-t_chg-t_disch)/2;
