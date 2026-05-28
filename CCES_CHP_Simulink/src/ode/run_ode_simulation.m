@@ -39,9 +39,25 @@ m_HPT = x(:,1);  V_hot = x(:,2);  T_tank = x(:,3);
 Th=573; Tc=298;
 Q_HTV = V_hot * 850 * 2.5 * (Th - Tc) / 1000;  % [MJ], kJ→MJ
 Q_cap = 150 * 3600;
-% P_HPT: 简化两相近似 (HPT约束仅用于绘参考)
-P_HPT = 6.41 * ones(size(m_HPT));  % P_sat(298K) 两相区恒定
-P_HPT(m_HPT < 1e5) = m_HPT(m_HPT < 1e5) .* 188.9 .* T_tank(m_HPT < 1e5) / V_HPT / 1e6;
+% P_HPT: P_sat(T_tank) 两相压力 (仅绘图, 不参与动力学)
+T_sat_v = (260:0.5:304)';  P_sat_v = zeros(size(T_sat_v));
+for i=1:length(T_sat_v)
+    P_sat_v(i)=getFluidProperty(cfg.REFPROP_LIB,'P','T',T_sat_v(i),'Q',0,'CO2',1,1,'MASS BASE SI');
+end
+P_HPT = zeros(size(m_HPT));
+for i = 1:length(m_HPT)
+    Tc = max(260, min(304, T_tank(i)));
+    Ps = interp1(T_sat_v, P_sat_v, Tc, 'linear');
+    rl = getFluidProperty(cfg.REFPROP_LIB,'D','T',298,'Q',0,'CO2',1,1,'MASS BASE SI');
+    rv = getFluidProperty(cfg.REFPROP_LIB,'D','T',298,'Q',1,'CO2',1,1,'MASS BASE SI');
+    if m_HPT(i) >= rl*V_HPT
+        P_HPT(i) = Ps/1e6 + (m_HPT(i)-rl*V_HPT)/(rl*V_HPT)*1000;
+    elseif m_HPT(i) > rv*V_HPT*0.05
+        P_HPT(i) = Ps/1e6;
+    else
+        P_HPT(i) = m_HPT(i)*188.9*T_tank(i)/V_HPT/1e6;
+    end
+end
 
 n = length(t);
 W_comp = zeros(n,1);  W_turb = zeros(n,1);

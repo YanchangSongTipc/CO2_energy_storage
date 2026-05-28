@@ -15,7 +15,9 @@ end
 
 m_HPT=x(1); V_hot=max(0,min(V_total,x(2))); T_tank=x(3);
 
-% HPT约束边界 (饱和密度近似298K定值, 避免每步REFPROP)
+% HPT约束边界 (密度近似298K定值, 仅用于约束判定)
+% 动力学不依赖精确P_HPT, 约束基于m_HPT直接比较
+% P_HPT的P_sat(T)两相计算仅在run脚本绘图中使用
 rl=getFP(lib,'D','T',298,'Q',0,Fluid); rv=getFP(lib,'D','T',298,'Q',1,Fluid);
 msl=rl*V_HPT; msv=rv*V_HPT;
 
