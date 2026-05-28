@@ -1,87 +1,71 @@
 function [dx, W_comp, Q_IC, W_turb, Q_HR, T_heat, mode] = ode_dynamics(t, x)
-% HPT + 双罐HTV (充电8h固定, 放电时长可调)
-% x(1)=m_HPT [kg], x(2)=V_hot [m³], x(3)=T_tank [K]
-persistent lib Fluid V_HPT rho_cp T_hot T_cold V_total a_ch a_dis Wc Wt t_chg t_disch P_sat_LUT T_LUT
-
-if isempty(lib)
+persistent p
+if isempty(p)
     addpath(fullfile(fileparts(mfilename('fullpath')), '..', '..'));
-    cfg=config_paths(); lib=cfg.REFPROP_LIB; Fluid='CO2';
-    V_HPT=6228; T_hot=483; T_cold=298; rho_cp=850*2.5;
-    V_total=150*3600*1000/(rho_cp*(T_hot-T_cold));
-    T_LUT=(260:0.5:304)'; P_sat_LUT=zeros(size(T_LUT));
-    for i=1:length(T_LUT)
-        P_sat_LUT(i)=getFP(lib,'P','T',T_LUT(i),'Q',0,Fluid);
-    end
-    a_ch=2.744; a_dis=4.117; Wc=9.74; Wt=10.12;
-    t_chg=8.0; t_disch=4.0;
-    fprintf('HTV: Th=%.0fK V=%.0fm3 | 充%.1fh 放%.1fh | P_sat LUT %dpts\n',...
-        T_hot,V_total,t_chg,t_disch,length(T_LUT));
+    cfg=config_paths();
+    p.lib=cfg.REFPROP_LIB; p.Fluid='CO2';
+    p.V_HPT=6228; p.Th=406; p.Tc=298; p.rho_cp=850*2.5;
+    p.Vt=150*3600*1000/(p.rho_cp*(p.Th-p.Tc));
+    p.ac=2.744; p.ad=4.117; p.Wc=7.60; p.Wt=8.42;
+    p.tc=8.0; p.td=4.0;
+    p.rl=getFP(p.lib,'D','T',298,'Q',0,p.Fluid);
+    p.rv=getFP(p.lib,'D','T',298,'Q',1,p.Fluid);
+    p.msl=p.rl*p.V_HPT; p.msv=p.rv*p.V_HPT;
+    fprintf('平衡点: Th=%.0fK | Wc=%.1f Wt=%.1f MW | %.0fh/%.0fh\n',p.Th,p.Wc,p.Wt,p.tc,p.td);
 end
 
-m_HPT=x(1); V_hot=max(0,min(V_total,x(2))); T_tank=x(3);
-
-% HPT两相约束边界 (精确: T相关密度)
-Tc=max(260,min(304,T_tank));
-rl=getFP(lib,'D','T',Tc,'Q',0,Fluid); rv=getFP(lib,'D','T',Tc,'Q',1,Fluid);
-msl=rl*V_HPT; msv=rv*V_HPT;
+m=p.rl(1); Vh=max(0,min(p.Vt(1),x(2))); Tt=x(3);  %#ok<NASGU>
 
 % 调度
-t_h=mod(t/3600,24);  t_idle=(24-t_chg-t_disch)/2;
-if t_h<t_chg; mode=1;
-elseif t_h<t_chg+t_idle; mode=0;
-elseif t_h<t_chg+t_idle+t_disch; mode=-1;
-else; mode=0;
-end
+th=mod(t/3600,24); ti=(24-p.tc-p.td)/2;
+if th<p.tc; mode=1; elseif th<p.tc+ti; mode=0; elseif th<p.tc+ti+p.td; mode=-1; else; mode=0; end
 
-P_ok_ch=m_HPT<msl*.995; P_ok_dis=m_HPT>msv*1.05;
-Q_ok_ch=V_hot<V_total*.90; Q_ok_dis=V_hot>V_total*.10;
-T_heat=T_hot;
+% 约束
+ok_c=(m<p.msl*.995)&&(Vh<p.Vt*.90);
+ok_d=(m>p.msv*1.05)&&(Vh>p.Vt*.10);
 
-if mode==1 && P_ok_ch && Q_ok_ch
-    m_dot=a_ch*Wc; dm_HPT=m_dot;
-    [~,q_IC_kJ]=charge_per_kg(lib,Fluid);
-    Q_IC_MW=q_IC_kJ*m_dot/1000; dV_hot=Q_IC_MW*1000/(rho_cp*(T_hot-T_cold));
-    dT_tank=(298-T_tank)/600; W_comp=Wc; Q_IC=Q_IC_MW; W_turb=0; Q_HR=0;
-elseif mode==-1 && P_ok_dis && Q_ok_dis
-    m_dot=a_dis*Wt; dm_HPT=-m_dot;
-    [~,q_HR_kJ]=discharge_per_kg(lib,Fluid,T_tank,T_heat);
-    Q_HR_MW=q_HR_kJ*m_dot/1000; dV_hot=-Q_HR_MW*1000/(rho_cp*(T_hot-T_cold));
-    dT_tank=-m_dot*3e-5; W_comp=0; Q_IC=0; W_turb=Wt; Q_HR=Q_HR_MW;
+if mode==1 && ok_c
+    md=p.ac*p.Wc; dm=md;
+    [~,qi]=charge_per_kg(p.lib,p.Fluid); Qic=qi*md/1000;
+    dV=Qic*1000/(p.rho_cp*(p.Th-p.Tc));
+    dT=(298-Tt)/600; Wc=p.Wc; Qi=Qic; Wt=0; Qr=0;
+elseif mode==-1 && ok_d
+    md=p.ad*p.Wt; dm=-md;
+    [~,qr]=discharge_per_kg(p.lib,p.Fluid,Tt,p.Th); Qr=qr*md/1000;
+    dV=-Qr*1000/(p.rho_cp*(p.Th-p.Tc));
+    dT=-md*3e-5; Wc=0; Qi=0; Wt=p.Wt; Wr=Qr; %#ok<NASGU>
 else
-    dm_HPT=0; dV_hot=0; dT_tank=(298-T_tank)/50000;
-    W_comp=0; Q_IC=0; W_turb=0; Q_HR=0;
+    dm=0; dV=0; dT=(298-Tt)/50000; Wc=0; Qi=0; Wt=0; Qr=0;
 end
-dx=[dm_HPT; dV_hot; dT_tank];
+dx=[dm; dV; dT]; W_comp=Wc; Q_IC=Qi; W_turb=Wt; Q_HR=Qr; T_heat=p.Th;
 end
 
-function [w_comp,q_IC]=charge_per_kg(lib,Fluid)
-persistent wc qic
-if isempty(wc)
-    eta_c=0.85; h1=getFP(lib,'H','T',298,'P',0.102e6,Fluid);
+function [wc,qi]=charge_per_kg(lib,Fluid)
+persistent w q
+if isempty(w)
+    e=0.85; h1=getFP(lib,'H','T',298,'P',0.102e6,Fluid);
     s1=getFP(lib,'S','T',298,'P',0.102e6,Fluid);
-    h2is=getFP(lib,'H','P',0.90e6,'S',s1,Fluid); h2=h1+(h2is-h1)/eta_c;
+    h2is=getFP(lib,'H','P',0.90e6,'S',s1,Fluid); h2=h1+(h2is-h1)/e;
     h3=getFP(lib,'H','T',308,'P',0.85e6,Fluid);
     s3=getFP(lib,'S','T',308,'P',0.85e6,Fluid);
-    h4is=getFP(lib,'H','P',6.90e6,'S',s3,Fluid); h4=h3+(h4is-h3)/eta_c;
+    h4is=getFP(lib,'H','P',6.90e6,'S',s3,Fluid); h4=h3+(h4is-h3)/e;
     h5=getFP(lib,'H','T',309,'P',6.85e6,Fluid);
-    wc=(h2-h1+h4-h3)/1000; qic=(h2-h3+h4-h5)/1000;
+    w=(h2-h1+h4-h3)/1000; q=(h2-h3+h4-h5)/1000;
 end
-w_comp=wc; q_IC=qic;
-end
-
-function [w_turb,q_HR]=discharge_per_kg(lib,Fluid,T_tank,T_heat)
-    eta_t=0.88; h_hpt=getFP(lib,'H','T',T_tank,'P',6.65e6,Fluid);
-    h_t1in=getFP(lib,'H','T',T_heat,'P',6.50e6,Fluid);
-    q_pre=(h_t1in-h_hpt)/1000; s1=getFP(lib,'S','T',T_heat,'P',6.50e6,Fluid);
-    h1is=getFP(lib,'H','P',0.70e6,'S',s1,Fluid);
-    h1out=h_t1in-eta_t*(h_t1in-h1is); w_t1=(h_t1in-h1out)/1000;
-    h_t2in=getFP(lib,'H','T',T_heat,'P',0.65e6,Fluid);
-    q_re=(h_t2in-h1out)/1000; s2=getFP(lib,'S','T',T_heat,'P',0.65e6,Fluid);
-    h2is=getFP(lib,'H','P',0.12e6,'S',s2,Fluid);
-    h2out=h_t2in-eta_t*(h_t2in-h2is); w_t2=(h_t2in-h2out)/1000;
-    w_turb=w_t1+w_t2; q_HR=q_pre+q_re;
+wc=w; qi=q;
 end
 
-function val=getFP(lib,prop,varargin)
-    args=[varargin,{1,1,'MASS BASE SI'}]; val=getFluidProperty(lib,prop,args{:});
+function [wt,qr]=discharge_per_kg(lib,Fluid,Tt,Th)
+    e=0.88; hh=getFP(lib,'H','T',Tt,'P',6.65e6,Fluid);
+    ht1=getFP(lib,'H','T',Th,'P',6.50e6,Fluid);
+    qp=(ht1-hh)/1000; s1=getFP(lib,'S','T',Th,'P',6.50e6,Fluid);
+    h1is=getFP(lib,'H','P',0.70e6,'S',s1,Fluid); h1o=ht1-e*(ht1-h1is);
+    w1=(ht1-h1o)/1000; ht2=getFP(lib,'H','T',Th,'P',0.65e6,Fluid);
+    qr2=(ht2-h1o)/1000; s2=getFP(lib,'S','T',Th,'P',0.65e6,Fluid);
+    h2is=getFP(lib,'H','P',0.12e6,'S',s2,Fluid); h2o=ht2-e*(ht2-h2is);
+    w2=(ht2-h2o)/1000; wt=w1+w2; qr=qp+qr2;
+end
+
+function v=getFP(lib,prop,varargin)
+    args=[varargin,{1,1,'MASS BASE SI'}]; v=getFluidProperty(lib,prop,args{:});
 end
