@@ -1,24 +1,28 @@
 function [dx, W_comp, Q_IC, W_turb, Q_HR, T_heat, mode] = ode_dynamics(t, x)
 % HPT + 双罐HTV (充电8h固定, 放电时长可调)
 % x(1)=m_HPT [kg], x(2)=V_hot [m³], x(3)=T_tank [K]
-persistent lib Fluid V_HPT rho_cp T_hot T_cold V_total a_ch a_dis Wc Wt t_chg t_disch
+persistent lib Fluid V_HPT rho_cp T_hot T_cold V_total a_ch a_dis Wc Wt t_chg t_disch P_sat_LUT T_LUT
 
 if isempty(lib)
     addpath(fullfile(fileparts(mfilename('fullpath')), '..', '..'));
     cfg=config_paths(); lib=cfg.REFPROP_LIB; Fluid='CO2';
     V_HPT=6228; T_hot=483; T_cold=298; rho_cp=850*2.5;
     V_total=150*3600*1000/(rho_cp*(T_hot-T_cold));
+    T_LUT=(260:0.5:304)'; P_sat_LUT=zeros(size(T_LUT));
+    for i=1:length(T_LUT)
+        P_sat_LUT(i)=getFP(lib,'P','T',T_LUT(i),'Q',0,Fluid);
+    end
     a_ch=2.744; a_dis=4.117; Wc=9.74; Wt=10.12;
-    t_chg=8.0; t_disch=4.0;  % 充电8h, 放电4h (可调)
-    fprintf('HTV: Th=%.0fK V=%.0fm3 | 充电%.1fh 放电%.1fh\n',T_hot,V_total,t_chg,t_disch);
+    t_chg=8.0; t_disch=4.0;
+    fprintf('HTV: Th=%.0fK V=%.0fm3 | 充%.1fh 放%.1fh | P_sat LUT %dpts\n',...
+        T_hot,V_total,t_chg,t_disch,length(T_LUT));
 end
 
 m_HPT=x(1); V_hot=max(0,min(V_total,x(2))); T_tank=x(3);
 
-% HPT约束边界 (密度近似298K定值, 仅用于约束判定)
-% 动力学不依赖精确P_HPT, 约束基于m_HPT直接比较
-% P_HPT的P_sat(T)两相计算仅在run脚本绘图中使用
-rl=getFP(lib,'D','T',298,'Q',0,Fluid); rv=getFP(lib,'D','T',298,'Q',1,Fluid);
+% HPT两相约束边界 (精确: T相关密度)
+Tc=max(260,min(304,T_tank));
+rl=getFP(lib,'D','T',Tc,'Q',0,Fluid); rv=getFP(lib,'D','T',Tc,'Q',1,Fluid);
 msl=rl*V_HPT; msv=rv*V_HPT;
 
 % 调度
