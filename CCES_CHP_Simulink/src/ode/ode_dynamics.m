@@ -14,7 +14,7 @@ if isempty(p)
     fprintf('平衡点: Th=%.0fK | Wc=%.1f Wt=%.1f MW | %.0fh/%.0fh\n',p.Th,p.Wc,p.Wt,p.tc,p.td);
 end
 
-m=p.rl(1); Vh=max(0,min(p.Vt(1),x(2))); Tt=x(3);  %#ok<NASGU>
+m=x(1); Vh=max(0,min(p.Vt(1),x(2))); Tt=x(3);
 
 % 调度
 th=mod(t/3600,24); ti=(24-p.tc-p.td)/2;
@@ -33,7 +33,7 @@ elseif mode==-1 && ok_d
     md=p.ad*p.Wt; dm=-md;
     [~,qr]=discharge_per_kg(p.lib,p.Fluid,Tt,p.Th); Qr=qr*md/1000;
     dV=-Qr*1000/(p.rho_cp*(p.Th-p.Tc));
-    dT=-md*3e-5; Wc=0; Qi=0; Wt=p.Wt; Wr=Qr; %#ok<NASGU>
+    dT=-md*3e-5; Wc=0; Qi=0; Wt=p.Wt; Qr2=Qr;
 else
     dm=0; dV=0; dT=(298-Tt)/50000; Wc=0; Qi=0; Wt=0; Qr=0;
 end
