@@ -1,0 +1,2 @@
+- [CCES-CHP Project Overview](project.md) — Directory structure, active files, REFPROP config
+- [CCES Technical Insights](technical.md) — Alpha derivation, heat-mass balance, HPT/HTV model evolution
