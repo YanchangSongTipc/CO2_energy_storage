@@ -29,7 +29,7 @@ x0 = [m_HPT_0; V_hot_0; T_tank_0];
 
 %% 仿真
 dt = 180;  t_sim = 21 * 86400;  tspan = 0:dt:t_sim;
-fprintf('CCES-CHP ODE仿真 (21天, 双罐HTV): 充电7.5h 放电5h\n');
+fprintf('CCES-CHP ODE仿真 (21天): 见 ode_dynamics 内打印\n');
 
 opts = odeset('RelTol', 2e-4, 'MaxStep', 900);
 [t, x] = ode45(@ode_dynamics, tspan, x0, opts);
