@@ -32,12 +32,13 @@ elseif m_HPT > m_sat_vap*0.05, P_MPa = Ps/1e6;
 else,                         P_MPa = m_HPT*188.9*T_tank/V_HPT/1e6;
 end
 
-% 调度: 充电7.5h + 放电4h (质量平衡后近热平衡)
+% 调度: 充电5h + 放电5h (质量平衡: α*Wc*tc ≈ α*Wt*td)
+% Wc≈9.74 MW, Wt=10.12 MW, 相等时长→质量近平衡
 t_h = mod(t/3600, 24);
-if     t_h < 7.5;  mode = 1;
-elseif t_h < 11.5;  mode = 0;
-elseif t_h < 15.5;  mode = -1;
-else;               mode = 0;
+if     t_h < 5;    mode = 1;    % 充电5h
+elseif t_h < 10;   mode = 0;    % 闲置5h
+elseif t_h < 15;   mode = -1;   % 放电5h
+else;               mode = 0;   % 闲置9h
 end
 
 % 约束
