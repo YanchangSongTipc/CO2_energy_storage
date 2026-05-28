@@ -43,15 +43,15 @@ end
 t_h = mod(t/3600, 24);
 if t_h < 7.5;       mode = 1;
 elseif t_h < 11.5;   mode = 0;
-elseif t_h < 16.5;   mode = -1;
+elseif t_h < 15.5;   mode = -1;  % 放电4h (热平衡)
 else;                mode = 0;
 end
 
 % 约束
 P_ok_ch  = m_HPT < m_sat_liq * 0.995;
 P_ok_dis = m_HPT > m_sat_vap * 1.05;
-Q_ok_ch  = V_hot < V_total * 0.98;
-Q_ok_dis = V_hot > V_total * 0.02;
+Q_ok_ch  = V_hot < V_total * 0.90;
+Q_ok_dis = V_hot > V_total * 0.10;
 T_heat = T_hot;  % 恒温热油 → CO2 加热温度恒定为设计值
 
 rho_cp = rho_oil * cp_oil;  % kJ/m³K
