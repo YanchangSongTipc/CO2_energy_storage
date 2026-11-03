@@ -1,71 +1,56 @@
 function [dx, W_comp, Q_IC, W_turb, Q_HR, T_heat, mode] = ode_dynamics(t, x)
-persistent p
-if isempty(p)
-    addpath(fullfile(fileparts(mfilename('fullpath')), '..', '..'));
-    cfg=config_paths();
-    p.lib=cfg.REFPROP_LIB; p.Fluid='CO2';
-    p.V_HPT=6228; p.Th=406; p.Tc=298; p.rho_cp=850*2.5;
-    p.Vt=150*3600*1000/(p.rho_cp*(p.Th-p.Tc));
-    p.ac=2.744; p.ad=4.117; p.Wc=7.60; p.Wt=8.42;
-    p.tc=8.0; p.td=4.0;
-    p.rl=getFP(p.lib,'D','T',298,'Q',0,p.Fluid);
-    p.rv=getFP(p.lib,'D','T',298,'Q',1,p.Fluid);
-    p.msl=p.rl*p.V_HPT; p.msv=p.rv*p.V_HPT;
-    fprintf('平衡点: Th=%.0fK | Wc=%.1f Wt=%.1f MW | %.0fh/%.0fh\n',p.Th,p.Wc,p.Wt,p.tc,p.td);
+%ODE_DYNAMICS  CCES-CHP 双 SOC 动态模型（质量 + 热量双重闭合）
+%
+%   状态量 x = [m_HPT (kg); Q_HTV (MJ)]
+%       m_HPT : HPT 内液态 CO2 存量（定压 6.8 MPa、298 K 室温液态储存）
+%       Q_HTV : HTV 蓄热量（MJ），容量 dp.Q_HTV_cap*3600
+%
+%   返回 dx = [dm/dt (kg/s); dQ/dt (MW)]，其余输出为瞬时功率 [MW]。
+%
+%   物理逻辑（每个 24 h 周期严格闭合，见 cces_design_point）：
+%     充电   m_HPT += m_c*dt        Q_HTV += Q_IC*dt
+%     放电   m_HPT -= m_d*dt        Q_HTV -= (Q_HR + Q_export)*dt
+%     待机   不动作
+%   由构造保证 m_c*t_c = m_d*t_d 且 Q_IC*t_c = (Q_HR+Q_export)*t_d，
+%   因此存量与蓄热逐日回到同一数值，不靠"撞限幅"制造假稳态。
+
+persistent dp_
+if isempty(dp_)
+    dp_ = cces_design_point(483);
+end
+p = dp_;
+
+m = x(1);
+Q = x(2);
+mode = cces_schedule(mod(t/3600, 24), p);
+
+eps_m = 1e-6*p.m_full;            % 数值容差: 防止恰好到达边界时被误判为越界
+m_hi  = p.SOC_gas_max*p.m_full + eps_m;
+m_lo  = p.SOC_gas_min*p.m_full - eps_m;
+Q_hi  = p.Q_HTV_cap*3600 + 1e-3;
+Q_lo  = -1e-3;
+
+dm = 0; dQ = 0;
+W_comp = 0; Q_IC = 0; W_turb = 0; Q_HR = 0;
+
+switch mode
+    case 1      % 充电：储液增加，压缩热进入 HTV
+        if m < m_hi && Q < Q_hi
+            dm =  p.m_charge;          % kg/s
+            dQ =  p.Q_IC_rate;         % MW = MJ/s
+            W_comp = p.W_charge;
+            Q_IC   = p.Q_IC_rate;
+        end
+    case -1     % 放电：储液减少，回热 + 对外供热由 HTV 支出
+        if m > m_lo && Q > Q_lo
+            dm = -p.m_discharge;
+            dQ = -(p.Q_HR_rate + p.Q_export);
+            W_turb = p.W_discharge;
+            Q_HR   = p.Q_HR_rate;
+        end
+    otherwise   % 待机
 end
 
-m=x(1); Vh=max(0,min(p.Vt(1),x(2))); Tt=x(3);
-
-% 调度
-th=mod(t/3600,24); ti=(24-p.tc-p.td)/2;
-if th<p.tc; mode=1; elseif th<p.tc+ti; mode=0; elseif th<p.tc+ti+p.td; mode=-1; else; mode=0; end
-
-% 约束
-ok_c=(m<p.msl*.995)&&(Vh<p.Vt*.90);
-ok_d=(m>p.msv*1.05)&&(Vh>p.Vt*.10);
-
-if mode==1 && ok_c
-    md=p.ac*p.Wc; dm=md;
-    [~,qi]=charge_per_kg(p.lib,p.Fluid); Qic=qi*md/1000;
-    dV=Qic*1000/(p.rho_cp*(p.Th-p.Tc));
-    dT=(298-Tt)/600; Wc=p.Wc; Qi=Qic; Wt=0; Qr=0;
-elseif mode==-1 && ok_d
-    md=p.ad*p.Wt; dm=-md;
-    [~,qr]=discharge_per_kg(p.lib,p.Fluid,Tt,p.Th); Qr=qr*md/1000;
-    dV=-Qr*1000/(p.rho_cp*(p.Th-p.Tc));
-    dT=-md*3e-5; Wc=0; Qi=0; Wt=p.Wt; Qr2=Qr;
-else
-    dm=0; dV=0; dT=(298-Tt)/50000; Wc=0; Qi=0; Wt=0; Qr=0;
-end
-dx=[dm; dV; dT]; W_comp=Wc; Q_IC=Qi; W_turb=Wt; Q_HR=Qr; T_heat=p.Th;
-end
-
-function [wc,qi]=charge_per_kg(lib,Fluid)
-persistent w q
-if isempty(w)
-    e=0.85; h1=getFP(lib,'H','T',298,'P',0.102e6,Fluid);
-    s1=getFP(lib,'S','T',298,'P',0.102e6,Fluid);
-    h2is=getFP(lib,'H','P',0.90e6,'S',s1,Fluid); h2=h1+(h2is-h1)/e;
-    h3=getFP(lib,'H','T',308,'P',0.85e6,Fluid);
-    s3=getFP(lib,'S','T',308,'P',0.85e6,Fluid);
-    h4is=getFP(lib,'H','P',6.90e6,'S',s3,Fluid); h4=h3+(h4is-h3)/e;
-    h5=getFP(lib,'H','T',309,'P',6.85e6,Fluid);
-    w=(h2-h1+h4-h3)/1000; q=(h2-h3+h4-h5)/1000;
-end
-wc=w; qi=q;
-end
-
-function [wt,qr]=discharge_per_kg(lib,Fluid,Tt,Th)
-    e=0.88; hh=getFP(lib,'H','T',Tt,'P',6.65e6,Fluid);
-    ht1=getFP(lib,'H','T',Th,'P',6.50e6,Fluid);
-    qp=(ht1-hh)/1000; s1=getFP(lib,'S','T',Th,'P',6.50e6,Fluid);
-    h1is=getFP(lib,'H','P',0.70e6,'S',s1,Fluid); h1o=ht1-e*(ht1-h1is);
-    w1=(ht1-h1o)/1000; ht2=getFP(lib,'H','T',Th,'P',0.65e6,Fluid);
-    qr2=(ht2-h1o)/1000; s2=getFP(lib,'S','T',Th,'P',0.65e6,Fluid);
-    h2is=getFP(lib,'H','P',0.12e6,'S',s2,Fluid); h2o=ht2-e*(ht2-h2is);
-    w2=(ht2-h2o)/1000; wt=w1+w2; qr=qp+qr2;
-end
-
-function v=getFP(lib,prop,varargin)
-    args=[varargin,{1,1,'MASS BASE SI'}]; v=getFluidProperty(lib,prop,args{:});
+dx = [dm; dQ];
+T_heat = p.T_oil_hot;
 end

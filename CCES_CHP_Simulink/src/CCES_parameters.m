@@ -1,5 +1,8 @@
 % =========================================================================
 % CCES_parameters.m — CCES-CHP 系统仿真参数定义
+%
+% [已弃用] 当前主线参数请用 src/ode/cces_design_point.m（REFPROP 现算）。
+% 本文件仅供 src/ode/archive/ 下的早期脚本引用，数值已与之对齐。
 % =========================================================================
 
 %% 工作流体与物性接口
@@ -44,10 +47,10 @@ params.P_T2_out = 0.12e6;     % T2 出口 [Pa] = 0.12 MPa
 params.P_AEHE_out = 0.102e6;  % AE-HE 出口 [Pa]
 params.P_LPT_nom = 0.102e6;   % LPT 额定 [Pa] = 0.102 MPa
 
-%% 储罐参数 (标定至5h满功率放电, V_HPT = m_needed*R*T/ΔP)
-% m_needed = alpha2 * W_design * t_discharge_design = 4.117*10*5*3600 = 741,060 kg
-% V_HPT = 741060 * 188.9 * 298 / (6.698e6) = 6228 m³
-params.V_HPT = 6228;        % HPT 容积 [m^3] (标定至5h放电)
+%% 储罐参数（室温液态储存：V = m/ρ_l，不再用理想气体公式）
+% m_full = alpha2*W*t_d/(SOC_max-SOC_min) = 4.191*10*5*3600/0.8 = 943 t
+% V_HPT = 943000/ρ_l(298K,6.8MPa) ≈ 1280 m³
+params.V_HPT = 1280;        % HPT 容积 [m^3]（定压液态，满液 943 t）
 params.V_LPT = 10000;       % LPT 容积 [m^3] (低压侧需更大)
 params.Rg_CO2 = 188.9;      % CO2 气体常数 [J/(kg·K)] (与 Pa 单位一致)
 params.T_HPT_store = 298;   % HPT 存储温度 [K]
@@ -55,7 +58,7 @@ params.T_HPT_store = 298;   % HPT 存储温度 [K]
 %% 蓄热系统参数
 params.Q_HTV_capacity = 150 * 3600;  % HTV 蓄热容量 [MJ_th] (=150 MWh_th)
 params.Q_HTV_initial   = 75 * 3600;   % 初始蓄热量 [MJ_th] (=75 MWh_th, 50% SOC)
-params.T_HTV_max = 573;    % 导热油最高温度 [K]
+params.T_HTV_max = 495;    % 导热油最高温度 [K]（论文 Table 1）
 params.T_ATV = 298;        % 冷导热油温度 [K]
 
 %% 无量纲耦合系数（来自 Cycle.m 稳态设计点，全回路流量）
@@ -63,19 +66,18 @@ params.T_ATV = 298;        % 冷导热油温度 [K]
 % 注意: α 是全回路(压气机/透平)流量系数，非 HPT 净储/释流量
 %       满功率时 m_dot_circuit = alpha*W_design (kg/s)
 %       HPT 作为回路高压侧缓冲罐，约束了满功率持续时长
-params.beta1  = 1.185;     % Q_IC / W_C_E = 压缩热/充电功率比
-params.beta2  = 2.307;     % Q_HR / W_T_E = 回热/放电功率比
-params.alpha1 = 2.744;     % m_charge / W_C_E = 2.744 kg/(s·MW) (全回路)
-params.alpha2 = 4.117;     % m_discharge / W_T_E = 4.117 kg/(s·MW) (全回路)
+params.beta1  = 1.205;     % Q_IC / W_C_E = 压缩热/充电功率比
+params.beta2  = 1.659;     % Q_HR / W_T_E = 回热/放电功率比（不含 EHE 潜热）
+params.alpha1 = 2.762;     % m_charge / W_C_E = kg/(s·MW)
+params.alpha2 = 4.191;     % m_discharge / W_T_E = kg/(s·MW)
 
 %% 设计参数 (来自论文 Hao et al., Energy 2024)
 params.W_design = 10;           % 设计充放电功率 [MW]
 params.t_charge_design = 7.5;   % 设计充电时长 [h] (可用时间窗口)
 params.t_discharge_design = 5.0;% 设计放电时长 [h] (可用时间窗口)
 
-% HPT 储罐约束: 满功率 10MW 时 α1*W=27.4kg/s → 充满 ~36min
-% 因此系统不能连续满功率运行 7.5h，功率必须被 HPT 压力约束调制
-% 论文的可行性域方法正是用来处理这种功率-容量耦合约束
+% HPT 按 5 h 满功率放电标定：满液 943 t，10 MW 放电约 7.59 h 充满
+% 运行窗口取 SOC 10%~90%，因此充放电时长由质量守恒反解（见 cces_design_point）
 
 %% 仿真参数 (可自定义调度场景)
 params.dt_sim = 60;        % 仿真时间步长 [s]
