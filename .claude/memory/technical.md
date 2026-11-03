@@ -9,42 +9,57 @@ metadata:
 
 # CCES-CHP Technical Insights
 
-## Alpha Coefficient Derivation
-α = m_dot / W = 1000 / Δh_specific [kg/(s·MW)] — NOT empirical, derived from power equation.
-- α_ch = 2.744 (compressor: 355 kJ/kg)
-- α_dis = 4.117 (turbine: 251 kJ/kg at 483K)
-- α_dis > α_ch because w_turb < w_comp (isentropic losses)
+## 已修正的关键错误：EHE 被并入回热（2026-11）
+论文 2.1 节：液态 CO₂ 经 V2 节流后**先由 EHE 完全汽化**，再进入 HR1/HR2。
+旧代码把这段潜热算进 Q_HR1，导致：
+- Q_HR1 15.88 MW（论文 9.47），γ₂ 2.307（论文 1.59），Y 126%（论文 91%），X −26%（论文 9%），
+  η_heat −17.2%（论文 21.4%），Q_LG-HE 为负。
+拆分 EHE（等压汽化 +5 K 过热，h≈417 kJ/kg）后：Q_EHE=6.23、Q_HR1=9.65、γ₂=1.66（按 10 MW 归一 1.596）、
+X=9.3%、Y=90.7%、η_heat=25.4%。**复现以此为准。**
 
-## Heat Balance Problem
-At Th=483K: q_IC=436 kJ/kg, q_HR=541 kJ/kg. Ratio=1.24.
-- Mass balance and heat balance CANNOT be simultaneously achieved with fixed α and T_heat.
-- For heat balance at rated power: need external heat OR lower T_heat (~405K where q_HR≈436).
-- For mass+heat balance with rated power: turbine must drop to ~8.6 MW.
+## α / γ 推导（非经验值）
+- α = m_dot/W = 1000/Δh_specific [kg/(s·MW)]
+- α₁ = 2.762（压气机 354.8 kJ/kg，÷0.98）, α₂ = 4.191（透平 251.2 kJ/kg，×0.95）
+- α₂ > α₁ 因为 w_turb < w_comp
+- γ₁ = q_IC/w_cE = 1.205；γ₂ = q_HR/w_tE = 1.659（**不含 EHE**）
 
-## HPT Model Evolution
-1. Ideal gas P=mRT/V → rejected (two-phase physics)
-2. Two-phase P=P_sat(T) → accepted
-3. Temperature drift debate → resolved: T returns to ambient each cycle, no net drift
-4. Current: P=P_sat(T_tank), T_tank varies ±10K during charge/discharge
+## 热平衡：设计点本来就是自洽的
+q_IC = 436 kJ/kg（每 kg 充电），q_HR = 396 kJ/kg（每 kg 放电，仅 HR1+HR2）。
+- 质量闭合 **26.9 kg/s × 7.5 h = 726 t ≈ 40.3 × 5 h = 725 t**（0.1%），
+  即论文的 7.5h/5h 就是按质量平衡设计的。
+- 热量差 (436−396)/436 ≈ 9~10% 正好作为低温对外供热，对应论文 X = 9%。
+- 因此**不需要**降到 406 K 去"凑"热平衡；406 K / 8h4h / 7.6-8.42 MW 是在补偿不存在的热亏，
+  且该工况下真实 α₂ = 5.22，与硬编码的 4.117 自相矛盾（已废弃）。
 
-## HTV Model Evolution
-1. Empirical T_heat = f(Q) → rejected
-2. Single-tank variable T → T_heat varies, turbine power unstable
-3. Two-tank (hot 573K/cold 298K) → T_heat constant, but q_HR >> q_IC
-4. Current: Two-tank Th=483K, accepts constraint-bounded operation
+## HPT 模型（当前定论）
+论文 Eq.23 用理想气体 P=mRT/V，与"室温液态储存"矛盾：6228 m³ 装 6.8 MPa 气体 ≈ 750 t，
+而液态只需 ~1050 m³ 就能装同样质量。
+- 当前：**定压液态储罐**，状态量=储液质量，P=6.8 MPa 由泵/背压维持，
+  储气 SOC=液位，P_sat(298)=6.43 MPa 作为节流不闪蒸的亚冷度参考（0.37 MPa）。
+- 满液 943 t = 1280 m³，运行窗口 10%~90%。
+- 后果：P 不再是随时间变化的量，"气压 SOC"退化为液位；论文 Fig.7/12 那种 0.12→6.8 MPa
+  的压力摆动只存在于气体模型里，写论文时必须二选一。
 
-## Energy Balance Closure
-Turbine exit (361K) → Cooler → Compressor inlet (298K, 0.102MPa).
-56 kJ/kg rejected to environment. Cycle IS closed thermodynamically.
-RTE per kg = 251/355 = 70.8% (matches Cycle.m).
+## HTV 模型
+两罐导热油：T_hot=495 K、T_cold=298 K、ρcp=850×2.5 kJ/(m³·K)、容量 150 MWh → 1290 m³。
+热量闭合决定对外供热：Q_export = (Q_IC·t_c − Q_HR·t_d)/t_d = 1.69 MW。
 
-## Key Physical Constraints
-1. P_ok_ch = m_HPT < m_sat_liq × 0.995 (HPT not overfilled)
-2. P_ok_dis = m_HPT > m_sat_vap × 1.05 (HPT has liquid)
-3. Q_ok_ch = V_hot < 0.90 V_total (hot tank not full)
-4. Q_ok_dis = V_hot > 0.10 V_total (hot tank not empty)
+## 双闭合条件（写论文/改参数时用）
+- 质量：m_c·t_c = m_d·t_d
+- 热量：Q_IC·t_c = (Q_HR + Q_export)·t_d
+两者同时满足 ⇔ 系统进入严格周期稳态（不靠限幅）。当前 21 天仿真：
+质量漂移 0.56 kg/日（7.4e-7）、热量漂移 6.8e-5 MWh/日、功率从未被削峰。
 
-## Cross-Platform
-`config_paths.m` in root handles Windows/Ubuntu REFPROP path switching.
 
-Why: This conversation uncovered fundamental thermodynamic constraints (heat-mas imbalance, α derivation, two-phase HPT physics) that future sessions must understand to continue work.
+## ML 侧（2026-11 重构）
+- 训练数据改为调用 cces_design_point：γ₂=1.659、Q 上限统一 12.05、新增 HPT 质量约束
+  （m ± α·W·Δt 与 m_full / 0 比较），SOC_gas 特征重要性 0.0015 → **0.2376**。
+- 重训：XGB 100%、MLP 98.58%、W_max R²=0.9964（RMSE 0.076 MW）、Q_max R²=1.0。
+- 调度重跑：规则 17 h / 44.0 MWh → ML 24 h / 46.3 MWh，末态 SOC 0.2%。
+  **旧说法"末态 SOC 5% 安全裕量"不成立**，ML 的优势是覆盖 24 h + 多供热 5.2%。
+- β₂(T) 实测：483 K 1.659 → 503 K 1.686（+1.6%），旧脚本写的 1.78 是估算错误；
+  可行域面积 −1.6%，同等储液放电时长 +5.0%（α₂ 4.191→3.993），RTE +2.8 pt。
+
+## 跨平台
+`config_paths.m` 在仓库根目录，处理 Windows/Ubuntu 的 REFPROP 路径。
+子目录脚本定位仓库根：从 `CCES_CHP_Simulink/src/ode/` 需上溯三级。

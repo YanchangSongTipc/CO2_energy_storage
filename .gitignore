@@ -10,3 +10,12 @@ slprj/
 # Python
 __pycache__/
 *.pyc
+
+# Simulink 自动保存 / 编译缓存
+*.autosave
+
+# 本地临时依赖与缓存（不要提交）
+.pylibs/
+.mplcache/
+.prefs*/
+*.log
