@@ -477,3 +477,49 @@ raises efficiency and discharge duration rather than expanding the domain.
 3. **Fig.1 的 state_table** 需要 REFPROP 逐点重算，我没法代算；`params_text` 里的四个功率也需要按 `cces_design_point` 的分级值填，不要用旧图里的 4.90/4.65/5.49/4.63。
 4. **λ 的经济含义**：λ 目前是纯数学权重。若把电价写进目标函数，λ 应等于 $p_h/p_e$（同一时间尺度下），这句话建议写进 §6.5 结尾，能把"任意权重"的批评堵住。
 5. 我这边的 `.pylibs`（353 MB）与 `.mplcache` 都已 gitignore，不会进仓库。
+
+---
+
+## 7. 工作电脑执行记录（2026-11-03）
+
+### Step 1 · 多参数扫描：175 点 / 0 failed / 无 NaN
+
+`baseline check: gamma1=1.205 gamma2=1.659 alpha1=2.762 alpha2=4.191` 通过。
+`gamma2 1.552–1.793 (15.5%)`、`alpha2 3.606–4.752 (31.8%)`、`eta_elec 58.3–76.3%`。
+
+**两处偏离交接单，均已在代码中注明：**
+
+1. **`P_HPT` 上限由 8.0 改为 7.6 MPa。** `P_EHE = 0.9706·P_HPT`，取 8.0 时达 7.76 MPa，
+   超过 CO₂ 临界压力 7.38 MPa：`T_sat(P,Q=0)` 调用失败（REFPQ error 141），
+   且此区间蒸发器已无相变，与亚临界工况不可比（γ₂ 在 7.6→8.0 出现 1.68→1.75 的跳变）。
+   改为 `PList = 6.0:0.4:7.6`（仍 5 档，且含 6.8 基准），175 点总数不变。
+2. **`cces_design_point.m` 两处改动：**
+   - EHE 增加超临界保护：`P_EHE ≥ 7.38 MPa` 时取 `T_EHE_out = Tc + 5`（拟临界），
+     仅作为越界防线，当前扫描范围内不触发；
+   - `SOC_heat_0` 自适应：摆幅超过罐容时自动下移初值（基准点仍 0.30，Q0=45，峰值 136.4，
+     与改动前完全一致）。原固定 30% 会让 18 个高温高压点被断言拒绝，属实验设计问题而非物理不可行。
+
+### Step 2b · 复现图：14 张已重出
+
+`PaperReproduction.m` 删除了第 461/510 行的图内标题，并把放电图内的 `\beta_2` 标注、
+Fig.9 图例的 `-\beta_2` 改为 `\gamma`。其余带 "(Fig.x)" 的标题（6 处）按交接单要求未动。
+
+### Step 2a · Fig.1：源文件已改，PNG 未导出
+
+`CCES_CHP_cycle.drawio` 已更新：`γ₁=1.205 γ₂=1.659`、`HPT=1280 m³ (943 t)`、
+压缩机 `9.74 MW_e`、透平 `9.62 MW_e`（两级轴功 4.90/4.65、5.49/4.63 不变，仅总量修正——
+原图把轴功误标为 MW_e）。13 行状态表经逐点核对与新模型一致，未改。
+
+**本机无 draw.io CLI（Linux），PNG 导出需在 Windows 侧执行：**
+
+```powershell
+& "C:\Program Files\draw.io\draw.io.exe" --export --format png --scale 3 `
+  --output "CCES_CHP_Simulink\output\CCES_CHP_cycle.png" `
+  "CCES_CHP_Simulink\output\CCES_CHP_cycle.drawio"
+```
+
+### 数据质量提示
+
+- 175 行 × 14 列，**无 NaN/空值**；
+- **32 个点的 X < 0**（Th ≥ 500 K、各效率档），即高温工况回热需求超过压缩热、需外部补热。
+  做"参数泛化"图时建议按 `X_pct > 0` 过滤，或单独标出该区域作为自持运行的温度上限。

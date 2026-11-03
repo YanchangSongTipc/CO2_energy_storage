@@ -69,8 +69,15 @@ h13is = g('H','P',0.12e6,'S',s12);  h13 = h12 - dp.eta_t*(h12-h13is);
 
 % EHE：节流后等压汽化 +5 K，热源为环境/低品位热，不属于回热（不计入 γ2）
 P_EHE = 6.60e6*rP;
-T_EHE_sat = g('T','P',P_EHE,'Q',0);
-dp.T_EHE_out = T_EHE_sat + 5;
+P_CRIT = 7.38e6;                       % CO2 临界压力
+if P_EHE < P_CRIT
+    T_EHE_sat = g('T','P',P_EHE,'Q',0);
+    dp.T_EHE_out = T_EHE_sat + 5;
+else
+    % 高压侧超过临界压力时没有相变，EHE 退化为拟临界加热：
+    % 出口温度取 Tc + 5 K，与亚临界侧（T_sat -> Tc）连续衔接。
+    dp.T_EHE_out = 304.1 + 5;
+end
 h_EHE = g('H','P',P_EHE,'T',dp.T_EHE_out);
 dp.q_EHE = (h_EHE - h9)/1000;                  % kJ/kg
 dp.q_HR  = ((h10-h_EHE)+(h12-h11))/1000;       % kJ/kg 仅 HR1+HR2
@@ -117,12 +124,17 @@ dp.rho_cp_oil  = 850*2.5;                               % kJ/(m3·K)
 dp.dT_oil      = dp.T_oil_hot - dp.T_amb;
 dp.V_HTV       = dp.Q_HTV_cap*3600*1000/(dp.rho_cp_oil*dp.dT_oil);
 dp.Q_HTV_swing = dp.Q_IC_rate*dp.t_charge;              % MWh
+% 初始 SOC 自适应：基准点仍为 0.30；当参数扫描使循环摆幅变大时，
+% 自动下移起点，保证充电后不溢出（该值只影响初值，不影响 γ/α/η/X）。
+dp.SOC_heat_0  = min(dp.SOC_heat_0, ...
+                     max(0, (0.98*dp.Q_HTV_cap - dp.Q_HTV_swing)/dp.Q_HTV_cap));
 dp.Q_HTV_0     = dp.SOC_heat_0*dp.Q_HTV_cap;
 dp.Q_HTV_peak  = dp.Q_HTV_0 + dp.Q_HTV_swing;
 
-% 自检：初始 SOC 必须留出整循环的调节空间
-assert(dp.Q_HTV_peak <= dp.Q_HTV_cap, ...
-    'HTV 容量不足：峰值 %.1f MWh > 容量 %.1f MWh', dp.Q_HTV_peak, dp.Q_HTV_cap);
+% 自检：整循环热摆幅必须装得进 HTV
+assert(dp.Q_HTV_swing <= 0.98*dp.Q_HTV_cap, ...
+    'HTV 容量不足：循环热摆幅 %.1f MWh > 容量 %.1f MWh', ...
+    dp.Q_HTV_swing, dp.Q_HTV_cap);
 
 % ---------------- 24 h 调度分段 ----------------
 dp.t_idle      = 24 - dp.t_charge - dp.t_discharge;

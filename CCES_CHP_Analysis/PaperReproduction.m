@@ -458,7 +458,6 @@ plot(p_cx(1:end-1), p_cy(1:end-1), 'ko', 'MarkerSize', 7, 'MarkerFaceColor', 'k'
 
 xlabel('Charging Power W_{C,E} [MW]', 'FontSize', 10);
 ylabel('Heating Power Q_{HG-HE}+Q_{LG-HE} [MW]', 'FontSize', 10);
-title('Charging-Heating Feasibility Domain (Fig.3, slope +\beta_1)', 'FontSize', 11, 'FontWeight', 'bold');
 legend({'Feasible Region', 'Upper bound (HTV lower)', 'Lower bound (HTV upper)'}, ...
     'Location', 'best', 'FontSize', 8);
 xlim([-0.5, W_C_upper + 1.5]);
@@ -507,7 +506,6 @@ text(0.3, Q_at_W0_d + 0.3, 'Max Heat', 'FontSize', 8, 'Color', 'r');
 
 xlabel('Discharging Power W_{T,E} [MW]', 'FontSize', 10);
 ylabel('Heating Power Q_{HG-HE}+Q_{LG-HE} [MW]', 'FontSize', 10);
-title('Discharging-Heating Feasibility Domain (Fig.4, slope -\beta_2)', 'FontSize', 11, 'FontWeight', 'bold');
 legend({'Feasible Region', 'Upper bound (HTV lower)', 'Lower bound (HTV upper)', 'Infeasible'}, ...
     'Location', 'best', 'FontSize', 8);
 xlim([-0.5, W_T_upper + 1.5]);
@@ -516,7 +514,7 @@ set(gca, 'FontSize', 10);
 
 % 图例标注: 负斜率含义
 text(W_T_upper * 0.5, Q_HG_LG_max + 1.5, ...
-    '\beta_2 < 0: 电热竞争, 最大发电与最大供热不可兼得', ...
+    '\gamma_2 < 0: 电热竞争, 最大发电与最大供热不可兼得', ...
     'FontSize', 9, 'FontWeight', 'bold', 'Color', [0.6 0 0], ...
     'HorizontalAlignment', 'center');
 
@@ -925,7 +923,7 @@ ylim([-0.5, Q_HG_LG_max + 2]);
 xlabel('Discharging Power W_{T,E} [MW]', 'FontSize', 10);
 ylabel('Heating Power [MW]', 'FontSize', 10);
 title('Heat/Power-dependent Modes (Fig.7)', 'FontSize', 11, 'FontWeight', 'bold');
-legend({'Original Feasible', 'Constraint (-\beta_2)', ...
+legend({'Original Feasible', 'Constraint (-\gamma_2)', ...
     sprintf('Heat-dep. (fix Q=%.0f MW)', Q_fixed_heat), ...
     sprintf('Power-dep. (fix W=%.0f MW)', W_fixed_power)}, ...
     'Location', 'best', 'FontSize', 8);
