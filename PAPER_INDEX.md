@@ -28,7 +28,7 @@
 
 | 正文 | 内容 | 对应文件 | 状态 |
 |---|---|---|---|
-| Fig. 1 | 系统流程图 | [CCES_CHP_cycle.drawio](CCES_CHP_Simulink/output/CCES_CHP_cycle.drawio) | **待导出**：drawio 内仍是旧值（β₂=2.31、HPT 6228 m³、9.55/10.12 MW），先改成 γ₂=1.659、1280 m³/943 t、9.74/9.62 MW，再导出 PNG 到同目录 |
+| Fig. 1 | 系统流程图（英文版） | [CCES_CHP_cycle_en.png](CCES_CHP_Simulink/output/CCES_CHP_cycle_en.png) | 已导出（draw.io 32.6.1，scale 3，3302×2524）；源文件 [CCES_CHP_cycle_en.drawio](CCES_CHP_Simulink/output/CCES_CHP_cycle_en.drawio)，中文原件 `CCES_CHP_cycle.drawio` 保留给中文稿 |
 | Fig. 2 | T–s 循环图（含饱和穹顶） | [Fig12_Ts_Diagram.png](CCES_CHP_Analysis/output_figures/Fig12_Ts_Diagram.png) | 已内嵌 |
 | Fig. 3 | 双 SOC 与 HTV 蓄热 | [fig03_soc_heat.png](CCES_CHP_Simulink/output/ode/fig03_soc_heat.png) | 已内嵌 |
 | Fig. 4 | 充电可行域（斜率 +γ₁） | [Fig01_ChargeHeat_Feasibility.png](CCES_CHP_Analysis/output_figures/Fig01_ChargeHeat_Feasibility.png) | 已内嵌；演示参数 b=8，图内标题仍是旧符号 β₁，需重出 |

@@ -54,11 +54,9 @@ In the energy release process, liquid CO₂ flows out from the HPT, is throttled
 
 The high-temperature heat exchanger (HG-HE) and low-temperature heat exchanger (LG-HE) use the high and low-temperature thermal storage media to provide heat at different temperature grades to customers. The accompanying heat at the turbine outlet is also recovered, effectively improving the overall energy utilization efficiency.
 
-<!-- TODO(Fig.1): export ../CCES_CHP_Simulink/output/CCES_CHP_cycle.drawio to ../CCES_CHP_Simulink/output/CCES_CHP_cycle.png (or .svg) before submission. The .drawio file still carries superseded annotations that contradict Table 1: β2=2.31 (now γ2=1.659), HPT 6228 m3 (now 1280 m3, 943 t), and compressor/turbine powers 9.55/10.12 MW (now 9.74/9.62 MW). -->
+![Fig. 1](../CCES_CHP_Simulink/output/CCES_CHP_cycle_en.png)
 
-![Fig. 1](../CCES_CHP_Simulink/output/CCES_CHP_cycle.png)
-
-**Fig. 1. Schematic of the CCES-CHP system.** Charging and discharging share the LPT/HPT pair and the HTV thermal store; the compression heat recovered in IC1/IC2 supplies the reheat duties HR1/HR2 and the external heat load, while the evaporator (EHE) draws ambient/low-grade heat.
+**Fig. 1. Schematic of the CCES-CHP system.** Charging and discharging share the LPT/HPT pair and the HTV thermal store; the compression heat recovered in IC1/IC2 supplies the reheat duties HR1/HR2 and the external heat load, while the evaporator (EHE) draws ambient/low-grade heat. LPT and HPT denote the low- and high-pressure CO₂ tanks and HTV the high-temperature thermal vessel; the numbered points refer to the state table in the figure.
 
 ### 2.2 Thermodynamic Modeling
 
