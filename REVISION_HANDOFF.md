@@ -1,9 +1,32 @@
 # 期刊版改稿交接单（Applied Energy / ECM）
 
-> 生成时间：2026-11-03 · 对应远端 `ccc6659` 之后的增量
+> 生成时间：2026-11-03 · 对应远端 `4afb182` 之后的增量
 > 用法：在工作电脑上 `git pull` 后，按 §2 的顺序执行；正文改动在 §3 直接复制粘贴。
 > 所有"期望值"都是我在本机（Python 3.12 / sklearn 1.9.1 / xgboost 3.4.1）实跑得到的，
 > 你那边数值应在±0.5 个百分点、±0.05 以内；超出说明数据或版本不一致，先别改正文。
+
+---
+
+## 0. 两台机器怎么分工（先看这一节）
+
+原则：**需要 REFPROP / MATLAB / draw.io 的只有三件事，其余都在我这边做。**
+
+| # | 工作电脑（有 MATLAB + REFPROP） | 本机 / 我这边 |
+|---|---|---|
+| 1 | `design_sweep_multi` 多参数扫描 → `design_sweep_multi.csv` | 基于扫描结果做多参数泛化分析与新图 |
+| 2 | `PaperReproduction` 重出 14 张图（Fig.4/5 去图内标题、β→γ） | 检查图片、必要时改图注 |
+| 3 | 修正 drawio 旧数值 → 导出 `CCES_CHP_cycle.png` | 校验 Fig.1 路径可用 |
+| 4 | （可选）`python ml_extension.py` 复核我的数值 | 正文替换 A–H、λ 敏感性、经济学模块 |
+| 5 | `git add/commit/push` 回传 | `git pull` 后接着分析、写稿 |
+
+工作电脑上**不必**装 Python 依赖：`ml_extension.py` 的产物（CSV/PNG）已在仓库里，复核是可选项。
+反过来，本机没有 REFPROP，所以第 1–3 项只能你跑；跑完 push，我 `git pull` 就能接上。
+
+### 回传协议
+
+1. 工作电脑：`git pull` → 做完第 1–3 项 → `git add -A && git commit -m "..." && git push`
+2. 回到这边：告诉我"已经 push"，我 `git pull`，然后继续 §4 的经济性与 §3 的正文替换
+3. 若中途改了 MATLAB 脚本，请在 commit message 里写清改了哪个函数，避免我们两边改同一处
 
 ---
 
