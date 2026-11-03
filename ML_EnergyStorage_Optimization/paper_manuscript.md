@@ -54,6 +54,12 @@ In the energy release process, liquid CO₂ flows out from the HPT, is throttled
 
 The high-temperature heat exchanger (HG-HE) and low-temperature heat exchanger (LG-HE) use the high and low-temperature thermal storage media to provide heat at different temperature grades to customers. The accompanying heat at the turbine outlet is also recovered, effectively improving the overall energy utilization efficiency.
 
+<!-- TODO(Fig.1): export ../CCES_CHP_Simulink/output/CCES_CHP_cycle.drawio to ../CCES_CHP_Simulink/output/CCES_CHP_cycle.png (or .svg) before submission. The .drawio file still carries superseded annotations that contradict Table 1: β2=2.31 (now γ2=1.659), HPT 6228 m3 (now 1280 m3, 943 t), and compressor/turbine powers 9.55/10.12 MW (now 9.74/9.62 MW). -->
+
+![Fig. 1](../CCES_CHP_Simulink/output/CCES_CHP_cycle.png)
+
+**Fig. 1. Schematic of the CCES-CHP system.** Charging and discharging share the LPT/HPT pair and the HTV thermal store; the compression heat recovered in IC1/IC2 supplies the reheat duties HR1/HR2 and the external heat load, while the evaporator (EHE) draws ambient/low-grade heat.
+
 ### 2.2 Thermodynamic Modeling
 
 The thermodynamic model of the CCES-CHP system is developed based on mass conservation and energy conservation equations. The following assumptions are adopted [25–27]:
@@ -99,6 +105,12 @@ $$Q_{IC}(t) = m_C(t) \left[\sum_{i=1}^{N_C-1} (h_{C,i}^{out} - h_{C,i+1}^{in}) +
 The heat recovery load for the expansion process (HR1 and HR2) is:
 
 $$Q_{HR}(t) = m_T(t) \left[\sum_{i=1}^{N_T-1} (h_{T,i+1}^{in} - h_{T,i}^{out}) + (h_{T,1}^{in} - h_{HR-start})\right]$$
+
+The charging and discharging processes are plotted in the temperature–entropy plane in Fig. 2.
+
+![Fig. 2](../CCES_CHP_Analysis/output_figures/Fig12_Ts_Diagram.png)
+
+**Fig. 2. Temperature–entropy diagram of the CCES-CHP cycle with the CO₂ saturation dome.** State points 1–7 trace the charging process (compression, intercooling, liquefaction) and points 8–15 the discharging process (throttling, evaporation, reheat, expansion); the cycle stays on the vapour side of the dome.
 
 ### 2.3 System Design Parameters
 
@@ -184,6 +196,12 @@ $$SOC_{gas}(t) = \frac{m_{HPT}(t)}{m_{HPT}^{full}}, \qquad m_{HPT}^{lower} \le m
 
 with $m_{HPT}^{full}$ = 943 t (1280 m³ of liquid CO₂ at 298 K and 6.80 MPa) and an operating window of 10–90% of the full charge. Unlike the ideal-gas relation $p = m R_g T / V$ adopted in [20] for the HPT, this inventory formulation is consistent with liquid storage: 754 t of CO₂ occupies about 1057 m³ as a liquid, whereas the same mass would require roughly 6000 m³ as a gas at 6.8 MPa.
 
+The coupled evolution of the two SOCs under the periodic operating schedule is shown in Fig. 3.
+
+![Fig. 3](../CCES_CHP_Simulink/output/ode/fig03_soc_heat.png)
+
+**Fig. 3. Dual-SOC behaviour and HTV stored heat.** Left: the gas-side SOC (liquid level, 10–90%) and the heat-side SOC rise and fall in phase. Right: the HTV stored heat charges at 12.05 MW for 7.59 h and discharges at 18.28 MW for 5 h, returning to 45 MWh each cycle; the 150 MWh capacity is never reached.
+
 ### 3.3 Charging-Heating Feasibility Domain
 
 Under the charging-heating condition, electrical energy consumed by the compressor is converted into thermal energy of the storage medium and potential pressure energy of CO₂. The HTV heat storage must satisfy:
@@ -206,6 +224,12 @@ $$W_{C,E}(t) \le \frac{m_{HPT}^{upper} - m_{HPT}(t-1)}{\alpha_1 \Delta t} \quad 
 
 **Key characteristic**: The positive slope +γ₁ indicates electric-thermal **complementarity** during charging — higher charging power produces more compression heat, enabling greater heat supply. The inventory limit becomes active only when the tank approaches its upper bound (above about 89% SOC), where additional charging would overfill the HPT.
 
+The resulting charging-heating domain is sketched in Fig. 4.
+
+![Fig. 4](../CCES_CHP_Analysis/output_figures/Fig01_ChargeHeat_Feasibility.png)
+
+**Fig. 4. Charging-heating feasibility domain.** The positive slope +γ₁ expresses electric-thermal complementarity: a larger charging power raises the heat supply ceiling. The lines are drawn for a representative available-heat level so that the sloped constraint falls inside the plotting window; at high SOC the domain degenerates to the equipment rectangle.
+
 ### 3.4 Discharging-Heating Feasibility Domain
 
 Under the discharging-heating condition, the thermal energy of the storage medium and the potential pressure energy of CO₂ are converted into electrical power and direct heat supply. The boundary is determined by:
@@ -219,6 +243,12 @@ $$Q_{heat}(t) = Q_{heat}^{max}, \quad W_{T,E}(t) = W_{T,E}^{upper}$$
 $$W_{T,E}(t) \le \frac{m_{HPT}(t-1) - m_{HPT}^{lower}}{\alpha_2 \Delta t} \quad \text{(inventory limit)}$$
 
 **Key characteristic**: The negative slope −γ₂ indicates electric-thermal **competition** during discharging — power generation and heat supply compete for the same limited HTV stored energy. The upper-right corner (maximum power and maximum heat simultaneously) is infeasible.
+
+The resulting discharging-heating domain is sketched in Fig. 5.
+
+![Fig. 5](../CCES_CHP_Analysis/output_figures/Fig02_DischargeHeat_Feasibility.png)
+
+**Fig. 5. Discharging-heating feasibility domain.** The negative slope −γ₂ expresses electric-thermal competition: power generation and heat supply draw on the same thermal budget, so the upper-right corner (simultaneous maxima) is infeasible. The lines are drawn for a representative available-heat level so that the sloped constraint falls inside the plotting window.
 
 The zero-heat maximum power and zero-power maximum heat are:
 
@@ -379,7 +409,7 @@ A rule-based dispatch strategy serves as the comparison baseline. The rule-based
 
 ### 6.1 Case Study Configuration
 
-The case study considers an integrated energy system consisting of a 20 MW wind power unit, a 30 MW conventional CHP unit (heat-to-power ratio = 1.2), and a 10 MW/50 MWh CCES-CHP system. A typical day in the heating season is selected, with 24-hour profiles of electrical load, heat load, and wind power as shown in Fig. 2.
+The case study considers an integrated energy system consisting of a 20 MW wind power unit, a 30 MW conventional CHP unit (heat-to-power ratio = 1.2), and a 10 MW/50 MWh CCES-CHP system. A typical day in the heating season is selected, with 24-hour profiles of electrical load, heat load, and wind power as shown in Fig. 6.
 
 **Table 5. 24-hour load and wind power data.**
 
@@ -412,9 +442,13 @@ The case study considers an integrated energy system consisting of a 20 MW wind 
 
 Key characteristics: Wind power is abundant at night (hours 1–7) and low during midday. Electrical load peaks at noon (hours 12–15) and evening (hours 19–23). Heat load peaks in the morning and evening, characteristic of winter heating demand. Several charging windows exist (night wind surplus, midday troughs between peaks).
 
+![Fig. 6](../CCES_CHP_Analysis/output_figures/Fig03_LoadWind.png)
+
+**Fig. 6. 24-hour profiles of the electrical load, heat load and wind power.** Wind output peaks overnight, electrical load peaks at noon and in the evening, and the heat load peaks in the morning and evening, leaving charging windows overnight and at the midday trough.
+
 ### 6.2 Dispatch Optimization Results
 
-The 24-hour dispatch comparison between rule-based and ML-optimized strategies is presented in Fig. 3 and Table 6.
+The 24-hour dispatch comparison between rule-based and ML-optimized strategies is presented in Fig. 7 and Table 6.
 
 **Table 6. 24-hour dispatch performance comparison.**
 
@@ -426,6 +460,10 @@ The 24-hour dispatch comparison between rule-based and ML-optimized strategies i
 | Discharge duration (h) | 17 | **24** | **+41.2%** |
 | Terminal SOC_heat (%) | 0.0 | 0.2 | — |
 | Electrical dispatch tracking rate (%) | 44.9 | 45.4 | +0.5 pp |
+
+![Fig. 7](data/dispatch_comparison.png)
+
+**Fig. 7. Rule-based versus ML-optimized 24-hour dispatch.** Top: electrical dispatch instruction and the achieved charging/discharging power. Middle: heat dispatch instruction and the achieved heat supply. Bottom: HTV thermal SOC. The ML strategy keeps a small discharge through hours 18–24 instead of collapsing at hour 17.
 
 Three key observations:
 
@@ -508,6 +546,12 @@ Because the discharge constraint slope is −γ₂, a near-invariant γ₂ means
 | 80 | 120.5 | 120.5 | 0 (equipment-limited) |
 
 At SOC ≥ 20% the discharge domain is bounded by the equipment limits rather than by the heat budget: even at 10 MW the thermal draw (16.6 MW) plus the maximum heat supply (12.05 MW) stays below the one-hour heat availability (30 MW at 20% SOC), so the domain is the full rectangle and the temperature change has no effect. The thermal constraint starts trimming the domain below about 19% SOC and the power limit below about 11% SOC; at 10% SOC a slightly larger γ₂ reduces the area by 1.9%.
+
+The sweep is summarized in Fig. 8.
+
+![Fig. 8](data/feasibility_domain_change.png)
+
+**Fig. 8. Effect of the turbine inlet temperature on the feasibility domain.** Left: γ₂ and α₂ between 460 K and 520 K evaluated with REFPROP. Right: the discharging domain at SOC_heat = 10% for 483 K (grey) and 503 K (blue). The two boundaries nearly coincide; the temperature mainly changes the duration and the efficiency rather than the shape of the domain.
 
 #### Physical Interpretation
 

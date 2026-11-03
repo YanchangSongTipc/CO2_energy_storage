@@ -8,7 +8,7 @@
 
 | 文档 | 路径 | 说明 |
 |---|---|---|
-| **正文** | [ML_EnergyStorage_Optimization/paper_manuscript.md](ML_EnergyStorage_Optimization/paper_manuscript.md) | ICDIES 2026 投稿稿，Markdown，约 660 行 |
+| **正文** | [ML_EnergyStorage_Optimization/paper_manuscript.md](ML_EnergyStorage_Optimization/paper_manuscript.md) | ICDIES 2026 投稿稿，Markdown，约 700 行，已内嵌 8 图 |
 | 修订记录 | [ML_EnergyStorage_Optimization/DATA_REVISION.md](ML_EnergyStorage_Optimization/DATA_REVISION.md) | 旧值 → 新值对照，改稿依据 |
 | 早期框架 | [ML_EnergyStorage_Optimization/paper_framework.md](ML_EnergyStorage_Optimization/paper_framework.md) | 规划稿，**数值已作废**，仅供结构参考 |
 | ML 流程与指标 | [ML_EnergyStorage_Optimization/README.md](ML_EnergyStorage_Optimization/README.md) | 数据生成 → 训练 → 调度 |
@@ -24,25 +24,18 @@
 
 ## 三、正文图号 → 实际文件
 
-正文目前只引用了 3 张图，且**未内嵌图片**（纯 Markdown 文字引用）：
+正文已内嵌 8 张图（Markdown 图片引用，路径相对 `ML_EnergyStorage_Optimization/`），图号按出现顺序排列：
 
 | 正文 | 内容 | 对应文件 | 状态 |
 |---|---|---|---|
-| Fig. 1 | 系统流程图 | [CCES_CHP_Simulink/output/CCES_CHP_cycle.drawio](CCES_CHP_Simulink/output/CCES_CHP_cycle.drawio) | **仅 drawio 源文件，需导出 PNG/SVG** |
-| Fig. 2 | 负荷与风电曲线 | [Fig03_LoadWind.png](CCES_CHP_Analysis/output_figures/Fig03_LoadWind.png) | 可直接用 |
-| Fig. 3 | 规则 vs ML 调度 | [dispatch_comparison.png](ML_EnergyStorage_Optimization/data/dispatch_comparison.png) | 可直接用 |
-
-### 建议补充的图（尚未在正文引用）
-
-正文 §3 的可行域、§6.4 的温度敏感性目前只有公式和表格，建议补图：
-
-| 建议图号 | 文件 | 内容 |
-|---|---|---|
-| Fig. 4 | [Fig02_DischargeHeat_Feasibility.png](CCES_CHP_Analysis/output_figures/Fig02_DischargeHeat_Feasibility.png) | 放电可行域（斜率 −γ₂） |
-| Fig. 5 | [Fig01_ChargeHeat_Feasibility.png](CCES_CHP_Analysis/output_figures/Fig01_ChargeHeat_Feasibility.png) | 充电可行域（斜率 +γ₁） |
-| Fig. 6 | [feasibility_domain_change.png](ML_EnergyStorage_Optimization/data/feasibility_domain_change.png) | 温度扫描：γ₂ 近常数、α₂ 下降 |
-| Fig. 7 | [fig03_soc_heat.png](CCES_CHP_Simulink/output/ode/fig03_soc_heat.png) | 双 SOC 演化 |
-| Fig. 8 | [Fig12_Ts_Diagram.png](CCES_CHP_Analysis/output_figures/Fig12_Ts_Diagram.png) | T-s 循环图（含饱和穹顶） |
+| Fig. 1 | 系统流程图 | [CCES_CHP_cycle.drawio](CCES_CHP_Simulink/output/CCES_CHP_cycle.drawio) | **待导出**：drawio 内仍是旧值（β₂=2.31、HPT 6228 m³、9.55/10.12 MW），先改成 γ₂=1.659、1280 m³/943 t、9.74/9.62 MW，再导出 PNG 到同目录 |
+| Fig. 2 | T–s 循环图（含饱和穹顶） | [Fig12_Ts_Diagram.png](CCES_CHP_Analysis/output_figures/Fig12_Ts_Diagram.png) | 已内嵌 |
+| Fig. 3 | 双 SOC 与 HTV 蓄热 | [fig03_soc_heat.png](CCES_CHP_Simulink/output/ode/fig03_soc_heat.png) | 已内嵌 |
+| Fig. 4 | 充电可行域（斜率 +γ₁） | [Fig01_ChargeHeat_Feasibility.png](CCES_CHP_Analysis/output_figures/Fig01_ChargeHeat_Feasibility.png) | 已内嵌；演示参数 b=8，图内标题仍是旧符号 β₁，需重出 |
+| Fig. 5 | 放电可行域（斜率 −γ₂） | [Fig02_DischargeHeat_Feasibility.png](CCES_CHP_Analysis/output_figures/Fig02_DischargeHeat_Feasibility.png) | 已内嵌；演示参数 b=18，图内标题仍是旧符号 β₂，需重出 |
+| Fig. 6 | 负荷与风电曲线 | [Fig03_LoadWind.png](CCES_CHP_Analysis/output_figures/Fig03_LoadWind.png) | 已内嵌 |
+| Fig. 7 | 规则 vs ML 调度 | [dispatch_comparison.png](ML_EnergyStorage_Optimization/data/dispatch_comparison.png) | 已内嵌 |
+| Fig. 8 | 温度扫描（γ₂ 近常数、α₂ 下降） | [feasibility_domain_change.png](ML_EnergyStorage_Optimization/data/feasibility_domain_change.png) | 已内嵌 |
 
 其余可选用图见 [CCES_CHP_Analysis/README.md](CCES_CHP_Analysis/README.md) 的图号对照表。
 
