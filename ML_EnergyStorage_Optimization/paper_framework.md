@@ -4,6 +4,10 @@
 
 **论文类型**: 方法论 + 算例验证
 
+> **⚠ 2026-11 修订**：本文件是早期规划稿。其中的 γ₂=2.307、MLP 99.77%、“可行域扩大 23%” 等
+> 数值已被 REFPROP 实测取代，**以 [paper_manuscript.md](paper_manuscript.md) 与
+> [DATA_REVISION.md](DATA_REVISION.md) 为准**。
+
 ---
 
 ## Abstract (摘要)

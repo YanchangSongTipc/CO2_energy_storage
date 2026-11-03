@@ -32,7 +32,8 @@ y_Qmax = df['Q_max_feasible'].values
 
 # 分割训练/测试集
 X_train, X_test, yf_train, yf_test, yW_train, yW_test, yQ_train, yQ_test = \
-    train_test_split(X, y_feasible, y_Wmax, y_Qmax, test_size=0.2, random_state=42)
+    train_test_split(X, y_feasible, y_Wmax, y_Qmax,
+                     test_size=0.2, random_state=42, stratify=y_feasible)
 
 print(f'\n训练集: {len(X_train)}, 测试集: {len(X_test)}')
 print(f'可行性分布: 正例={yf_train.sum()/len(yf_train)*100:.1f}%')
@@ -43,8 +44,7 @@ print(f'可行性分布: 正例={yf_train.sum()/len(yf_train)*100:.1f}%')
 print('\n=== XGBoost: 可行性分类 ===')
 xgb_clf = xgb.XGBClassifier(
     n_estimators=200, max_depth=6, learning_rate=0.1,
-    subsample=0.8, colsample_bytree=0.8,
-    eval_metric='logloss', use_label_encoder=False, random_state=42
+    subsample=0.8, colsample_bytree=0.8, random_state=42
 )
 xgb_clf.fit(X_train, yf_train)
 
@@ -52,7 +52,7 @@ yf_pred = xgb_clf.predict(X_test)
 acc = accuracy_score(yf_test, yf_pred)
 print(f'测试准确率: {acc*100:.2f}%')
 
-# 特征重要性
+# 特征重要性（重点看 SOC_gas_pct: 旧数据为 0.0015，加入 HPT 质量约束后应显著上升）
 importance = xgb_clf.feature_importances_
 for name, imp in sorted(zip(feature_cols, importance), key=lambda x: -x[1]):
     print(f'  {name}: {imp:.4f}')

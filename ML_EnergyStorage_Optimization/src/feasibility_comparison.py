@@ -1,120 +1,129 @@
 """
 feasibility_comparison.py
-对比: 固定透平入口温度 vs ML优化调节透平入口温度后的可行域变化
+透平入口温度对放电可行域 / 放电时长的影响
 
-核心逻辑:
-- 提高透平入口温度 → 单位CO2做功增强 → β2下降 → 同样发电消耗回热减少
-- → 储热更多留给供热 → 可行域向"更多供热"方向扩展
-- → 放电时长从5h延长到8h (论文核心结论)
+数据来源：data/design_sweep.csv，由 MATLAB 侧 cces_design_sweep.m 调用
+cces_design_point（REFPROP 现算）生成，Python 端不再手写任何 β₂(T) 估算值。
+
+修正说明（原版本的两个错误）：
+  1) 旧版直接令 beta2_opt = 1.78（"由论文 Eq.31 估算"）。REFPROP 实测
+     β₂ 在 483→503 K 只从 1.659 变到 1.686（+1.6%），不存在 2.31→1.78 的下降。
+  2) 由此得出的"可行域扩大 23%、放电时长 5 h→8 h(+60%)"不成立。
+  真实机制是：升温使单位功率所需质量流量 α₂ 下降（4.19→3.99，−4.8%），
+  同样储液量可多放电约 5%，同时电效率上升约 2.8 个百分点。
 """
 
+import os
 import numpy as np
+import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import os
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+DATA = os.path.join(HERE, '..', 'data')
 
 # =========================================================================
-# 1. 系统参数
+# 1. 读取设计点扫描表
 # =========================================================================
-W_max = 10.0
-Q_max = 9.5
-Q_HTV_upper = 150.0
-Q_HTV_lower = 0.0
-dt = 1.0
+sweep = pd.read_csv(os.path.join(DATA, 'design_sweep.csv'))
+print('设计点扫描（REFPROP）:')
+print(sweep.to_string(index=False))
 
-# β2 随透平入口温度 T_turb 变化 (基于论文 Eq.31)
-# T_turb=483K (基准) → β2≈2.31 (回热多, 供热少)
-# T_turb=503K (优化) → β2≈1.78 (回热少, 供热多)
-T_turb_base = 483.0   # 基准透平入口温度 [K]
-T_turb_opt  = 503.0   # ML优化后透平入口温度 [K]
-beta2_base  = 2.31    # 基准 β2
-beta2_opt   = 1.78    # 优化后 β2 (由论文 Eq.31 估算)
-beta1       = 1.21
+def at(T):
+    return sweep.iloc[(sweep.Th_K - T).abs().argmin()]
+
+base = at(483.0)
+opt = at(503.0)
 
 # =========================================================================
-# 2. 可行域对比: 不同 SOC 状态下
+# 2. 系统常数（与 cces_design_point 一致）
 # =========================================================================
-SOC_levels = [20, 40, 60, 80]  # 四个 SOC 水平
+W_max = 10.0          # MW
+Q_max = 12.05         # MW  = γ1·W_design
+Q_HTV = 15.0          # MWh = 10% SOC：只有低 SOC 时储热约束才真正限制可行域
+dt = 1.0              # h
+M_usable = 754400.0   # kg  设计循环质量（5 h × α₂ × 10 MW）
 
-fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+def domain_area(beta2):
+    """放电可行域面积 ∫ min(Q_max, Q_HTV/Δt − β2·W) dW"""
+    b_up = Q_HTV / dt
+    W_lim = min(W_max, b_up / beta2)
+    W = np.linspace(0.0, W_lim, 2000)
+    Q = np.minimum(Q_max, np.maximum(0.0, b_up - beta2 * W))
+    return np.trapz(Q, W)
 
-for idx, SOC_h in enumerate(SOC_levels):
-    ax = axes[idx // 2, idx % 2]
-    Q_HTV = SOC_h / 100 * Q_HTV_upper
-    b_upper = max(0, (Q_HTV - Q_HTV_lower) / dt)  # W=0时的最大供热
-    b_lower = (Q_HTV - Q_HTV_upper) / dt
+def duration(alpha2):
+    """同等储液量、满功率放电能持续多久 [h]"""
+    return M_usable / (alpha2 * W_max * 3600.0)
 
-    # 基准可行域 (灰色, β2_base)
-    W_vals = np.linspace(0, W_max, 100)
-    Q_bound_base = np.minimum(Q_max, np.maximum(0, b_upper - beta2_base * W_vals))
-    ax.fill_between(W_vals, 0, Q_bound_base, color='gray', alpha=0.25, label='Baseline (T=483K)')
-    ax.plot(W_vals, Q_bound_base, 'k-', lw=2, label=f'β₂={beta2_base:.2f}')
+# =========================================================================
+# 3. 定量对比
+# =========================================================================
+rows = []
+for _, r in sweep.iterrows():
+    rows.append((r.Th_K, r.beta2, r.alpha2, r.eta_elec_pct,
+                 domain_area(r.beta2), duration(r.alpha2)))
 
-    # ML优化后可行域 (蓝色, β2_opt)
-    Q_bound_opt = np.minimum(Q_max, np.maximum(0, b_upper - beta2_opt * W_vals))
-    ax.fill_between(W_vals, 0, Q_bound_opt, color='blue', alpha=0.20, label='ML-Optimized (T=503K)')
-    ax.plot(W_vals, Q_bound_opt, 'b-', lw=2, label=f'β₂={beta2_opt:.2f}')
+print('\n Th[K]  beta2  alpha2  可行域面积   同等储液放电时长   RTE%')
+print('-' * 66)
+for T, b2, a2, rte, area, dur in rows:
+    print(f' {T:5.0f}  {b2:.3f}  {a2:.3f}   {area:8.1f} MWh     {dur:5.2f} h      {rte:5.1f}')
 
-    # 标注扩展区域
-    ax.fill_between(W_vals, Q_bound_base, Q_bound_opt, color='cyan', alpha=0.30, label='Expanded Region')
+d_area = (domain_area(opt.beta2) - domain_area(base.beta2)) / domain_area(base.beta2) * 100
+d_dur = (duration(opt.alpha2) - duration(base.alpha2)) / duration(base.alpha2) * 100
+d_b2 = (opt.beta2 - base.beta2) / base.beta2 * 100
+d_a2 = (opt.alpha2 - base.alpha2) / base.alpha2 * 100
 
-    # 标注 Max Heat 和 Max Power 点
-    Q_max_base = min(Q_max, b_upper)
-    W_max_base = min(W_max, b_upper / beta2_base)
-    W_max_opt  = min(W_max, b_upper / beta2_opt)
+print('\n=== 483 K -> 503 K ===')
+print(f'  beta2 : {base.beta2:.3f} -> {opt.beta2:.3f}  ({d_b2:+.1f}%)')
+print(f'  alpha2: {base.alpha2:.3f} -> {opt.alpha2:.3f}  ({d_a2:+.1f}%)')
+print(f'  可行域面积(SOC 10%): {domain_area(base.beta2):.1f} -> {domain_area(opt.beta2):.1f} MWh ({d_area:+.1f}%)')
+print('  注：SOC=50% 时 β₂·W_max = 16.9 MW < Q_HTV/Δt = 75 MW，可行域被设备上限')
+print('      Q_max 截成矩形，与 β₂ 无关；电热竞争只在低 SOC（<~15%）出现。')
+print(f'  同等储液放电时长: {duration(base.alpha2):.2f} -> {duration(opt.alpha2):.2f} h ({d_dur:+.1f}%)')
+print(f'  电-电效率: {base.eta_elec_pct:.1f}% -> {opt.eta_elec_pct:.1f}%')
+print('\n结论：升温带来的是"同等储液约多放 5% + 电效率 +3.3 pt"，')
+print('      而不是此前假设的可行域扩大 23% / 放电时长 +60%。')
 
-    ax.plot(0, Q_max_base, 'ko', ms=8)
-    ax.plot(W_max_base, 0, 'ko', ms=8)
-    ax.plot(W_max_opt, 0, 'bo', ms=8, mfc='b')
+# =========================================================================
+# 4. 绘图
+# =========================================================================
+fig, axes = plt.subplots(1, 2, figsize=(13, 5))
 
-    ax.set_xlim(-0.5, W_max + 1.0)
-    ax.set_ylim(-0.5, Q_max + 2.0)
-    ax.set_xlabel('Discharging Power [MW]')
-    ax.set_ylabel('Heating Power [MW]')
-    ax.set_title(f'SOC_heat = {SOC_h}% (Q_HTV = {Q_HTV:.0f} MWh)')
-    ax.legend(fontsize=7, loc='upper right')
-    ax.grid(True, alpha=0.3)
+ax = axes[0]
+ax.plot(sweep.Th_K, sweep.beta2, 'o-', color='#c0392b', lw=2)
+ax.axvline(483, color='gray', ls='--', alpha=0.6)
+ax.axvline(503, color='gray', ls='--', alpha=0.6)
+ax.set_xlabel('Turbine inlet temperature [K]')
+ax.set_ylabel(r'$\gamma_2$ [-]', color='#c0392b')
+ax.tick_params(axis='y', labelcolor='#c0392b')
+ax2 = ax.twinx()
+ax2.plot(sweep.Th_K, sweep.alpha2, 's-', color='#2c3e50', lw=2)
+ax2.set_ylabel(r'$\alpha_2$ [kg/(s$\cdot$MW)]', color='#2c3e50')
+ax2.tick_params(axis='y', labelcolor='#2c3e50')
+ax.set_title(r'$\gamma_2$ nearly flat, $\alpha_2$ falls with T')
+ax.grid(alpha=0.3)
 
-fig.suptitle('Feasible Domain: Baseline vs ML-Optimized (Turbine Inlet Temp Adjusted)',
-             fontsize=13, fontweight='bold')
+ax = axes[1]
+b_up = Q_HTV / dt
+W = np.linspace(0, W_max, 400)
+for r, color, lab in [(base, '#7f8c8d', f'483 K ($\\gamma_2$={base.beta2:.3f})'),
+                      (opt, '#2980b9', f'503 K ($\\gamma_2$={opt.beta2:.3f})')]:
+    Qb = np.minimum(Q_max, np.maximum(0, b_up - r.beta2 * W))
+    ax.fill_between(W, 0, Qb, color=color, alpha=0.25)
+    ax.plot(W, Qb, color=color, lw=2, label=lab)
+ax.set_xlabel(r'Discharging power $W_{T,E}$ [MW]')
+ax.set_ylabel('Heating power [MW]')
+ax.set_title(f'Feasible domain at SOC=10% (area change {d_area:+.1f}%)')
+ax.legend(loc='upper right', fontsize=9)
+ax.grid(alpha=0.3)
+ax.set_xlim(0, W_max)
+ax.set_ylim(0, Q_max + 2)
+
+fig.suptitle('Effect of turbine inlet temperature: REFPROP values, not an estimate',
+             fontsize=12, fontweight='bold')
 plt.tight_layout()
-
-out_dir = os.path.join('..', 'data')
-os.makedirs(out_dir, exist_ok=True)
-plt.savefig(os.path.join(out_dir, 'feasibility_domain_change.png'), dpi=150)
-print('可行域对比图已保存')
-
-# =========================================================================
-# 3. 定量分析
-# =========================================================================
-print('\n=== 可行域面积变化分析 ===')
-print(f'{"SOC":>5s} {"基准面积":>10s} {"优化面积":>10s} {"增幅":>8s} {"基准Wmax":>10s} {"优化Wmax":>10s}')
-print('-' * 60)
-
-for SOC_h in [10, 20, 30, 40, 50, 60, 70, 80]:
-    Q_HTV = SOC_h / 100 * Q_HTV_upper
-    b_upper = max(0, (Q_HTV - Q_HTV_lower) / dt)
-
-    area_base = 0.5 * min(W_max, b_upper/beta2_base) * min(Q_max, b_upper)
-    area_opt  = 0.5 * min(W_max, b_upper/beta2_opt)  * min(Q_max, b_upper)
-
-    Wmax_base = min(W_max, max(0, b_upper / beta2_base))
-    Wmax_opt  = min(W_max, max(0, b_upper / beta2_opt))
-
-    change = (area_opt - area_base) / (area_base + 1e-6) * 100
-    print(f'{SOC_h:4.0f}% {area_base:9.1f} {area_opt:9.1f} {change:+7.1f}% {Wmax_base:9.1f} {Wmax_opt:9.1f}')
-
-# =========================================================================
-# 4. 放电时长分析
-# =========================================================================
-print('\n=== 放电时长对比 (满功率10MW, 零供热) ===')
-discharge_rates = {
-    'Baseline (483K)': beta2_base * W_max,
-    'ML-Optimized (503K)': beta2_opt * W_max,
-    'ML-Optimized (483K→503K)': (beta2_base - beta2_opt) * W_max,  # 节省的回热功率
-}
-
-for label, rate in discharge_rates.items():
-    hours = Q_HTV_upper / (rate + 1e-6)
-    print(f'  {label}: 消耗率={rate:.1f} MW, 放电时长≈{hours:.1f} h')
+out = os.path.join(DATA, 'feasibility_domain_change.png')
+plt.savefig(out, dpi=150)
+print(f'\n图已保存: {out}')

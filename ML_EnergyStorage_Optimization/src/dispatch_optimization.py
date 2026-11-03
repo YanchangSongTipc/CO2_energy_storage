@@ -23,12 +23,12 @@ with open(os.path.join(model_dir, 'xgb_classifier.pkl'), 'rb') as f:
 # 2. 系统参数
 # =========================================================================
 W_max = 10.0          # 最大充/放电功率 [MW]
-Q_max = 9.5           # 最大供热功率 [MW]
+Q_max = 12.05         # 最大供热功率 [MW] = γ1·W_design（与训练集一致）
 Q_HTV_upper = 150.0   # HTV 储热上限 [MWh]
 Q_HTV_lower = 0.0     # HTV 储热下限
 dt = 1.0              # 调度步长 [h]
-beta1 = 1.205         # 来自热力学模型
-beta2 = 2.307
+beta1 = 1.205         # 来自 cces_design_point(483)
+beta2 = 1.659         # 不含 EHE 潜热（旧值 2.307 已废弃）
 t_charge_design = 7.5
 t_discharge_design = 5.0
 
@@ -59,7 +59,7 @@ Elec_Dispatch = Elec_Load - CCHP_elec - Wind_Power
 def predict_feasibility(SOC_h, SOC_g, W, Q, mode):
     """用 XGBoost 预测 (W,Q) 在给定 SOC 下是否可行"""
     features = np.array([[SOC_h, SOC_g, W, Q, mode,
-                          beta1, beta2, 2.76, 4.19]])  # alpha1, alpha2 ~const
+                          beta1, beta2, 2.762, 4.191]])  # alpha1, alpha2 来自设计点
     return clf.predict(features)[0]
 
 def find_optimal_dispatch_ml(SOC_h, SOC_g, elec_dispatch, heat_dispatch):

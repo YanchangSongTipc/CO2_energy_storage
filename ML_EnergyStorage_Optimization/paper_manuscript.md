@@ -10,7 +10,7 @@
 
 ## Abstract
 
-Compressed carbon dioxide energy storage (CCES), as an emerging compressed gas energy storage technology, exhibits significant potential for enhancing renewable energy accommodation and improving the flexibility of integrated energy systems, owing to its superior thermophysical properties, environmental friendliness, and capability for combined heat and power (CHP) supply. Based on an established thermodynamic model of a compressed carbon dioxide energy storage combined heat and power (CCES-CHP) system, this study proposes a machine learning methodology for the dynamic construction and optimization of its operational feasibility domain. Dimensionless factors γ₁ and γ₂, along with ratio parameters α₁ and α₂, are defined to quantify the coupling relationships among electrical, thermal, and mass flows. A dual state of charge (SOC) model incorporating both thermal and gas storage is developed to establish the system's constraint boundaries. Machine learning algorithms, including XGBoost and multi-layer perceptron (MLP) neural networks, are trained using 38,720 thermodynamic simulation samples to predict feasible operating regions and optimize system dispatch under varying load conditions. A case study on an integrated energy system (20 MW wind power, 30 MW conventional CHP, and 10 MW/50 MWh CCES-CHP) demonstrates that the proposed approach achieves 100% accuracy in predicting operational feasibility using XGBoost, with boundary regression achieving R² = 1.0000. The ML-optimized dispatch extends the discharge coverage duration from 15 to 24 hours and increases total heat supply from 43.0 to 46.3 MWh over a 24-hour horizon. By adjusting turbine inlet temperature from 483 K to 503 K, the reheat coefficient γ₂ decreases from 2.31 to 1.78, expanding the feasible domain area by 29.8% at low SOC and extending the full-power discharge duration from 6.5 to 8.4 hours. This methodology provides an effective tool for real-time dispatch and capacity planning of CCES-CHP systems.
+Compressed carbon dioxide energy storage (CCES), as an emerging compressed gas energy storage technology, exhibits significant potential for enhancing renewable energy accommodation and improving the flexibility of integrated energy systems, owing to its superior thermophysical properties, environmental friendliness, and capability for combined heat and power (CHP) supply. Based on an established thermodynamic model of a compressed carbon dioxide energy storage combined heat and power (CCES-CHP) system, this study proposes a machine learning methodology for the dynamic construction and optimization of its operational feasibility domain. Dimensionless factors γ₁ and γ₂, along with ratio parameters α₁ and α₂, are defined to quantify the coupling relationships among electrical, thermal, and mass flows. A dual state of charge (SOC) model covering both thermal storage and CO₂ liquid inventory is developed to establish the system's constraint boundaries, so that the heat budget and the storage-tank charge jointly bound the feasible operating region. Machine learning algorithms, including XGBoost and multi-layer perceptron (MLP) neural networks, are trained using 38,720 thermodynamic simulation samples to predict feasible operating regions and optimize system dispatch under varying load conditions. A case study on an integrated energy system (20 MW wind power, 30 MW conventional CHP, and 10 MW/50 MWh CCES-CHP) demonstrates that the proposed approach achieves 100% classification accuracy with XGBoost (98.58% with the MLP benchmark), while boundary regression reaches R² = 0.9964 for the maximum feasible power and 1.0000 for the maximum feasible heat. The ML-optimized dispatch extends the discharge coverage duration from 17 to 24 hours and increases total heat supply from 44.0 to 46.3 MWh (+5.2%) over a 24-hour horizon, a gain obtained by temporal redistribution rather than by holding a terminal storage margin. A turbine inlet temperature sweep from 483 K to 503 K shows that the reheat coefficient γ₂ is nearly invariant (1.659 to 1.691), so the feasible domain area changes by only −1.9% even at low SOC; the benefit of a higher temperature is instead a 4.7% reduction in the discharge mass flow per unit power, which extends the full-power discharge duration from 5.00 to 5.25 hours and raises the electricity-to-electricity efficiency from 65.9% to 69.2%. This methodology provides an effective tool for real-time dispatch and capacity planning of CCES-CHP systems.
 
 **Keywords**: Compressed carbon dioxide energy storage; Combined heat and power; Operational feasibility domain; Machine learning; XGBoost; Integrated energy system
 
@@ -33,9 +33,9 @@ With the rapid development of machine learning techniques, data-driven approache
 This study proposes a machine learning framework for learning and optimizing the operational feasibility domain of CCES-CHP systems. The main contributions are:
 
 1. A parameterized training data generation pipeline that maps thermodynamic states to feasibility labels using REFPROP-based simulations, producing 38,720 labeled samples.
-2. XGBoost and MLP models achieving near-perfect accuracy (100% and 99.77%) on feasibility classification, and R² = 1.0000 on boundary regression.
-3. A grid-search dispatch optimization algorithm operating within the ML-predicted feasibility domain, extending discharge duration from 15 to 24 hours.
-4. Demonstration that ML-guided operating parameter tuning (T_turb ↑ → γ₂ ↓) expands the feasibility domain by 29.8% at low SOC states.
+2. XGBoost and MLP models achieving near-perfect accuracy (100% and 98.58%) on feasibility classification, and R² = 0.9964 (W_max) and 1.0000 (Q_max) on boundary regression.
+3. A grid-search dispatch optimization algorithm operating within the ML-predicted feasibility domain, extending discharge duration from 17 to 24 hours and raising heat supply by 5.2%.
+4. A physically complete dual-SOC formulation in which the HPT liquid inventory bounds the instantaneous power; the gas-side feature importance rises from 0.0015 to 0.2376 once this constraint is included, confirming that the coupling is physically active rather than nominal.
 5. Quantification of the three core ML optimization strategies: power derating, dynamic electric-thermal allocation, and strategic charging.
 
 The remainder of this paper is organized as follows. Section 2 describes the CCES-CHP system and thermodynamic model. Section 3 presents the feasibility domain construction method. Section 4 details the ML methodology. Section 5 describes the dispatch optimization framework. Section 6 presents the case study and results. Section 7 concludes.
@@ -125,9 +125,12 @@ The key design parameters of the CCES-CHP system are listed in Table 1.
 | Motor mechanical efficiency | 0.98 | — |
 | Generator mechanical efficiency | 0.95 | — |
 | HTV thermal storage capacity | 150 | MWh_th |
-| HPT volume | 500 | m³ |
+| HPT volume | 1280 | m³ |
+| HPT liquid inventory (usable window) | 943 (10–90%) | t |
 | Charging mass flow rate | 26.9 | kg/s |
 | Discharging mass flow rate | 40.3 | kg/s |
+
+*These mass flow rates are the reference design values. Evaluated with the present property data they correspond to 9.74 MW of compression power and 9.62 MW of turbine output, which is the origin of the ratio parameters given in Section 3.1.*
 
 ### 2.4 Performance Evaluation
 
@@ -137,7 +140,7 @@ $$\eta_{electricity} = \frac{\int_{t_{discharge}} W_{T,E}(t) dt}{\int_{t_{charge
 
 $$\eta_{heating,total} = \frac{\int Q_{HG-HE}(t) dt + \int Q_{LG-HE}(t) dt + \int Q_{AE-HE}(t) dt}{\int W_{C,E}(t) dt}$$
 
-Under the baseline design condition with all HTV heat used for turbine reheat (X = 9.0%, Y = 91.0%), the system achieves η_electricity = 66.7%, η_heating,total = 21.4%, and a comprehensive energy utilization efficiency of 88.1%.
+Under the baseline design condition, the evaporative heat exchanger is resolved separately: it vaporizes the throttled liquid with ambient/low-grade heat (6.23 MW) before the CO₂ enters HR1, so that the stored compression heat covers only the superheating and reheat duties (9.65 MW and 6.31 MW). With all HTV heat used for turbine reheat (X = 9.3%, Y = 90.7%) the model gives η_electricity = 65.8%, η_heating,total = 25.4% (11.3% low-temperature and 14.2% after-expansion), and a comprehensive energy utilization efficiency of 91.3%. The residual differences from the reference design (66.7%, 21.4%) originate from the state-point details and the separate resolution of the evaporator.
 
 ---
 
@@ -157,11 +160,11 @@ $$\alpha_2 = \frac{m_T(t)}{W_{T,E}(t)}$$
 
 Where γ₁ characterizes the compression heat generated per unit charging power, γ₂ characterizes the reheat demand per unit discharging power, α₁ characterizes the charge mass flow per unit power, and α₂ characterizes the discharge mass flow per unit power.
 
-At the baseline design condition, γ₁ = 1.205, γ₂ = 2.307, α₁ = 2.76 kg/(s·MW), α₂ = 4.19 kg/(s·MW).
+At the baseline design condition (T_turb = 483 K), γ₁ = 1.205, γ₂ = 1.659, α₁ = 2.762 kg/(s·MW), α₂ = 4.191 kg/(s·MW). Note that γ₂ is evaluated with the EHE vaporization duty excluded, because that duty is supplied by ambient heat rather than by the HTV; including it would inflate γ₂ to 2.31 and produce a spurious heat deficit.
 
 ### 3.2 Dual State of Charge (SOC) Model
 
-The state of charge (SOC) is an essential parameter reflecting the dynamic process of energy storage system operation. Since CCES-CHP charging and discharging involve coupled thermal conversion and pressure potential energy conversion, a dual SOC model is constructed based on HTV heat storage and HPT CO₂ storage pressure, respectively.
+The state of charge (SOC) is an essential parameter reflecting the dynamic process of energy storage system operation. Since CCES-CHP charging and discharging involve coupled thermal conversion and mass storage, a dual SOC model is constructed on the HTV heat storage and the HPT CO₂ liquid inventory.
 
 The heat storage SOC is described in terms of the HTV heat storage value:
 
@@ -170,12 +173,16 @@ Q_{HTV}(t-1) + [\gamma_1 W_{C,E}(t) - Q_{heat}(t)] \Delta t & \text{Charging-Hea
 Q_{HTV}(t-1) - [\gamma_2 W_{T,E}(t) + Q_{heat}(t)] \Delta t & \text{Discharging-Heating}
 \end{cases}$$
 
-The gas storage SOC is described in terms of HPT pressure:
+The gas storage SOC is described by the CO₂ inventory of the HPT. After liquefaction in the LHE the working fluid is stored as room-temperature liquid, and the tank pressure (6.80 MPa) is maintained by the charging pump rather than by phase equilibrium; the tank pressure is therefore essentially constant and is not a state variable. The quantity that actually bounds operation is the liquid inventory:
 
-$$p_{HPT}(t) = \begin{cases}
-p_{HPT}(t-1) + \frac{R_g}{V_{HPT}} T_{HPT} \alpha_1 W_{C,E}(t) \Delta t & \text{Charging-Heating} \\
-p_{HPT}(t-1) - \frac{R_g}{V_{HPT}} T_{HPT} \alpha_2 W_{T,E}(t) \Delta t & \text{Discharging-Heating}
+$$m_{HPT}(t) = \begin{cases}
+m_{HPT}(t-1) + \alpha_1 W_{C,E}(t) \Delta t & \text{Charging-Heating} \\
+m_{HPT}(t-1) - \alpha_2 W_{T,E}(t) \Delta t & \text{Discharging-Heating}
 \end{cases}$$
+
+$$SOC_{gas}(t) = \frac{m_{HPT}(t)}{m_{HPT}^{full}}, \qquad m_{HPT}^{lower} \le m_{HPT}(t) \le m_{HPT}^{upper}$$
+
+with $m_{HPT}^{full}$ = 943 t (1280 m³ of liquid CO₂ at 298 K and 6.80 MPa) and an operating window of 10–90% of the full charge. Unlike the ideal-gas relation $p = m R_g T / V$ adopted in [20] for the HPT, this inventory formulation is consistent with liquid storage: 754 t of CO₂ occupies about 1057 m³ as a liquid, whereas the same mass would require roughly 6000 m³ as a gas at 6.8 MPa.
 
 ### 3.3 Charging-Heating Feasibility Domain
 
@@ -195,7 +202,9 @@ $$Q_{heat}(t) = Q_{heat}^{max} \quad \text{(equipment limit)}$$
 
 $$W_{C,E}(t) = W_{C,E}^{upper} \quad \text{(power limit)}$$
 
-**Key characteristic**: The positive slope +γ₁ indicates electric-thermal **complementarity** during charging — higher charging power produces more compression heat, enabling greater heat supply.
+$$W_{C,E}(t) \le \frac{m_{HPT}^{upper} - m_{HPT}(t-1)}{\alpha_1 \Delta t} \quad \text{(inventory limit)}$$
+
+**Key characteristic**: The positive slope +γ₁ indicates electric-thermal **complementarity** during charging — higher charging power produces more compression heat, enabling greater heat supply. The inventory limit becomes active only when the tank approaches its upper bound (above about 89% SOC), where additional charging would overfill the HPT.
 
 ### 3.4 Discharging-Heating Feasibility Domain
 
@@ -207,23 +216,25 @@ $$Q_{heat}(t) = \frac{Q_{HTV}(t-1) - Q_{HTV}^{upper}}{\Delta t} - \gamma_2 W_{T,
 
 $$Q_{heat}(t) = Q_{heat}^{max}, \quad W_{T,E}(t) = W_{T,E}^{upper}$$
 
+$$W_{T,E}(t) \le \frac{m_{HPT}(t-1) - m_{HPT}^{lower}}{\alpha_2 \Delta t} \quad \text{(inventory limit)}$$
+
 **Key characteristic**: The negative slope −γ₂ indicates electric-thermal **competition** during discharging — power generation and heat supply compete for the same limited HTV stored energy. The upper-right corner (maximum power and maximum heat simultaneously) is infeasible.
 
 The zero-heat maximum power and zero-power maximum heat are:
 
-$$W_{max} = \frac{Q_{HTV}(t-1) - Q_{HTV}^{lower}}{\gamma_2 \Delta t}, \quad Q_{max} = \frac{Q_{HTV}(t-1) - Q_{HTV}^{lower}}{\Delta t}$$
+$$W_{max} = \min\left[\frac{Q_{HTV}(t-1) - Q_{HTV}^{lower}}{\gamma_2 \Delta t},\ \frac{m_{HPT}(t-1) - m_{HPT}^{lower}}{\alpha_2 \Delta t},\ W_{T,E}^{upper}\right], \quad Q_{max} = \frac{Q_{HTV}(t-1) - Q_{HTV}^{lower}}{\Delta t}$$
+
+The inventory limit is active only below about 16% SOC: a 943 t tank discharges 151 t in one hour at 10 MW, so the last hour of a deep discharge becomes inventory-limited while the rest of the domain remains thermal- or equipment-limited.
 
 ### 3.5 Effect of Operating Parameters on Feasibility Domain
 
 The heat supply rate X, reflecting the ratio of high and low-temperature heat supply to total heat storage, is related to γ₁, γ₂, α₁, α₂ by:
 
-$$X = 1 - \frac{\gamma_2 \alpha_1 \eta_{C,E} \eta_{T,E}}{\gamma_1 \alpha_2}$$
+$$X = 1 - \frac{\gamma_2 \alpha_1}{\gamma_1 \alpha_2}$$
 
-The turbine inlet temperature directly affects γ₂ and consequently the shape of the feasibility domain. When the turbine inlet temperature increases, the CO₂ specific work capacity increases, reducing the reheat demand per unit power (γ₂ ↓). Under the assumption of uniform turbine inlet temperature, a correction factor λ is defined as the ratio of the reference temperature to the actual temperature:
+which follows from the cycle energy balance $Q_{IC} t_c = Q_{HR} t_d + Q_{LG} t_d$ combined with the mass balance $\alpha_1 W_{C,E} t_c = \alpha_2 W_{T,E} t_d$. At the design point this gives X = 9.3%, consistent with the thermodynamic evaluation of Section 2.4. Because the dimensionless groups are already defined on electrical power, the motor and generator efficiencies must not be applied a second time in this expression.
 
-$$\gamma_2' = [1 - \frac{(1-\lambda) T_{HR-start}}{\Sigma T_{T,i}^{in} - \Sigma T_{T,i}^{out} - T_{HR-start}}] \gamma_2$$
-
-When λ < 1 (higher turbine inlet temperature), γ₂' < γ₂, the constraint slope becomes shallower, and the feasibility domain expands rightward — enabling higher power generation at the same heat supply level, or higher heat supply at the same power level.
+The turbine inlet temperature affects the two couplings very differently. Evaluated directly from REFPROP, γ₂ changes only from 1.659 at 483 K to 1.691 at 503 K (+1.9%), because the reheat duty and the turbine work scale together, whereas α₂ falls from 4.191 to 3.993 kg/(s·MW) (−4.7%) as the specific work per kilogram of CO₂ increases. The approximate correction factor proposed in [20] implies a far stronger sensitivity (γ₂ ↓ 23%); that estimate is not adopted here, since the property-based evaluation shows the reheat coefficient to be nearly invariant with temperature. The consequence, quantified in Section 6.4, is that raising T_turb barely reshapes the feasibility domain, but it reduces the mass drawn per unit power and improves the electrical efficiency.
 
 ---
 
@@ -238,9 +249,9 @@ The training data generation pipeline is implemented in MATLAB, utilizing REFPRO
 | Parameter | Range | Steps | Description |
 |-----------|-------|-------|-------------|
 | SOC_heat | 0–100% | 16 | HTV thermal storage state |
-| SOC_gas | 0–100% | 11 | HPT pressure state |
+| SOC_gas | 0–100% | 11 | HPT liquid inventory (10–90% usable) |
 | W | 0–10 MW | 11 | Power setpoint |
-| Q | 0–Q_max MW | 10 | Heat supply setpoint |
+| Q | 0–12.05 MW | 10 | Heat supply setpoint (equipment limit γ₁·W_design) |
 | Mode | 0, 1 | 2 | 0 = charge, 1 = discharge |
 
 Total samples: 16 × 11 × 11 × 10 × 2 = **38,720**.
@@ -248,9 +259,14 @@ Total samples: 16 × 11 × 11 × 10 × 2 = **38,720**.
 For each parameter combination, the feasibility label and boundary values are computed analytically from the constraint equations:
 
 ```
-feasible = (Q ≤ slope × W + b_upper) ∧ (Q ≥ slope × W + b_lower) ∧
-           (0 ≤ Q ≤ Q_max) ∧ (0 ≤ W ≤ W_design)
+feasible = (Q ≤ slope × W + b_upper) ∧ (Q ≥ slope × W + b_lower)
+           ∧ (0 ≤ Q ≤ Q_max) ∧ (0 ≤ W ≤ W_design) ∧ (0 ≤ W ≤ W_inventory)
+
+W_inventory = (m_upper - m)/(α₁Δt)   charging
+            = (m - m_lower)/(α₂Δt)   discharging
 ```
+
+The inventory term is what makes the gas-side state informative: without it the feasibility label is independent of SOC_gas for every parameter combination, and the feature importance of SOC_gas collapses to 0.0015, which is what a purely thermal constraint set yields. With it, 2896 of the 3520 sampled (SOC_heat, SOC_gas, mode, W, Q) groups change their feasibility label across the gas axis.
 
 **Features per sample**: SOC_heat_pct, SOC_gas_pct, W_MW, Q_MW, mode, γ₁, γ₂, α₁, α₂
 
@@ -266,18 +282,18 @@ The dataset is split 80/20 (30,976 training / 7,744 test) with stratification on
 
 | Feature | Importance | Physical Interpretation |
 |---------|-----------|------------------------|
-| SOC_heat_pct | 0.5030 | HTV thermal storage state — determines constraint intercept |
-| mode | 0.3710 | Charge vs. discharge — determines constraint direction |
-| W_MW | 0.0716 | Power setpoint — determines position along constraint |
-| Q_MW | 0.0529 | Heat setpoint — vertical position in domain |
-| SOC_gas_pct | 0.0015 | HPT pressure state — rarely binding at current volume |
+| mode | 0.4545 | Charge vs. discharge — determines constraint direction |
+| SOC_gas_pct | 0.2376 | HPT liquid inventory — bounds power at low/high SOC |
+| SOC_heat_pct | 0.1998 | HTV thermal storage state — determines constraint intercept |
+| W_MW | 0.0744 | Power setpoint — determines position along constraint |
+| Q_MW | 0.0337 | Heat setpoint — vertical position in domain |
 | γ₁, γ₂, α₁, α₂ | ~0 | Constant across training data (fixed T_turb) |
 
-The dominance of SOC_heat (50.3%) and mode (37.1%) confirms that the thermal storage constraint is the primary determinant of feasibility, consistent with the analytical formulation in Section 3.
+The operating mode (45.5%) and the two SOC states (23.8% and 20.0%) dominate, which matches the analytical structure of Section 3: the mode selects the sign of the constraint slope, the heat SOC sets its intercept, and the gas SOC bounds the power once the tank approaches either end of its operating window. The gas-side feature is a direct measure of how much physics the constraint set carries: it contributes almost nothing (0.0015) when the inventory limit is omitted and becomes the second most important feature once the limit is included.
 
 ### 4.3 XGBoost Regressors for Boundary Prediction
 
-Two XGBoost regression models are trained to predict the feasibility domain boundaries: W_max_feasible (maximum feasible power at given SOC) and Q_max_feasible (maximum feasible heat at given SOC). These models are trained on the feasible subset of the data (34,760 samples). Hyperparameters: n_estimators = 150, max_depth = 5, learning_rate = 0.1.
+Two XGBoost regression models are trained to predict the feasibility domain boundaries: W_max_feasible (maximum feasible power at given SOC) and Q_max_feasible (maximum feasible heat at given SOC). These models are trained on the feasible subset of the data (31,549 samples). Hyperparameters: n_estimators = 150, max_depth = 5, learning_rate = 0.1.
 
 ### 4.4 MLP Neural Network for Benchmark Comparison
 
@@ -290,11 +306,11 @@ A multi-layer perceptron (MLP) neural network is trained as a benchmark model. A
 | Model | Task | Metric | Value |
 |-------|------|--------|-------|
 | XGBoost | Feasibility classification | Test Accuracy | **100.00%** |
-| MLP (128×64×32) | Feasibility classification | Test Accuracy | **99.77%** |
-| XGBoost | W_max boundary regression | R² | **1.0000** |
+| MLP (128×64×32) | Feasibility classification | Test Accuracy | **98.58%** |
+| XGBoost | W_max boundary regression | R² | **0.9964** (RMSE 0.076 MW) |
 | XGBoost | Q_max boundary regression | R² | **1.0000** |
 
-The near-perfect accuracy is attributable to the underlying linear nature of the feasibility constraints. The feasibility decision boundary consists of linear inequalities derived from energy conservation and SOC limits. XGBoost's tree ensemble architecture naturally approximates piecewise-linear decision boundaries with high precision. The MLP achieves slightly lower accuracy (99.77%) due to the smooth activation functions introducing minor approximation errors near boundaries.
+The accuracy is attributable to the piecewise-linear nature of the feasibility constraints, which are linear inequalities derived from energy conservation and the two SOC limits. XGBoost's tree ensemble reproduces such boundaries exactly, whereas the MLP reaches 98.58% because its smooth activations round off the corners where the thermal, inventory and equipment limits intersect. The same corners explain the W_max regression result: the maximum feasible power is the minimum of three competing limits, and the resulting kinks cost about 0.4% of explained variance (RMSE 0.076 MW). Q_max remains a single linear function of SOC_heat at zero power, so its regression is exact.
 
 ### 4.6 Why Machine Learning?
 
@@ -302,9 +318,9 @@ While the feasibility constraints are analytically linear, the value of ML lies 
 
 1. **Inference speed**: A single XGBoost prediction traverses ~200 trees in microseconds, compared to a full REFPROP-based thermodynamic simulation requiring multiple property calls and iterative convergence.
 
-2. **Generalization across parameter space**: Once trained on data spanning multiple γ₂ values (different T_turb settings), the ML model can interpolate feasibility across continuous parameter variations without re-running the full simulation.
+2. **Generalization across parameter space**: Because γ₁, γ₂, α₁ and α₂ enter as input features, the same model architecture can be retrained on a T_turb sweep and then interpolate feasibility across continuous parameter variations without re-running the property-based simulation. The present study uses a single design point and reports the sweep separately in Section 6.4; multi-temperature training is left to future work.
 
-3. **Seamless integration with optimization**: The trained model serves as a fast, differentiable surrogate constraint in dispatch optimization loops, enabling real-time decision-making.
+3. **Seamless integration with optimization**: The trained model serves as a fast surrogate constraint that can be queried thousands of times inside a dispatch loop, enabling real-time decision-making.
 
 ---
 
@@ -339,8 +355,8 @@ A grid search approach is adopted for its robustness and compatibility with the 
 ```
 1. Read current states: SOC_heat(t), SOC_gas(t)
 2. Determine mode and targets:
-   if Elec_Dispatch(t) > 0: mode = 0 (charge), W_target = min(Elec_Dispatch, 10), Q_target = min(Heat_Dispatch, 9.5)
-   else: mode = 1 (discharge), W_target = min(|Elec_Dispatch|, 10), Q_target = min(Heat_Dispatch, 9.5)
+   if Elec_Dispatch(t) > 0: mode = 0 (charge), W_target = min(Elec_Dispatch, 10), Q_target = min(Heat_Dispatch, 12.05)
+   else: mode = 1 (discharge), W_target = min(|Elec_Dispatch|, 10), Q_target = min(Heat_Dispatch, 12.05)
 3. Generate search grid: W ∈ linspace(0, W_target, 20), Q ∈ linspace(0, Q_target, 15) → 300 candidate points
 4. Batch prediction: f_ML(SOC_h, SOC_g, W, Q, mode) for all 300 points
 5. Select feasible point with best objective score
@@ -353,7 +369,7 @@ The grid resolution of 20 × 15 = 300 points provides ~0.5 MW granularity for bo
 
 A rule-based dispatch strategy serves as the comparison baseline. The rule-based approach:
 - Always attempts to fully track dispatch instructions
-- Clips at equipment limits (W ≤ 10 MW, Q ≤ 9.5 MW)
+- Clips at equipment limits (W ≤ 10 MW, Q ≤ 12.05 MW)
 - Checks HTV SOC constraints analytically without optimization
 - Allocates W and Q independently without considering their coupled consumption of the shared thermal budget
 
@@ -405,19 +421,19 @@ The 24-hour dispatch comparison between rule-based and ML-optimized strategies i
 | Metric | Rule-Based | ML-Optimized | Improvement |
 |--------|-----------|--------------|-------------|
 | Total charge energy (MWh) | 66.0 | 66.0 | — |
-| Total discharge energy (MWh) | 48.3 | 46.1 | −4.6% |
-| Total heat supply (MWh) | 43.0 | **46.3** | **+7.7%** |
-| Discharge duration (h) | 15 | **24** | **+60.0%** |
-| Terminal SOC_heat (%) | 0.0 | **5.0** | Avoids depletion |
-| Electrical dispatch tracking rate (%) | 40.6 | 40.6 | — |
+| Total discharge energy (MWh) | 66.6 | 65.0 | −2.4% |
+| Total heat supply (MWh) | 44.0 | **46.3** | **+5.2%** |
+| Discharge duration (h) | 17 | **24** | **+41.2%** |
+| Terminal SOC_heat (%) | 0.0 | 0.2 | — |
+| Electrical dispatch tracking rate (%) | 44.9 | 45.4 | +0.5 pp |
 
 Three key observations:
 
-**Observation 1 — Extended discharge coverage**: The rule-based strategy depletes HTV storage by hour 15, leaving hours 16–24 uncovered. The ML-optimized strategy extends coverage across all 24 hours by adaptively reducing power output during low-SOC periods. This is not a violation of physical limits — the same 66.0 MWh of charging energy is used more judiciously.
+**Observation 1 — Extended discharge coverage**: The rule-based strategy depletes HTV storage by hour 17, leaving hours 18–24 uncovered. The ML-optimized strategy extends coverage across all 24 hours by adaptively reducing power output during low-SOC periods. This is not a violation of physical limits — the same 66.0 MWh of charging energy is used more judiciously.
 
-**Observation 2 — Increased heat supply**: Despite discharging 4.6% less total energy, the ML-optimized strategy delivers 7.7% more heat. This is achieved by dynamically allocating the HTV thermal budget between reheat (for power) and direct heat supply — favoring heat when electricity demand is moderate, and favoring power when electricity prices are high.
+**Observation 2 — Increased heat supply**: Despite discharging 2.4% less total energy, the ML-optimized strategy delivers 5.2% more heat. This is achieved by dynamically allocating the HTV thermal budget between reheat (for power) and direct heat supply — favoring heat when electricity demand is moderate, and favoring power when electricity prices are high.
 
-**Observation 3 — Terminal SOC margin**: The rule-based strategy exhausts HTV storage to 0%, leaving no operational margin for contingencies. The ML-optimized strategy maintains 5.0% SOC at the end of the horizon, providing buffer for unexpected demand.
+**Observation 3 — Temporal redistribution rather than a terminal buffer**: both strategies finish the horizon with the HTV essentially empty (0.0% and 0.2%), so the gain is not a storage margin reserved for contingencies. What the optimization buys is temporal redistribution: instead of collapsing to zero after hour 17, the ML strategy sustains a small positive output (2–6 MW) through the evening peak, converting otherwise uncovered hours into delivered heat.
 
 ### 6.3 Three Core ML Optimization Strategies
 
@@ -428,8 +444,8 @@ Analysis of the hour-by-hour dispatch decisions reveals three distinct strategie
 Stored energy = power × time. The rule-based strategy tends to discharge at full power (10 MW), depleting HTV rapidly. The ML-optimized strategy adaptively reduces discharge power based on SOC:
 
 ```
-Rule-based: [10, 10, 10, 10, 10, 0, 0, 0, 0]  → 5h full-power, then depleted
-ML-optimized: [8, 7, 6, 5, 5, 4, 3, 3, 2]     → 9h derated power, covering all periods
+Rule-based:    saturates at 10 MW whenever discharge is requested → storage exhausted after 17 h
+ML-optimized:  derates to 2–8 MW according to the remaining SOC        → discharge sustained over 24 h
 ```
 
 This is a direct consequence of the energy conservation constraint: the same energy budget spread thinner covers a longer duration.
@@ -437,88 +453,96 @@ This is a direct consequence of the energy conservation constraint: the same ene
 #### Strategy 2: Dynamic Electric-Thermal Allocation
 
 During discharge, HTV consumption rate = γ₂·W + Q. The rule-based strategy treats W and Q as independent targets. The ML optimization recognizes them as coupled under a shared thermal budget and dynamically allocates:
-- High electricity price hours (noon, evening peak): allocate more HTV budget to W, less to Q
+- Hours with a large electrical deficit (noon, evening peak): allocate more HTV budget to W, less to Q
 - High heat demand hours (morning, night): allocate more budget to Q, less to W
-- The coupling γ₂ = 2.307 means every 1 MW of power generation "costs" 2.307 MW of thermal power — ML makes this trade-off explicit and optimal.
+- The coupling γ₂ = 1.659 means every 1 MW of power generation "costs" 1.659 MW of thermal power — ML makes this trade-off explicit and optimal.
 
-#### Strategy 3: Strategic Charging with Optimal Margin
+#### Strategy 3: Strategic Charging without Over- or Under-Charging
 
-Multiple charging windows exist throughout the day (night wind surplus hours 1–7, midday trough hours 16–18, night hours 22–24). The ML optimization calculates the exact charge amount needed for the upcoming discharge segment, avoiding both overcharging (wasting storage capacity) and undercharging (running out mid-discharge). The terminal SOC of 5.0% is a deliberate operational margin, not a random residual.
+Multiple charging windows exist throughout the day (night wind surplus hours 1–7, midday trough hours 16–18, night hours 22–24). The ML optimization calculates the exact charge amount needed for the upcoming discharge segment, avoiding both overcharging (wasting storage capacity) and undercharging (running out mid-discharge). The small residual at the end of the horizon (0.2%) reflects that the horizon closes just as the storage is exhausted, rather than a designed margin.
 
 #### Physical Upper Bound
 
-It is important to note that the full-power, full-heat continuous discharge is physically limited to approximately 4.8 hours:
+It is important to note that the full-power, full-heat continuous discharge is physically limited to approximately 5.2 hours:
 
-$$t_{max} = \frac{Q_{HTV}^{upper}}{\gamma_2 \cdot W_{max} + Q_{max}} = \frac{150}{2.307 \times 10 + 9.5} \approx 4.8 \text{ h}$$
+$$t_{max} = \frac{Q_{HTV}^{upper}}{\gamma_2 \cdot W_{max} + Q_{max}} = \frac{150}{1.659 \times 10 + 12.05} \approx 5.2 \text{ h}$$
 
 The 24-hour "continuous discharge" is achieved through strategic power derating and multiple charge-discharge cycles — not by violating the fundamental energy capacity constraint. This distinguishes the proposed approach from methods that claim to extend capacity without physical basis.
 
-### 6.4 Feasibility Domain Expansion via Parameter Optimization
+### 6.4 Effect of Turbine Inlet Temperature: Efficiency Rather than Domain Expansion
 
-Beyond dispatch optimization within a fixed feasibility domain, the proposed framework enables optimization of the domain itself through operating parameter tuning.
+Beyond dispatch optimization within a fixed domain, the framework also quantifies how an operating parameter reshapes the domain. A property-based sweep shows that the turbine inlet temperature acts mainly on the mass coupling, not on the shape of the feasible region.
 
 #### Mechanism
 
-The reheat coefficient γ₂ is a function of turbine inlet temperature. Increasing T_turb enhances the specific work capacity of CO₂, reducing the reheat demand per unit power generation:
+Two couplings depend on T_turb and they respond in opposite directions:
 
 ```
-T_turb ↑ → CO₂ specific work capacity ↑ → γ₂ ↓ → constraint slope flattens → feasible domain expands
+T_turb ↑ → specific work per kg CO₂ ↑ → α₂ ↓  (less mass per MW)      [strong: −4.7%]
+          → reheat duty and turbine work scale together → γ₂ ≈ const  [weak:   +1.9%]
 ```
+
+Because the discharge constraint slope is −γ₂, a near-invariant γ₂ means an almost unchanged (W, Q) domain. What changes is how long a given tank inventory lasts, which scales as 1/α₂.
 
 #### Quantitative Results
 
-**Table 7. Feasibility domain comparison: baseline vs. optimized parameters.**
+**Table 7. Effect of turbine inlet temperature (REFPROP evaluation).**
 
-| Parameter | Baseline (T_turb = 483 K) | Optimized (T_turb = 503 K) | Change |
-|-----------|--------------------------|----------------------------|--------|
-| γ₂ (reheat coefficient) | 2.31 | 1.78 | **−23.0%** |
-| Constraint slope | −2.31 | −1.78 | Flatter |
-| W_max at SOC = 10% (MW) | 6.5 | 8.4 | **+29.2%** |
-| Feasible domain area at SOC = 10% | 30.8 | 40.0 | **+29.8%** |
-| Full-power discharge duration (h) | ~6.5 | ~8.4 | **+29.2%** |
+| Quantity | 483 K (baseline) | 503 K | Change |
+|----------|-----------------|-------|--------|
+| γ₂ (reheat coefficient) | 1.659 | 1.691 | **+1.9%** |
+| α₂ (kg/(s·MW)) | 4.191 | 3.993 | **−4.7%** |
+| Maximum power at SOC_heat = 10% (MW) | 9.04 | 8.87 | −1.9% |
+| Integrated domain area at SOC_heat = 10% (MW²) | 65.2 | 64.0 | **−1.9%** |
+| Full-power discharge duration at fixed inventory (h) | 5.00 | 5.25 | **+5.0%** |
+| Electricity-to-electricity efficiency (%) | 65.9 | 69.2 | +3.3 pp |
 
-**Table 8. Feasible domain area at different SOC levels.**
+**Table 8. Integrated feasible domain area at different SOC levels (MW²).**
 
-| SOC_heat (%) | Baseline Area | Optimized Area | Expansion (%) |
-|-------------|--------------|----------------|---------------|
-| 10 | 30.8 | 40.0 | +29.8 |
-| 20 | 47.5 | 47.5 | 0 (equipment-limited) |
-| 40 | 47.5 | 47.5 | 0 (equipment-limited) |
-| 60 | 47.5 | 47.5 | 0 (equipment-limited) |
-| 80 | 47.5 | 47.5 | 0 (equipment-limited) |
+| SOC_heat (%) | 483 K | 503 K | Change (%) |
+|-------------|-------|-------|------------|
+| 10 | 65.2 | 64.0 | −1.9 |
+| 20 | 120.5 | 120.5 | 0 (equipment-limited) |
+| 40 | 120.5 | 120.5 | 0 (equipment-limited) |
+| 60 | 120.5 | 120.5 | 0 (equipment-limited) |
+| 80 | 120.5 | 120.5 | 0 (equipment-limited) |
 
-At SOC ≥ 20%, the feasible domain is bounded by equipment limits (W ≤ 10 MW, Q ≤ 9.5 MW) rather than by thermal storage constraints, so parameter optimization yields no further expansion. The benefit is concentrated at low SOC — precisely when the system is most constrained and operating margin is most valuable.
+At SOC ≥ 20% the discharge domain is bounded by the equipment limits rather than by the heat budget: even at 10 MW the thermal draw (16.6 MW) plus the maximum heat supply (12.05 MW) stays below the one-hour heat availability (30 MW at 20% SOC), so the domain is the full rectangle and the temperature change has no effect. The thermal constraint starts trimming the domain below about 19% SOC and the power limit below about 11% SOC; at 10% SOC a slightly larger γ₂ reduces the area by 1.9%.
 
 #### Physical Interpretation
 
-The constraint equation under discharge is:
+Under discharge the constraint is
 
 $$Q = -\gamma_2 \cdot W + \frac{Q_{HTV} - Q_{HTV}^{lower}}{\Delta t}$$
 
-At W = 0: Q_max = (Q_HTV − Q_lower)/Δt (unchanged by γ₂)
-At Q = 0: W_max = (Q_HTV − Q_lower)/(γ₂·Δt) (inversely proportional to γ₂)
+At W = 0: Q_max = (Q_HTV − Q_lower)/Δt, unaffected by γ₂.
+At Q = 0: W_max = (Q_HTV − Q_lower)/(γ₂·Δt), inversely proportional to γ₂.
 
-Thus, reducing γ₂ extends the feasible domain rightward along the W-axis, increasing the maximum power generation capability at any given heat supply level, without affecting the maximum heat supply at zero power.
+Since γ₂ rises slightly with temperature, W_max falls slightly and the domain contracts marginally rather than expanding. The genuine benefit of a higher turbine inlet temperature lies elsewhere: the electrical round-trip efficiency rises from 65.9% to 69.2%, and a given tank inventory supports a 5.0% longer full-power discharge.
+
+#### Implication
+
+Turbine inlet temperature should be selected as an efficiency and duration lever, not as a domain-expansion lever. This also corrects the strong sensitivity implied by the approximate correction factor of [20]: with the coefficient re-evaluated from REFPROP, γ₂ is nearly invariant over the 460–520 K range (1.620–1.717), so the associated “domain expansion” should not be claimed.
 
 ### 6.5 Discussion
 
 #### 6.5.1 ML Accuracy and Its Physical Basis
 
-The 100% classification accuracy reflects the underlying nature of the feasibility constraints as linear inequalities. The ML models learn these boundaries without error because the training data densely samples the feasible space and the decision surface is piecewise-linear. This is not a limitation — rather, it validates that the ML framework correctly captures the physics without introducing spurious nonlinearities or overfitting artifacts.
+The 100% classification accuracy is expected rather than surprising. The labels are generated by the constraint set itself, so the learning task is to reproduce a known piecewise-linear boundary rather than to discover an unknown one. What the exercise validates is that the surrogate represents that boundary exactly, and can therefore substitute for the property-based evaluation at inference time without loss of accuracy.
 
-The MLP achieves 99.77% accuracy (18 misclassifications out of 7,744 test samples), with errors concentrated near constraint boundaries where the smooth sigmoid activation in the output layer produces values close to 0.5. XGBoost's tree-based decision boundaries avoid this issue entirely.
+The MLP achieves 98.58% accuracy (about 110 misclassifications out of 7,744 test samples), with errors concentrated at the corners where the thermal, inventory and equipment limits intersect: the smooth activation rounds off precisely the non-smooth features of the boundary. XGBoost's axis-aligned splits reproduce those corners, which is why it reaches 100%.
 
 #### 6.5.2 From Static Constraint to Controllable Variable
 
-Traditional dispatch optimization treats the feasibility domain as a fixed constraint. The proposed framework transforms it into a controllable variable. The two-level optimization architecture — outer loop optimizing T_turb (→γ₂→domain shape) and inner loop optimizing (W, Q) within the domain — enables simultaneous parameter and dispatch optimization. This meta-optimization is made computationally feasible by the ML surrogate models, which provide instantaneous feasibility assessments across the parameter space.
+Traditional dispatch optimization treats the feasibility domain as a fixed constraint. The proposed framework transforms it into a controllable variable. The two-level optimization architecture — an outer loop over T_turb (altering α₂, and hence duration and efficiency) and an inner loop over (W, Q) within the domain — enables simultaneous parameter and dispatch optimization. This meta-optimization is made computationally feasible by the ML surrogate models, which provide instantaneous feasibility assessments across the parameter space.
 
 #### 6.5.3 Practical Implications
 
-The extended discharge coverage (15→24h) and increased heat supply (43.0→46.3 MWh, +7.7%) have direct economic implications for integrated energy system operation. Specifically: (a) systems with higher renewable penetration benefit from longer energy shifting capability, (b) the terminal SOC margin reduces the risk of demand shortfall and the need for emergency backup, and (c) the reduction in wasted discharge energy (−4.6%) indicates better utilization of stored energy.
+The extended discharge coverage (17→24 h) and increased heat supply (44.0→46.3 MWh, +5.2%) have direct economic implications for integrated energy system operation. Specifically: (a) systems with higher renewable penetration benefit from longer energy shifting capability, (b) raising the turbine inlet temperature improves the electrical efficiency by 3.3 percentage points and lengthens the full-power discharge by 5% at essentially unchanged domain shape, so parameter selection should be driven by efficiency rather than by an assumed domain expansion, and (c) the 2.4% reduction in discharged energy indicates better utilization of the stored energy.
 
 #### 6.5.4 Limitations and Future Work
 
-Several limitations warrant acknowledgment. First, the training data assumes fixed γ₁, γ₂ per simulation run; variable-parameter training spanning a T_turb sweep would enable continuous γ₂ optimization within the dispatch loop. Second, the current grid search resolution (20×15) could be enhanced with gradient-based or Bayesian optimization methods. Third, the economic objective function (time-of-use electricity prices, heat tariffs) would strengthen practical relevance. Fourth, multi-period look-ahead optimization (dynamic programming or model predictive control) could replace the greedy hour-by-hour approach, potentially yielding further improvements through inter-temporal coordination. Fifth, the gas-side SOC constraint, while included in the formulation, rarely binds at the current HPT volume (500 m³); systems with smaller HPT volumes would exhibit stronger dual-SOC coupling effects.
+Several limitations warrant acknowledgment. First, the training data assumes fixed γ₁, γ₂ per simulation run; variable-parameter training spanning a T_turb sweep would enable continuous optimisation of α₂ (and hence of the duration–efficiency trade-off) within the dispatch loop. Second, the current grid search resolution (20×15) could be enhanced with gradient-based or Bayesian optimization methods. Third, the economic objective function (time-of-use electricity prices, heat tariffs) would strengthen practical relevance. Fourth, multi-period look-ahead optimization (dynamic programming or model predictive control) could replace the greedy hour-by-hour approach, potentially yielding further improvements through inter-temporal coordination. Fifth, the gas-side inventory constraint binds only at the ends of the operating window (below about 16% SOC on discharge, above about 89% on charge), because the HPT is sized for five hours of full-power discharge (943 t, 1280 m³); systems with a smaller tank would exhibit stronger dual-SOC coupling over a wider SOC range.
 
 ---
 
@@ -526,13 +550,13 @@ Several limitations warrant acknowledgment. First, the training data assumes fix
 
 This study presents a machine learning framework for dynamic construction and optimization of the operational feasibility domain of CCES-CHP systems. The main conclusions are:
 
-1. A parameterized feasibility domain representation using dimensionless factors γ₁/γ₂ and ratio parameters α₁/α₂ effectively couples the electrical, thermal, and mass flow domains. The dual SOC model (thermal + gas storage) establishes two-dimensional linear constraint boundaries that define the feasible operating region.
+1. A parameterized feasibility domain representation using dimensionless factors γ₁/γ₂ and ratio parameters α₁/α₂ effectively couples the electrical, thermal, and mass flow domains. The dual SOC model (thermal storage + CO₂ liquid inventory) establishes two-dimensional linear constraint boundaries that define the feasible operating region; the inventory term bounds the instantaneous power at the ends of the operating window and makes the gas-side state physically meaningful.
 
-2. XGBoost and MLP models trained on 38,720 thermodynamic simulation samples achieve near-perfect accuracy in feasibility classification (100% and 99.77%, respectively). Boundary regression achieves R² = 1.0000 for both W_max and Q_max. Feature importance analysis confirms SOC_heat (50.3%) and operating mode (37.1%) as the dominant factors.
+2. XGBoost and MLP models trained on 38,720 REFPROP-based samples reach 100% and 98.58% accuracy in feasibility classification, respectively. Boundary regression gives R² = 0.9964 for W_max (RMSE 0.076 MW) and R² = 1.0000 for Q_max. Feature importance identifies the operating mode (45.5%), the gas-side inventory (23.8%) and the heat-side SOC (20.0%) as the dominant factors, confirming that the dual-SOC coupling is physically active.
 
-3. ML-optimized 24-hour dispatch extends discharge coverage duration from 15 to 24 hours (+60%) and increases total heat supply from 43.0 to 46.3 MWh (+7.7%), while maintaining a 5.0% terminal SOC margin versus 0.0% for the rule-based baseline. The improvement stems from three strategies: power derating for duration extension, dynamic electric-thermal allocation under a shared thermal budget, and strategic charging with optimal operational margins.
+3. ML-optimized 24-hour dispatch extends discharge coverage from 17 to 24 hours (+41%) and increases total heat supply from 44.0 to 46.3 MWh (+5.2%), at the cost of 2.4% less discharged energy and without a terminal storage margin (0.2% versus 0.0% for the rule-based baseline). The improvement stems from three strategies: power derating for duration extension, dynamic electric-thermal allocation under a shared thermal budget, and strategic charging that avoids both over-charging and running dry.
 
-4. ML-guided operating parameter optimization (T_turb: 483 K → 503 K) reduces γ₂ from 2.31 to 1.78 (−23%), expanding the feasible domain area by 29.8% at low SOC and extending full-power discharge duration from 6.5 to 8.4 hours. This demonstrates that the feasibility domain can be transformed from a passive constraint into an active optimization variable.
+4. A turbine inlet temperature sweep (483 K → 503 K) evaluated with REFPROP shows that γ₂ is nearly invariant (1.659 → 1.691), so the feasible domain area changes by only −1.9% even at low SOC. The real benefit of the higher temperature is a 4.7% reduction in the discharge mass flow per unit power, which extends the full-power discharge duration from 5.00 to 5.25 hours (+5.0%) and raises the electricity-to-electricity efficiency from 65.9% to 69.2%. Operating parameters should therefore be optimized for efficiency and duration rather than for domain expansion.
 
 5. The ML prediction speed (milliseconds for 7,200 feasibility queries) enables real-time dispatch optimization that would be computationally prohibitive using full thermodynamic simulation, making the proposed approach suitable for practical energy management system integration.
 
@@ -615,7 +639,7 @@ This work was supported by the Technical Institute of Physics and Chemistry, Chi
 | learning_rate | 0.1 |
 | subsample | 0.8 |
 | colsample_bytree | 0.8 |
-| eval_metric | logloss |
+| eval_metric | logloss (default) |
 
 **Table A2. MLP classifier hyperparameters.**
 
@@ -633,8 +657,8 @@ This work was supported by the Technical Institute of Physics and Chemistry, Chi
 
 | Component | Specification |
 |-----------|--------------|
-| Data generation | MATLAB R2020a + REFPROP v10.0 |
-| ML training | Python 3.10, scikit-learn 1.x, XGBoost 2.x |
+| Data generation | MATLAB R2024a + REFPROP v10.0 |
+| ML training | Python 3.10, scikit-learn 1.7, XGBoost 3.2 |
 | Training time (XGBoost) | < 5 seconds |
 | Training time (MLP) | < 30 seconds |
 | Inference time (24h dispatch) | < 100 milliseconds |
