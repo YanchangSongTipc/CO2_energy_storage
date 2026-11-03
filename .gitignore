@@ -19,3 +19,6 @@ __pycache__/
 .mplcache/
 .prefs*/
 *.log
+
+# 本机 SSH 密钥（不提交）
+.ssh_local/
