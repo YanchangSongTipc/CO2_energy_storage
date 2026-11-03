@@ -1,4 +1,4 @@
-function dp = cces_design_point(Th)
+function dp = cces_design_point(Th, opts)
 %CCES_DESIGN_POINT  CCES-CHP 设计点与循环闭合参数的唯一来源
 %
 %   dp = cces_design_point(Th)  以透平入口温度 Th [K]（默认 483 K）为输入，
@@ -16,6 +16,7 @@ function dp = cces_design_point(Th)
 %     - 储罐按"定压室温液态"处理，储气 SOC 用液位（质量）表示，不用理想气体压力
 
 if nargin < 1 || isempty(Th), Th = 483; end
+if nargin < 2 || isempty(opts), opts = struct(); end
 
 rootDir = fullfile(fileparts(mfilename('fullpath')), '..', '..', '..');
 addpath(rootDir);
@@ -40,26 +41,34 @@ dp.SOC_gas_min = 0.10;  % 储液下限（防抽空）
 dp.SOC_gas_max = 0.90;  % 储液上限（防满罐）
 dp.SOC_heat_0  = 0.30;  % HTV 初始 SOC（需留出整循环调节空间）
 
+% ---------------- 可选覆盖（供 design_sweep_multi 做多参数扫描） ----------------
+% 缺省时与旧行为完全一致；论文基准点 rP = 1。
+if isfield(opts, 'eta_c'), dp.eta_c = opts.eta_c; end
+if isfield(opts, 'eta_t'), dp.eta_t = opts.eta_t; end
+if isfield(opts, 'T_amb'), dp.T_amb = opts.T_amb; end
+if isfield(opts, 'P_HPT'), dp.P_HPT = opts.P_HPT; end
+rP = dp.P_HPT / 6.80;   % 高压侧压力按 P_HPT 等比缩放
+
 % ---------------- 充电侧：每 kg 工质 ----------------
 h1 = g('H','P',0.102e6,'T',298);  s1 = g('S','P',0.102e6,'T',298);
 h3is = g('H','P',0.90e6,'S',s1);  h3 = h1 + (h3is-h1)/dp.eta_c;
 h4 = g('H','P',0.85e6,'T',308);   s4 = g('S','P',0.85e6,'T',308);
-h5is = g('H','P',6.90e6,'S',s4);  h5 = h4 + (h5is-h4)/dp.eta_c;
-h6 = g('H','P',6.85e6,'T',309);
+h5is = g('H','P',6.90e6*rP,'S',s4);  h5 = h4 + (h5is-h4)/dp.eta_c;
+h6 = g('H','P',6.85e6*rP,'T',309);
 dp.w_c  = ((h3-h1)+(h5-h4))/1000;      % kJ/kg 轴功
 dp.q_IC = ((h3-h4)+(h5-h6))/1000;      % kJ/kg 压缩热
 
 % ---------------- 放电侧：每 kg 工质 ----------------
-h8 = g('H','P',6.65e6,'T',296);  h9 = h8;               % V2 等焓节流
-h10 = g('H','P',6.50e6,'T',Th);
-s10 = g('S','P',6.50e6,'T',Th);
+h8 = g('H','P',6.65e6*rP,'T',296);  h9 = h8;               % V2 等焓节流
+h10 = g('H','P',6.50e6*rP,'T',Th);
+s10 = g('S','P',6.50e6*rP,'T',Th);
 h11is = g('H','P',0.70e6,'S',s10);  h11 = h10 - dp.eta_t*(h10-h11is);
 h12 = g('H','P',0.65e6,'T',Th);
 s12 = g('S','P',0.65e6,'T',Th);
 h13is = g('H','P',0.12e6,'S',s12);  h13 = h12 - dp.eta_t*(h12-h13is);
 
 % EHE：节流后等压汽化 +5 K，热源为环境/低品位热，不属于回热（不计入 γ2）
-P_EHE = 6.60e6;
+P_EHE = 6.60e6*rP;
 T_EHE_sat = g('T','P',P_EHE,'Q',0);
 dp.T_EHE_out = T_EHE_sat + 5;
 h_EHE = g('H','P',P_EHE,'T',dp.T_EHE_out);

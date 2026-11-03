@@ -179,7 +179,7 @@ def metrics(W, Q, S, lam):
         "discharge_MWh": float(np.sum(W[discharging])),
         "heat_MWh": float(np.sum(Q)),
         "electric_tracking_pct": float(100 * (1 - np.mean(np.abs(W - W_t) / (W_t + 1e-9)))),
-        "discharge_hours": int(np.sum(W > 1e-3)),
+        "discharge_hours": int(np.sum((W > 1e-3) & discharging)),
         "terminal_SOC_pct": float(S[-1] / S_MAX * 100),
         "soc_balance_ok": ok,
     }

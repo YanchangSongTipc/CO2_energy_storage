@@ -202,7 +202,9 @@ print('-' * 50)
 print(f'{"总充电量 [MWh]":25s} {E_charge_rule:12.1f} {E_charge_ml:12.1f}')
 print(f'{"总放电量 [MWh]":25s} {E_discharge_rule:12.1f} {E_discharge_ml:12.1f}')
 print(f'{"总供热量 [MWh]":25s} {Q_total_rule:12.1f} {Q_total_ml:12.1f}')
-print(f'{"放电时长 [h]":25s} {np.sum(W_rule>0):12.0f} {np.sum(W_ml>0):12.0f}')
+dis_hours_rule = int(np.sum((W_rule > 1e-3) & (Elec_Dispatch < 0)))
+dis_hours_ml = int(np.sum((W_ml > 1e-3) & (Elec_Dispatch < 0)))
+print(f'{"放电时长 [h]":25s} {dis_hours_rule:12d} {dis_hours_ml:12d}')
 print(f'{"末态 SOC [%]":25s} {SOC_h_rule[-1]:12.1f} {SOC_h_ml[-1]:12.1f}')
 
 # 调度指令跟踪率
