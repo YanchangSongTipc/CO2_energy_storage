@@ -192,6 +192,18 @@ States(:, 5) = States(:, 5) / 1000;   % J/(kg·K) → kJ/(kg·K)
 h_crit = h_crit / 1000;               % J/kg → kJ/kg
 s_crit = s_crit / 1000;               % J/(kg·K) → kJ/(kg·K)
 
+% --- EHE 出口状态 (论文 2.1 节: 节流后先由 EHE 完全汽化, 之后才进入 HR1/HR2) ---
+% 修正: 原实现把 EHE 的蒸发潜热并入了 Q_HR1, 使 γ2 由论文的 1.59 虚高到 2.31。
+% 此处显式拆出 EHE: 节流后等压蒸发至饱和气 + 5 K 过热; 该热量由环境/低品位热源提供,
+% 不计入 γ2, 也不进入 HTV 储热平衡 (对应论文 Table 2 的 Q_HR1 = 9.47 MW)。
+dT_EHE = 5;                                       % EHE 端差 [K] (Table 1: 最小换热温差 5 K)
+P_EHE  = States(9, 3);                            % 节流后压力 [MPa]
+T_EHE_sat = getFluidProperty(libLoc, 'T', 'P', P_EHE*1e6, 'Q', 0, Fluid, 1, 1, 'MASS BASE SI');
+T_EHE_out = T_EHE_sat + dT_EHE;                   % EHE 出口温度 [K]
+h_EHE_out = getFluidProperty(libLoc, 'H', 'P', P_EHE*1e6, 'T', T_EHE_out, Fluid, 1, 1, 'MASS BASE SI') / 1000;  % [kJ/kg]
+fprintf('EHE 出口: T = %.1f K (饱和 %.1f K + %.0f K), h = %.1f kJ/kg\n', ...
+    T_EHE_out, T_EHE_sat, dT_EHE, h_EHE_out);
+
 % CO2 饱和线数据 (用于 p-h, T-s 饱和曲线图)
 T_triple = 216.6;  % CO2 三相点温度
 T_sat_range = [linspace(T_triple, T_crit-15, 40), ...
@@ -260,7 +272,9 @@ Q_IC2 = m_charge * (States(5,4) - States(6,4)) / 1000;   % IC2 热功率
 Q_IC  = Q_IC1 + Q_IC2;                                    % 总中冷器热功率 (式 8)
 
 % 回热热交换器热回收
-Q_HR1 = m_discharge * (States(10,4) - States(9,4)) / 1000;   % HR1 热功率
+% EHE: 节流后等压蒸发 + 过热 (热源为环境/低品位热, 不计入 γ2 与 HTV 平衡)
+Q_EHE = m_discharge * (h_EHE_out - States(9,4)) / 1000;        % EHE 蒸发吸热功率
+Q_HR1 = m_discharge * (States(10,4) - h_EHE_out) / 1000;       % HR1 过热热功率 (从 EHE 出口起算)
 Q_HR2 = m_discharge * (States(12,4) - States(11,4)) / 1000;  % HR2 热功率
 Q_HR  = Q_HR1 + Q_HR2;                                        % 总回热功率 (式 10)
 
@@ -313,7 +327,8 @@ fprintf(' m_C  (充电质量流量)                |  %8.1f     |  kg/s\n', m_ch
 fprintf(' m_T  (放电质量流量)                |  %8.1f     |  kg/s\n', m_discharge);
 fprintf(' Q_IC1 (IC1 热功率)                |  %8.2f     |  MW\n', Q_IC1);
 fprintf(' Q_IC2 (IC2 热功率)                |  %8.2f     |  MW\n', Q_IC2);
-fprintf(' Q_HR1 (HR1 热功率)                |  %8.2f     |  MW\n', Q_HR1);
+fprintf(' Q_EHE (EHE 蒸发吸热, 不计入γ2)    |  %8.2f     |  MW\n', Q_EHE);
+fprintf(' Q_HR1 (HR1 过热热功率)            |  %8.2f     |  MW\n', Q_HR1);
 fprintf(' Q_HR2 (HR2 热功率)                |  %8.2f     |  MW\n', Q_HR2);
 fprintf(' Q_HG-HE (高温供热功率)            |  %8.2f     |  MW\n', Q_HG_HE);
 fprintf(' Q_LG-HE (低温供热功率)            |  %8.2f     |  MW\n', Q_LG_HE);
