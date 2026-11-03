@@ -10,7 +10,7 @@
 
 ## Abstract
 
-Compressed carbon dioxide energy storage (CCES), as an emerging compressed gas energy storage technology, exhibits significant potential for enhancing renewable energy accommodation and improving the flexibility of integrated energy systems, owing to its superior thermophysical properties, environmental friendliness, and capability for combined heat and power (CHP) supply. Based on an established thermodynamic model of a compressed carbon dioxide energy storage combined heat and power (CCES-CHP) system, this study proposes a machine learning methodology for the dynamic construction and optimization of its operational feasibility domain. Dimensionless factors γ₁ and γ₂, along with ratio parameters α₁ and α₂, are defined to quantify the coupling relationships among electrical, thermal, and mass flows. A dual state of charge (SOC) model covering both thermal storage and CO₂ liquid inventory is developed to establish the system's constraint boundaries, so that the heat budget and the storage-tank charge jointly bound the feasible operating region. Machine learning algorithms, including XGBoost and multi-layer perceptron (MLP) neural networks, are trained using 38,720 thermodynamic simulation samples to predict feasible operating regions and optimize system dispatch under varying load conditions. A case study on an integrated energy system (20 MW wind power, 30 MW conventional CHP, and 10 MW/50 MWh CCES-CHP) demonstrates that the proposed approach achieves 100% classification accuracy with XGBoost (98.58% with the MLP benchmark), while boundary regression reaches R² = 0.9964 for the maximum feasible power and 1.0000 for the maximum feasible heat. The ML-optimized dispatch extends the discharge coverage duration from 17 to 24 hours and increases total heat supply from 44.0 to 46.3 MWh (+5.2%) over a 24-hour horizon, a gain obtained by temporal redistribution rather than by holding a terminal storage margin. A turbine inlet temperature sweep from 483 K to 503 K shows that the reheat coefficient γ₂ is nearly invariant (1.659 to 1.691), so the feasible domain area changes by only −1.9% even at low SOC; the benefit of a higher temperature is instead a 4.7% reduction in the discharge mass flow per unit power, which extends the full-power discharge duration from 5.00 to 5.25 hours and raises the electricity-to-electricity efficiency from 65.9% to 69.2%. This methodology provides an effective tool for real-time dispatch and capacity planning of CCES-CHP systems.
+Compressed carbon dioxide energy storage with combined heat and power (CCES-CHP) couples electrical, thermal and mass flows, so its operational feasibility domain is a polygon in the power–heat plane whose position shifts with two state variables. Building that domain from thermophysical property calls is too slow for real-time dispatch. Surrogates are therefore trained on 38,720 samples generated with REFPROP from a two-stage transcritical CO₂ cycle, using dimensionless couplings γ₁/γ₂ and α₁/α₂ together with a dual state-of-charge formulation in which the CO₂ liquid inventory, not the tank pressure, bounds the instantaneous power. Under five-fold stratified cross-validation XGBoost classifies feasibility at 100.00 ± 0.01 % and an MLP at 99.74 ± 0.11 %, against 82.01 % for a linear classifier, and reproduces both domain boundaries exactly (R² = 1.0000). TreeSHAP attributes 41.5 % of the prediction to the heat state and 25.1 % to the gas inventory; removing the gas state costs 9.3 percentage points, confirming that the inventory constraint is physically active. In a 24-hour case study the surrogate-guided dispatch raises delivered heat from 44.0 to 46.3 MWh (+5.2 %) and the hours with active discharge from 9 to 16, but an exact linear-programming benchmark of the same objective places it 3.8 % from the optimum. A sweep of the heat weight locates the genuine headroom: 48.6 MWh for the heuristic and 52.0 MWh for the optimum, 18 % above the rule-based baseline. Turbine inlet temperature raises efficiency and discharge duration rather than expanding the domain.
 
 **Keywords**: Compressed carbon dioxide energy storage; Combined heat and power; Operational feasibility domain; Machine learning; XGBoost; Integrated energy system
 
@@ -33,10 +33,10 @@ With the rapid development of machine learning techniques, data-driven approache
 This study proposes a machine learning framework for learning and optimizing the operational feasibility domain of CCES-CHP systems. The main contributions are:
 
 1. A parameterized training data generation pipeline that maps thermodynamic states to feasibility labels using REFPROP-based simulations, producing 38,720 labeled samples.
-2. XGBoost and MLP models achieving near-perfect accuracy (100% and 98.58%) on feasibility classification, and R² = 0.9964 (W_max) and 1.0000 (Q_max) on boundary regression.
-3. A grid-search dispatch optimization algorithm operating within the ML-predicted feasibility domain, extending discharge duration from 17 to 24 hours and raising heat supply by 5.2%.
-4. A physically complete dual-SOC formulation in which the HPT liquid inventory bounds the instantaneous power; the gas-side feature importance rises from 0.0015 to 0.2376 once this constraint is included, confirming that the coupling is physically active rather than nominal.
-5. Quantification of the three core ML optimization strategies: power derating, dynamic electric-thermal allocation, and strategic charging.
+2. XGBoost and MLP models reaching 100.00 ± 0.01 % and 99.74 ± 0.11 % accuracy under five-fold stratified cross-validation, against 82.01 % for a linear classifier, and exact reproduction of both domain boundaries (R² = 1.0000).
+3. A dispatch framework that pairs the surrogate with an exact linear-programming benchmark: the grid-search heuristic delivers 46.3 MWh of heat against 44.0 MWh for the rule-based policy, yet sits 3.8 % from the optimum of its own objective, and a sweep of the heat weight shows the achievable gain rising from 46.3 to 48.6 MWh for the heuristic and from 14.7 to 52.0 MWh for the optimum.
+4. A physically complete dual-SOC formulation in which the HPT liquid inventory bounds the instantaneous power; TreeSHAP attributes 25.1 % of the prediction to the gas-side state and removing it costs 9.3 percentage points of accuracy, confirming that the coupling is physically active rather than nominal.
+5. A quantitative attribution of where the dispatch gain comes from: the conservatism of the surrogate near the constraint boundary, which preserves thermal storage for later hours, rather than an optimal electric–thermal allocation.
 
 The remainder of this paper is organized as follows. Section 2 describes the CCES-CHP system and thermodynamic model. Section 3 presents the feasibility domain construction method. Section 4 details the ML methodology. Section 5 describes the dispatch optimization framework. Section 6 presents the case study and results. Section 7 concludes.
 
@@ -306,18 +306,27 @@ XGBoost (eXtreme Gradient Boosting) [21] is employed as the primary classificati
 
 The dataset is split 80/20 (30,976 training / 7,744 test) with stratification on the feasibility label. The feature importance analysis reveals the dominant factors governing feasibility:
 
-**Table 3. XGBoost feature importance ranking.**
+**Table 3. TreeSHAP attribution of the XGBoost classifier.**
 
-| Feature | Importance | Physical Interpretation |
-|---------|-----------|------------------------|
-| mode | 0.4545 | Charge vs. discharge — determines constraint direction |
-| SOC_gas_pct | 0.2376 | HPT liquid inventory — bounds power at low/high SOC |
-| SOC_heat_pct | 0.1998 | HTV thermal storage state — determines constraint intercept |
-| W_MW | 0.0744 | Power setpoint — determines position along constraint |
-| Q_MW | 0.0337 | Heat setpoint — vertical position in domain |
-| γ₁, γ₂, α₁, α₂ | ~0 | Constant across training data (fixed T_turb) |
+| Feature | Mean abs SHAP | Share (%) | Physical interpretation |
+|---------|-------------|-----------|------------------------|
+| SOC_heat_pct | 4.37 | 41.5 | HTV thermal state — sets the constraint intercept |
+| SOC_gas_pct | 2.64 | 25.1 | HPT liquid inventory — bounds power at the window ends |
+| W_MW | 1.55 | 14.7 | Power setpoint — position along the constraint line |
+| mode | 1.37 | 13.0 | Charge vs discharge — selects the constraint direction |
+| Q_MW | 0.61 | 5.8 | Heat setpoint — vertical position in the domain |
+| γ₁, γ₂, α₁, α₂ | 0.00 | 0.0 | Constant across the training set (fixed T_turb) |
 
-The operating mode (45.5%) and the two SOC states (23.8% and 20.0%) dominate, which matches the analytical structure of Section 3: the mode selects the sign of the constraint slope, the heat SOC sets its intercept, and the gas SOC bounds the power once the tank approaches either end of its operating window. The gas-side feature is a direct measure of how much physics the constraint set carries: it contributes almost nothing (0.0015) when the inventory limit is omitted and becomes the second most important feature once the limit is included.
+Gain-based importance ranks the operating mode first (45.5 % in an earlier
+evaluation), but gain rewards features that are split often and high-cardinality
+binary splits are cheap to exploit. TreeSHAP measures the marginal contribution
+to the prediction and instead ranks the two storage states first (41.5 % and
+25.1 %), which matches the analytical structure of Section 3: the heat state sets
+the intercept and the gas state bounds the power. The gas-side feature is the
+decisive test of how much physics the constraint set carries: removing it from
+the feature vector lowers the cross-validated accuracy from 100.00 % to 90.68 %
+(a 9.3 percentage-point drop), whereas under the pre-revision constraint set it
+contributed 0.0015 of the gain importance and changed nothing.
 
 ### 4.3 XGBoost Regressors for Boundary Prediction
 
@@ -329,16 +338,30 @@ A multi-layer perceptron (MLP) neural network is trained as a benchmark model. A
 
 ### 4.5 Model Performance
 
-**Table 4. ML model performance summary.**
+**Table 4. Model performance under five-fold stratified cross-validation.**
 
 | Model | Task | Metric | Value |
 |-------|------|--------|-------|
-| XGBoost | Feasibility classification | Test Accuracy | **100.00%** |
-| MLP (128×64×32) | Feasibility classification | Test Accuracy | **98.58%** |
-| XGBoost | W_max boundary regression | R² | **0.9964** (RMSE 0.076 MW) |
-| XGBoost | Q_max boundary regression | R² | **1.0000** |
+| XGBoost | Feasibility classification | CV accuracy | **100.00 ± 0.01 %** |
+| Random forest (300) | Feasibility classification | CV accuracy | 99.96 ± 0.02 % |
+| Histogram gradient boosting | Feasibility classification | CV accuracy | 99.96 ± 0.04 % |
+| MLP (128×64×32) | Feasibility classification | CV accuracy | 99.74 ± 0.11 % |
+| Extra trees (300) | Feasibility classification | CV accuracy | 99.90 ± 0.04 % |
+| Decision tree (depth 6) | Feasibility classification | CV accuracy | 96.22 ± 0.16 % |
+| Logistic regression | Feasibility classification | CV accuracy | 82.01 ± 0.04 % |
+| XGBoost | W_max regression | R² / RMSE | **1.0000** / 1e-4 MW |
+| XGBoost | Q_max regression | R² / RMSE | **1.0000** / < 1e-4 MW |
 
-The accuracy is attributable to the piecewise-linear nature of the feasibility constraints, which are linear inequalities derived from energy conservation and the two SOC limits. XGBoost's tree ensemble reproduces such boundaries exactly, whereas the MLP reaches 98.58% because its smooth activations round off the corners where the thermal, inventory and equipment limits intersect. The same corners explain the W_max regression result: the maximum feasible power is the minimum of three competing limits, and the resulting kinks cost about 0.4% of explained variance (RMSE 0.076 MW). Q_max remains a single linear function of SOC_heat at zero power, so its regression is exact.
+Three observations follow. First, a linear classifier reaches only 82.01 %, which
+is the quantitative statement that the feasible set is a polygon rather than a
+half-space: no single hyperplane separates feasible from infeasible operating
+points. Second, the two boundary regressors are reproduced exactly rather than
+approximately, because W_max and Q_max are deterministic piecewise-linear
+functions of the state (Section 3.3–3.4); a tree ensemble resolves them to the
+label precision, and the earlier R² = 0.9964 reflected a single train/test split
+with a shallower ensemble. Third, the MLP sits 0.26 pp below XGBoost: its smooth
+activations round off the corners where the thermal, inventory and equipment
+limits intersect.
 
 ### 4.6 Why Machine Learning?
 
@@ -401,6 +424,33 @@ A rule-based dispatch strategy serves as the comparison baseline. The rule-based
 - Checks HTV SOC constraints analytically without optimization
 - Allocates W and Q independently without considering their coupled consumption of the shared thermal budget
 
+### 5.4 Optimality of the grid search
+
+The hour-by-hour policy is greedy: it maximises the instantaneous score without
+regard to how the decision changes the state available to later hours. Because
+every constraint and the objective are linear in (W, Q) once the mode is fixed by
+the sign of the dispatch instruction, the same 24-hour problem can be solved
+exactly as a linear programme. We solve it with HiGHS through SciPy, using the
+same bounds, the same heat-storage recursion and the same objective, so the LP
+value is a valid lower bound on the achievable tracking error.
+
+**Table 5. Optimality gap of the dispatch policies (λ = 0.5).**
+
+| Policy | Objective | Gap vs. LP | Heat (MWh) | Discharge (MWh) | Electrical tracking (%) |
+|--------|-----------|-----------|-----------|-----------------|------------------------|
+| Rule-based | 85.876 | +3.63 % | 44.00 | 66.6 | 62.8 |
+| ML grid search (20×15) | 86.041 | +3.83 % | 46.29 | 66.3 | 62.7 |
+| LP optimum | **82.868** | — | 14.74 | 84.3 | 71.0 |
+
+Two results deserve emphasis. The grid search is 3.8 % away from the optimum of
+its own objective, and at λ = 0.5 it does not beat the rule-based heuristic on
+that objective. The reason is visible in the optimal solution: with electricity
+weighted twice as heavily as heat, the LP discharges 84.3 MWh and delivers only
+14.7 MWh of heat, i.e. the objective never asked for heat. The 5.2 % heat gain of
+the heuristic is therefore not an optimisation result but a side effect of the
+surrogate being conservative near the boundary, which preserves storage for later
+hours. Section 6.5 turns this into a sensitivity study on λ.
+
 ---
 
 ## 6. Results and Discussion
@@ -409,7 +459,7 @@ A rule-based dispatch strategy serves as the comparison baseline. The rule-based
 
 The case study considers an integrated energy system consisting of a 20 MW wind power unit, a 30 MW conventional CHP unit (heat-to-power ratio = 1.2), and a 10 MW/50 MWh CCES-CHP system. A typical day in the heating season is selected, with 24-hour profiles of electrical load, heat load, and wind power as shown in Fig. 6.
 
-**Table 5. 24-hour load and wind power data.**
+**Table 6. 24-hour load and wind power data.**
 
 | Hour | Heat Load (MW) | Elec Load (MW) | Wind Power (MW) |
 |------|---------------|----------------|-----------------|
@@ -446,56 +496,86 @@ Key characteristics: Wind power is abundant at night (hours 1–7) and low durin
 
 ### 6.2 Dispatch Optimization Results
 
-The 24-hour dispatch comparison between rule-based and ML-optimized strategies is presented in Fig. 7 and Table 6.
+The 24-hour dispatch comparison between rule-based and ML-optimized strategies is presented in Fig. 7 and Table 7.
 
-**Table 6. 24-hour dispatch performance comparison.**
+**Table 7. 24-hour dispatch performance comparison.**
 
-| Metric | Rule-Based | ML-Optimized | Improvement |
-|--------|-----------|--------------|-------------|
+| Metric | Rule-based | ML-guided | Change |
+|--------|-----------|-----------|--------|
 | Total charge energy (MWh) | 66.0 | 66.0 | — |
-| Total discharge energy (MWh) | 66.6 | 65.0 | −2.4% |
-| Total heat supply (MWh) | 44.0 | **46.3** | **+5.2%** |
-| Discharge duration (h) | 17 | **24** | **+41.2%** |
-| Terminal SOC_heat (%) | 0.0 | 0.2 | — |
+| Total discharge energy (MWh) | 66.6 | 65.0 | −2.4 % |
+| Total heat supply (MWh) | 44.0 | **46.3** | **+5.2 %** |
+| Hours with active discharge (h) | 9 | **16** | **+78 %** |
+| Hours with non-zero power (h) | 17 | 24 | +41 % |
+| Terminal SOC_heat (%) | 0.2 | 0.2 | — |
 | Electrical dispatch tracking rate (%) | 44.9 | 45.4 | +0.5 pp |
+
+Two metrics are reported because an earlier version of this work conflated them:
+"hours with active discharge" counts hours in which the dispatch instruction is a
+discharge and the unit delivers positive power (9 → 16), whereas "hours with
+non-zero power" also counts charging hours (17 → 24). The 17 → 24 claim in the
+conference version referred to the second quantity.
 
 ![Fig. 7](data/dispatch_comparison.png)
 
-**Fig. 7. Rule-based versus ML-optimized 24-hour dispatch.** Top: electrical dispatch instruction and the achieved charging/discharging power. Middle: heat dispatch instruction and the achieved heat supply. Bottom: HTV thermal SOC. The ML strategy keeps a small discharge through hours 18–24 instead of collapsing at hour 17.
+**Fig. 7. Rule-based versus ML-guided 24-hour dispatch.** Top: electrical dispatch instruction and the achieved charging/discharging power. Middle: heat dispatch instruction and the achieved heat supply. Bottom: HTV thermal SOC. The ML-guided policy keeps a small discharge through hours 18–24 instead of collapsing at hour 17.
 
-Three key observations:
+Three observations:
 
-**Observation 1 — Extended discharge coverage**: The rule-based strategy depletes HTV storage by hour 17, leaving hours 18–24 uncovered. The ML-optimized strategy extends coverage across all 24 hours by adaptively reducing power output during low-SOC periods. This is not a violation of physical limits — the same 66.0 MWh of charging energy is used more judiciously.
+**Observation 1 — Longer active discharge.** The rule-based policy exhausts the
+HTV by hour 10 and then tracks only the remaining heat load; the ML-guided policy
+keeps a positive discharge in 16 of the hours that call for one. Both policies end
+the horizon essentially empty (0.2 %), so the difference is timing rather than a
+reserved margin.
 
-**Observation 2 — Increased heat supply**: Despite discharging 2.4% less total energy, the ML-optimized strategy delivers 5.2% more heat. This is achieved by dynamically allocating the HTV thermal budget between reheat (for power) and direct heat supply — favoring heat when electricity demand is moderate, and favoring power when electricity prices are high.
+**Observation 2 — More heat, at the cost of discharge energy.** Total heat rises
+from 44.0 to 46.3 MWh while total discharge falls by 2.4 %. The mechanism is not
+an optimal allocation: the surrogate classifies some feasible operating points as
+infeasible near the boundary, so the grid search picks lower power than the
+analytic domain would allow (for example 0.53 MW instead of 3.68 MW at hour 5),
+which leaves thermal energy for later hours. Section 6.5 shows what an explicit
+weighting of heat delivers instead.
 
-**Observation 3 — Temporal redistribution rather than a terminal buffer**: both strategies finish the horizon with the HTV essentially empty (0.0% and 0.2%), so the gain is not a storage margin reserved for contingencies. What the optimization buys is temporal redistribution: instead of collapsing to zero after hour 17, the ML strategy sustains a small positive output (2–6 MW) through the evening peak, converting otherwise uncovered hours into delivered heat.
+**Observation 3 — The heuristic is not optimal.** Under the same objective the
+LP of Section 5.4 reaches 82.868 against 86.041 for the grid search, and the
+rule-based heuristic is closer to the optimum than the grid search is. The
+value of the surrogate therefore lies in inference speed and in parameter
+generalisation, not in the search itself.
 
-### 6.3 Three Core ML Optimization Strategies
+### 6.3 Where the Dispatch Gain Comes From
 
-Analysis of the hour-by-hour dispatch decisions reveals three distinct strategies the ML optimization employs:
+The hour-by-hour decisions reveal three mechanisms, and it matters which of them
+is an optimisation result and which is an artefact of the surrogate.
 
-#### Strategy 1: Power Derating for Duration Extension
+#### Mechanism 1: Conservative boundary estimates
 
-Stored energy = power × time. The rule-based strategy tends to discharge at full power (10 MW), depleting HTV rapidly. The ML-optimized strategy adaptively reduces discharge power based on SOC:
+Near the constraint boundary the tree ensemble predicts infeasibility for points
+that the analytic domain admits. Between hours 5 and 9 it selects 0.53 MW where
+the analytic domain allows up to 3.7 MW; at hour 17 it selects 6.8 MW against an
+admissible 10 MW. Every selected point lies inside the physical domain (0 of 24
+violations were found on re-checking), so the trajectory is feasible, but the
+conservatism acts as an implicit storage margin and is the actual source of the
+5.2 % heat gain. A safety margin applied to the analytic constraint would produce
+the same effect at no modelling cost, which is why the conference version's
+attribution to "dynamic electric–thermal allocation" is withdrawn here.
 
-```
-Rule-based:    saturates at 10 MW whenever discharge is requested → storage exhausted after 17 h
-ML-optimized:  derates to 2–8 MW according to the remaining SOC        → discharge sustained over 24 h
-```
+#### Mechanism 2: Derating for duration
 
-This is a direct consequence of the energy conservation constraint: the same energy budget spread thinner covers a longer duration.
+Because a fixed heat inventory is drained at γ₂W + Q, halving the power roughly
+doubles the duration at which the unit can still deliver. Both the rule-based and
+the ML-guided policies derate, but the rule-based policy derates only after the
+HTV is nearly empty, whereas the surrogate derates early.
 
-#### Strategy 2: Dynamic Electric-Thermal Allocation
+#### Mechanism 3: Charging sized to the next discharge segment
 
-During discharge, HTV consumption rate = γ₂·W + Q. The rule-based strategy treats W and Q as independent targets. The ML optimization recognizes them as coupled under a shared thermal budget and dynamically allocates:
-- Hours with a large electrical deficit (noon, evening peak): allocate more HTV budget to W, less to Q
-- High heat demand hours (morning, night): allocate more budget to Q, less to W
-- The coupling γ₂ = 1.659 means every 1 MW of power generation "costs" 1.659 MW of thermal power — ML makes this trade-off explicit and optimal.
+The ML-guided policy charges at hours 12–15 and 20–23, immediately before the
+evening peak, and does not over-charge: the terminal SOC is 0.2 %. Over-charging
+is excluded by the SOC upper bound, so this is a constraint property rather than
+an optimisation insight.
 
-#### Strategy 3: Strategic Charging without Over- or Under-Charging
-
-Multiple charging windows exist throughout the day (night wind surplus hours 1–7, midday trough hours 16–18, night hours 22–24). The ML optimization calculates the exact charge amount needed for the upcoming discharge segment, avoiding both overcharging (wasting storage capacity) and undercharging (running out mid-discharge). The small residual at the end of the horizon (0.2%) reflects that the horizon closes just as the storage is exhausted, rather than a designed margin.
+The physical upper bound is unchanged: a full-power, full-heat discharge lasts
+about 5.2 h, and the longer coverage is obtained by derating and by recharging,
+not by violating the energy capacity.
 
 #### Physical Upper Bound
 
@@ -522,7 +602,7 @@ Because the discharge constraint slope is −γ₂, a near-invariant γ₂ means
 
 #### Quantitative Results
 
-**Table 7. Effect of turbine inlet temperature (REFPROP evaluation).**
+**Table 8. Effect of turbine inlet temperature (REFPROP evaluation).**
 
 | Quantity | 483 K (baseline) | 503 K | Change |
 |----------|-----------------|-------|--------|
@@ -533,7 +613,7 @@ Because the discharge constraint slope is −γ₂, a near-invariant γ₂ means
 | Full-power discharge duration at fixed inventory (h) | 5.00 | 5.25 | **+5.0%** |
 | Electricity-to-electricity efficiency (%) | 65.9 | 69.2 | +3.3 pp |
 
-**Table 8. Integrated feasible domain area at different SOC levels (MW²).**
+**Table 9. Integrated feasible domain area at different SOC levels (MW²).**
 
 | SOC_heat (%) | 483 K | 503 K | Change (%) |
 |-------------|-------|-------|------------|
@@ -551,6 +631,24 @@ The sweep is summarized in Fig. 8.
 
 **Fig. 8. Effect of the turbine inlet temperature on the feasibility domain.** Left: γ₂ and α₂ between 460 K and 520 K evaluated with REFPROP. Right: the discharging domain at SOC_heat = 10% for 483 K (grey) and 503 K (blue). The two boundaries nearly coincide; the temperature mainly changes the duration and the efficiency rather than the shape of the domain.
 
+#### Multi-Parameter Sweep
+
+The comparison above holds the isentropic efficiency and the storage pressure fixed. A 175-point design sweep (Th 460–520 K, η_t 0.84–0.92, P_HPT 6.0–7.6 MPa) shows which of the three knobs actually moves the couplings, and it also exposes a limit that the single-temperature study cannot see.
+
+At fixed temperature and pressure, raising η_t from 0.84 to 0.92 lowers γ₂ by 5.7 % (1.670 → 1.574 at 460 K and 6.8 MPa), because less reheat is needed per unit of work. At fixed temperature and efficiency, raising P_HPT from 6.0 to 7.6 MPa raises γ₂ by 3.2 % (1.597 → 1.649). The temperature dependence is the weakest of the three, 0.09–0.11 %/K, i.e. +5–6 % over the 60 K span, which is the quantitative version of the near-invariance claimed in Section 6.4 above.
+
+The discharge domain therefore moves by about ±7 %: its area at SOC_heat = 10 % lies between 60.3 and 69.7 MW² around the 65.2 MW² baseline, and α₂ spans 3.606–4.752 kg s⁻¹ MW⁻¹, which corresponds to 4.41–5.81 h of full-power discharge from the fixed tank inventory. The electrical efficiency spans 58.3–74.2 %.
+
+The sweep also locates a feasibility boundary that the temperature-only study misses. At 32 of the 175 points the heat-closure solution returns a negative external heat supply (X < 0): the reheat duty alone exceeds the compression heat the cycle produces, so the unit can generate power but cannot deliver heat. These points are marked with open symbols in Fig. 9 and excluded from the statistics above. The deficit appears only above 500 K, and it is concentrated at low storage pressure: 13 of the 35 points at 6.0 MPa, 10 at 6.4 MPa, 7 at 6.8 MPa, 2 at 7.2 MPa and none at 7.6 MPa. For the baseline efficiency and pressure (η_t = 0.88, 6.8 MPa) the surplus vanishes at about 517 K.
+
+This gives the turbine inlet temperature a sharper meaning than "efficiency lever". Raising Th from 460 K to 520 K converts a 16.5 % heat surplus into a 2.5 % deficit at the baseline pressure, so the operating envelope has an upper temperature bound imposed by the heat balance rather than by the turbine. Higher storage pressure relaxes that bound, because it enlarges the compression heat per unit of work.
+
+The sweep is shown in Fig. 9.
+
+![Fig. 9](data/fig_parameter_sweep.png)
+
+**Fig. 9. Multi-parameter design sweep.** (a) γ₂ and (b) α₂ against turbine inlet temperature for the five storage pressures at η_t = 0.88; (c) heat supply ratio X for the same slice. Filled markers and solid lines are feasible CHP points; open markers are heat-deficit points (X < 0), which are excluded from the fitted statistics.
+
 #### Physical Interpretation
 
 Under discharge the constraint is
@@ -566,25 +664,56 @@ Since γ₂ rises slightly with temperature, W_max falls slightly and the domain
 
 Turbine inlet temperature should be selected as an efficiency and duration lever, not as a domain-expansion lever. This also corrects the strong sensitivity implied by the approximate correction factor of [20]: with the coefficient re-evaluated from REFPROP, γ₂ is nearly invariant over the 460–520 K range (1.620–1.717), so the associated “domain expansion” should not be claimed.
 
-### 6.5 Discussion
+### 6.5 Sensitivity to the electric–thermal weight
 
-#### 6.5.1 ML Accuracy and Its Physical Basis
+The objective in Section 5.1 weights the electrical and thermal deviations by
+λ = 0.5 without justification. Sweeping λ exposes how much of the reported
+behaviour is a property of the system and how much is a property of the weight.
+
+**Table 10. Delivered heat (MWh) versus the heat weight λ.**
+
+| λ | Rule-based | ML grid search | LP optimum |
+|---|-----------|----------------|-----------|
+| 0 | 44.00 | 0.00 | 14.74 |
+| 0.25 | 44.00 | 44.29 | 14.74 |
+| 0.50 | 44.00 | 46.29 | 14.74 |
+| 1.0 | 44.00 | 48.00 | 52.00 |
+| 2.0 | 44.00 | 48.57 | 52.00 |
+| 5.0 | 44.00 | 48.57 | 52.00 |
+
+Three conclusions follow. The rule-based policy is insensitive to λ because it
+never trades power against heat. The ML-guided policy improves monotonically up
+to λ = 2 and saturates at 48.6 MWh. The LP optimum saturates at 52.0 MWh, 18 %
+above the rule-based baseline, which is the headroom that a heat-aware objective
+can actually capture. Since the optimum is saturated for every λ ≥ 1, a planner
+who wants maximum heat should weight heat at least as heavily as electricity; at
+λ = 0.5 the same optimum delivers 14.7 MWh, i.e. the weight, not the physics,
+decides the outcome. Heat supply should therefore be reported as a function of λ
+rather than as a single number. The three curves are plotted in Fig. 10.
+
+![Fig. 10](data/fig_lambda_sweep.png)
+
+**Fig. 10. Delivered heat versus the heat weight λ.** Rule-based (circles), ML grid search (squares) and LP optimum (triangles). The rule-based policy is independent of λ; the heuristic saturates at 48.6 MWh and the exact optimum at 52.0 MWh.
+
+### 6.6 Discussion
+
+#### 6.6.1 ML Accuracy and Its Physical Basis
 
 The 100% classification accuracy is expected rather than surprising. The labels are generated by the constraint set itself, so the learning task is to reproduce a known piecewise-linear boundary rather than to discover an unknown one. What the exercise validates is that the surrogate represents that boundary exactly, and can therefore substitute for the property-based evaluation at inference time without loss of accuracy.
 
-The MLP achieves 98.58% accuracy (about 110 misclassifications out of 7,744 test samples), with errors concentrated at the corners where the thermal, inventory and equipment limits intersect: the smooth activation rounds off precisely the non-smooth features of the boundary. XGBoost's axis-aligned splits reproduce those corners, which is why it reaches 100%.
+The MLP reaches 99.74 ± 0.11 % under the same five folds, with errors concentrated at the corners where the thermal, inventory and equipment limits intersect: the smooth activation rounds off precisely the non-smooth features of the boundary. XGBoost's axis-aligned splits reproduce those corners, which is why it reaches 100.00 %. The 82.01 % of the linear baseline is the complementary statement: the feasible set is an intersection of half-spaces, and no single hyperplane separates it.
 
-#### 6.5.2 From Static Constraint to Controllable Variable
+#### 6.6.2 From Static Constraint to Controllable Variable
 
 Traditional dispatch optimization treats the feasibility domain as a fixed constraint. The proposed framework transforms it into a controllable variable. The two-level optimization architecture — an outer loop over T_turb (altering α₂, and hence duration and efficiency) and an inner loop over (W, Q) within the domain — enables simultaneous parameter and dispatch optimization. This meta-optimization is made computationally feasible by the ML surrogate models, which provide instantaneous feasibility assessments across the parameter space.
 
-#### 6.5.3 Practical Implications
+#### 6.6.3 Practical Implications
 
-The extended discharge coverage (17→24 h) and increased heat supply (44.0→46.3 MWh, +5.2%) have direct economic implications for integrated energy system operation. Specifically: (a) systems with higher renewable penetration benefit from longer energy shifting capability, (b) raising the turbine inlet temperature improves the electrical efficiency by 3.3 percentage points and lengthens the full-power discharge by 5% at essentially unchanged domain shape, so parameter selection should be driven by efficiency rather than by an assumed domain expansion, and (c) the 2.4% reduction in discharged energy indicates better utilization of the stored energy.
+The longer active discharge (9→16 h) and the increased heat supply (44.0→46.3 MWh, +5.2 %) have direct implications for integrated energy system operation. Specifically: (a) systems with higher renewable penetration benefit from longer energy shifting capability, (b) raising the turbine inlet temperature improves the electrical efficiency by 3.3 percentage points and lengthens the full-power discharge by 5 % at essentially unchanged domain shape, so parameter selection should be driven by efficiency rather than by an assumed domain expansion, (c) the 2.4 % reduction in discharged energy indicates that the same thermal budget is spread over more hours rather than that more energy is delivered, and (d) because the heat gain depends on the weight λ, a tariff-driven objective (λ = heat price / electricity price) is the natural way to make the dispatch economically meaningful.
 
-#### 6.5.4 Limitations and Future Work
+#### 6.6.4 Limitations and Future Work
 
-Several limitations warrant acknowledgment. First, the training data assumes fixed γ₁, γ₂ per simulation run; variable-parameter training spanning a T_turb sweep would enable continuous optimisation of α₂ (and hence of the duration–efficiency trade-off) within the dispatch loop. Second, the current grid search resolution (20×15) could be enhanced with gradient-based or Bayesian optimization methods. Third, the economic objective function (time-of-use electricity prices, heat tariffs) would strengthen practical relevance. Fourth, multi-period look-ahead optimization (dynamic programming or model predictive control) could replace the greedy hour-by-hour approach, potentially yielding further improvements through inter-temporal coordination. Fifth, the gas-side inventory constraint binds only at the ends of the operating window (below about 16% SOC on discharge, above about 89% on charge), because the HPT is sized for five hours of full-power discharge (943 t, 1280 m³); systems with a smaller tank would exhibit stronger dual-SOC coupling over a wider SOC range.
+Several limitations warrant acknowledgment. First, the training data assumes fixed γ₁, γ₂ per simulation run; the multi-parameter sweep in Section 6.4 is the first step towards variable-parameter training, which would enable continuous optimisation of α₂ (and hence of the duration–efficiency trade-off) inside the dispatch loop. Second, the 20×15 grid search sits 3.8 % from the exact optimum of its own objective; because the problem is linear once the mode is fixed, replacing the heuristic with the LP — or with a receding-horizon MPC — is a modelling choice rather than a computational obstacle, and the gap reported here is the price of keeping the algorithm model-agnostic. Third, the economic objective (time-of-use electricity prices, heat tariffs) is not yet part of the optimisation, although Section 6.5 shows how the weight λ maps onto it. Fourth, multi-period look-ahead optimization (dynamic programming or model predictive control) could replace the greedy hour-by-hour approach, potentially yielding further improvements through inter-temporal coordination. Fifth, the gas-side inventory constraint binds only at the ends of the operating window (below about 16 % SOC on discharge, above about 89 % on charge), because the HPT is sized for five hours of full-power discharge (943 t, 1280 m³); systems with a smaller tank would exhibit stronger dual-SOC coupling over a wider SOC range.
 
 ---
 
@@ -594,9 +723,24 @@ This study presents a machine learning framework for dynamic construction and op
 
 1. A parameterized feasibility domain representation using dimensionless factors γ₁/γ₂ and ratio parameters α₁/α₂ effectively couples the electrical, thermal, and mass flow domains. The dual SOC model (thermal storage + CO₂ liquid inventory) establishes two-dimensional linear constraint boundaries that define the feasible operating region; the inventory term bounds the instantaneous power at the ends of the operating window and makes the gas-side state physically meaningful.
 
-2. XGBoost and MLP models trained on 38,720 REFPROP-based samples reach 100% and 98.58% accuracy in feasibility classification, respectively. Boundary regression gives R² = 0.9964 for W_max (RMSE 0.076 MW) and R² = 1.0000 for Q_max. Feature importance identifies the operating mode (45.5%), the gas-side inventory (23.8%) and the heat-side SOC (20.0%) as the dominant factors, confirming that the dual-SOC coupling is physically active.
+2. XGBoost and MLP models trained on 38,720 REFPROP-based samples reach
+   100.00 ± 0.01 % and 99.74 ± 0.11 % accuracy in feasibility classification
+   under five-fold stratified cross-validation, against 82.01 % for a linear
+   classifier; boundary regression reproduces W_max and Q_max exactly
+   (R² = 1.0000). TreeSHAP attributes 41.5 % and 25.1 % of the prediction to the
+   heat and gas states, and dropping the gas-side feature costs 9.3 percentage
+   points, confirming that the dual-SOC coupling is physically active.
 
-3. ML-optimized 24-hour dispatch extends discharge coverage from 17 to 24 hours (+41%) and increases total heat supply from 44.0 to 46.3 MWh (+5.2%), at the cost of 2.4% less discharged energy and without a terminal storage margin (0.2% versus 0.0% for the rule-based baseline). The improvement stems from three strategies: power derating for duration extension, dynamic electric-thermal allocation under a shared thermal budget, and strategic charging that avoids both over-charging and running dry.
+3. ML-guided 24-hour dispatch raises delivered heat from 44.0 to 46.3 MWh
+   (+5.2 %) and the number of hours with active discharge from 9 to 16, at the
+   cost of 2.4 % less discharged energy and with the same terminal SOC (0.2 %).
+   The gain stems from the conservatism of the surrogate near the boundary rather
+   than from an optimal allocation: against an exact LP optimum of the same
+   objective the grid search is 3.8 % worse and the rule-based heuristic is
+   slightly better, so the surrogate's value lies in inference speed and
+   parameter generalisation. A λ-sweep locates the genuine headroom: 48.6 MWh for
+   the heuristic and 52.0 MWh for the optimum when heat is weighted at least as
+   heavily as electricity.
 
 4. A turbine inlet temperature sweep (483 K → 503 K) evaluated with REFPROP shows that γ₂ is nearly invariant (1.659 → 1.691), so the feasible domain area changes by only −1.9% even at low SOC. The real benefit of the higher temperature is a 4.7% reduction in the discharge mass flow per unit power, which extends the full-power discharge duration from 5.00 to 5.25 hours (+5.0%) and raises the electricity-to-electricity efficiency from 65.9% to 69.2%. Operating parameters should therefore be optimized for efficiency and duration rather than for domain expansion.
 
