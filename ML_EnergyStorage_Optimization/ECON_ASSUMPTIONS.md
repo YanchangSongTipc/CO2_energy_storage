@@ -1,6 +1,6 @@
 # 经济性假设（ECON_ASSUMPTIONS）
 
-> 状态：**文献校核后的占位值**（2026-11-04 更新）。量级可用于投稿判断，金额仍需按项目实际替换。
+> 状态：**山东算例 + 文献校核**（2026-11-04 更新）。电价与热价已替换为可引用的公开数据；CAPEX 仍为文献区间内的估计，需项目报价替换。
 > 代码：`src/economics.py` 的 `PARAMS` 字典，改完直接重跑，无需动模型。
 > 运行：`python src/economics.py` → `data/economics_summary.csv`、`data/economics_sensitivity.csv`、`data/fig_economics.png`
 
@@ -40,40 +40,53 @@
 | 套利运行天数 | `operating_days_el` | 330 | — | 全年除检修 |
 | 供热运行天数 | `operating_days_heat` | 150 | — | 供暖季 |
 
-> 注：会议稿的算例是"供暖季典型日"，365 天套利是期刊版才引入的口径——两个天数必须分别说明，否则 LCOE 会被低估。
+> 注：会议稿的算例是"供暖季典型日"，330 天套利是期刊版才引入的口径——两个天数必须分别说明，否则 LCOE 会被低估。
 
-## 二、参考工况结果（默认参数，ML-guided）
+### 山东电价与热价（已落实，可引用）
+
+| 项目 | 数值（原单位） | 折算 | 来源 |
+|---|---|---|---|
+| 工商业两部制 1-10 kV 高峰 | 1.0475 元/kWh | 147.5 USD/MWh | 国网山东《代理购电工商业用户电价表》，执行期 2025-03-01 至 03-31：[烟台市政府转发](https://www.yantai.gov.cn/art/2025/3/20/art_70253_3244147.html) |
+| 同表 平时段 | 0.6899 元/kWh | 97.2 USD/MWh | 同上 |
+| 同表 低谷 | 0.3324 元/kWh | 46.8 USD/MWh | 同上 |
+| 同表 尖峰 / 深谷 | 1.2007 / 0.2303 元/kWh | 169.1 / 32.4 USD/MWh | 同上（深谷可用于充电，本文未取） |
+| 工商业分时机制 | 高峰 +70 %、低谷 −70 %、尖峰 +100 %、深谷 −90 % | — | 山东省工商业分时电价政策解读（2025-04-21）：[烟台市发改委](https://fgw.yantai.gov.cn/art/2025/4/21/art_52219_2909512.html) |
+| 工业蒸汽 | 349 元/吨（燃气锅炉基准售价） | ≈447 元/MWh_th ≈ 63.0 USD/MWh_th | 济南市发改委《关于调整工业蒸汽价格有关事项的通知》，2023-01：[报道](http://jinan.subaoxw.com/zj/2023/0110/90612.html) |
+
+**折算假设**：汇率 7.10 CNY/USD；1 t 蒸汽 ≈ 2.8 GJ ≈ 0.78 MWh_th。若本文供热是采暖热水而不是工艺蒸汽，热价应改用当地"元/GJ"口径（通常显著低于蒸汽价），经济性会变差——这一点必须在正文里写清楚，否则审稿人会质疑口径混用。
+
+## 二、参考工况结果（山东价格，ML-guided）
 
 | 项目 | 值 |
 |---|---|
 | CAPEX | 15.75 MUSD |
 | 年运维 | 0.39 MUSD |
-| 年套利收入 | 1.70 MUSD |
-| 年供热收入 | 0.21 MUSD |
+| 年套利收入 | 2.14 MUSD |
+| 年供热收入 | 0.44 MUSD |
 | 年放电量 / 年供热量 | 21,450 MWh / 6,945 MWh |
 | LCOE（仅电） | 81.4 USD/MWh |
 | LCOH（电+热） | 61.5 USD/MWh |
-| 静态回收期 | 10.4 yr |
-| NPV（25 yr, 7%） | +1.93 MUSD |
+| 静态回收期 | 7.2 yr |
+| NPV（25 yr, 7 %） | **+9.75 MUSD** |
 
-三种调度策略对比（同一 CAPEX）：
+三种调度策略对比（同一 CAPEX、山东价格）：
 
-| 策略 | 年放电 MWh | 年供热 MWh | LCOE | 回收期 | NPV |
-|---|---|---|---|---|---|
-| Rule-based | 21,978 | 6,600 | 79.4 | 10.0 yr | +2.55 MUSD |
-| ML-guided | 21,450 | 6,945 | 81.4 | 10.4 yr | +1.93 MUSD |
-| LP optimum (λ=1) | 20,394 | 7,800 | 85.6 | 11.1 yr | +0.76 MUSD |
+| 策略 | 年放电 MWh | 年供热 MWh | 年收入 MUSD | LCOE | 回收期 | NPV |
+|---|---|---|---|---|---|---|
+| Rule-based | 21,978 | 6,600 | 2.64 | 79.4 | 7.0 yr | **+10.41 MUSD** |
+| ML-guided | 21,450 | 6,945 | 2.58 | 81.4 | 7.2 yr | +9.75 MUSD |
+| LP optimum (λ=1) | 20,394 | 7,800 | 2.48 | 85.6 | 7.6 yr | +8.56 MUSD |
 
-**这张表本身就是一个结论**：在"套利为主、热价为 30 USD/MWh_th"的假设下，多供热换不来收益——放电量才是收入主体，所以规则调度的 NPV 反而最高。这正好呼应正文 §6.5 的论点：**供热的经济价值取决于 λ = 热价 / 电价**，而不是系统的物理能力。
+**这张表本身就是一个结论**：在山东电价下项目能盈利，但**放电量仍是收入主体**（套利 2.1–2.2 MUSD vs 供热 0.4 MUSD），所以规则调度的 NPV 反而最高。这正好呼应正文 §6.5：供热的经济价值取决于 λ = 热价 / 电价，而不是系统的物理能力。也说明"供热增益"只有在热价显著高于本地蒸汽价、或把 λ 调到 1 以上时才转化为收益。
 
-## 三、盈亏平衡
+## 三、盈亏平衡（山东价格）
 
-| 变量 | 盈亏平衡值 |
-|---|---|
-| 峰谷电价差（CAPEX 不变） | **72 USD/MWh** |
-| CAPEX 乘数（电价差 80 USD/MWh 不变） | **1.10**（即 17.2 MUSD） |
+| 变量 | 盈亏平衡值 | 与当前值比较 |
+|---|---|---|
+| 峰谷电价差（CAPEX 不变） | **62 USD/MWh** | 山东实际约 101 USD/MWh → 有安全边际 |
+| CAPEX（电价差约 101 USD/MWh） | **23.4 MUSD（1.48 倍）** | 当前 15.75 MUSD → 可容忍 +48 % 的投资超支 |
 
-写进正文时建议这样表述：*"At the reference assumptions the plant breaks even at a peak–valley spread of 72 USD/MWh, or at a capital cost of 17.2 MUSD. The first figure is set by the local tariff and must be checked against the provincial schedule; the second lies within the 500–1200 USD/kW range reported for large-scale CAES and is consistent with the 90.7 USD/MWh LCOE of a published liquid-CO₂ case."*
+写进正文时建议这样表述：*"With the March 2025 Shandong industrial tariff (1.0475 / 0.3324 CNY per kWh for the peak and valley periods) and a gas-fired industrial steam price of 349 CNY per tonne, the plant reaches break-even at a peak–valley spread of 62 USD/MWh, well below the 101 USD/MWh offered by the tariff, and tolerates a capital cost of 23.4 MUSD before the net present value turns negative. The capital figure lies within the 500–1200 USD/kW range reported for large-scale CAES and is consistent with the 90.7 USD/MWh LCOE of a published liquid-CO₂ case."*
 
 ## 四、替换清单（你提供后我改代码）
 

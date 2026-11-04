@@ -50,9 +50,14 @@ PARAMS = {
     "opex_frac_per_year": 0.025,   # [0.015, 0.04]
     "discount_rate": 0.07,         # [0.05, 0.10]
     "life_years": 25,
-    "price_peak_usd_per_MWh": 120.0,   # [90, 180]
-    "price_valley_usd_per_MWh": 40.0,  # [20, 60]
-    "price_heat_usd_per_MWh_th": 30.0, # [20, 45]
+    # Shandong, March 2025: SGCC aggregated purchase tariff, industrial two-part
+    # 1-10 kV: peak 1.0475, flat 0.6899, valley 0.3324 CNY/kWh (deep valley 0.2303).
+    # Converted at 7.10 CNY/USD.
+    "price_peak_usd_per_MWh": 147.5,     # 1.0475 CNY/kWh
+    "price_valley_usd_per_MWh": 46.8,    # 0.3324 CNY/kWh
+    # Jinan (Shandong) gas-fired industrial steam: 349 CNY/t (Jan 2023 notice);
+    # 1 t of steam ~ 0.78 MWh_th, i.e. ~447 CNY/MWh_th.
+    "price_heat_usd_per_MWh_th": 63.0,
     "price_co2_usd_per_t": 0.0,        # optional
     "co2_kg_per_MWh": 0.0,             # avoided emissions, if counted
     "operating_days_el": 330,          # arbitrage days per year
@@ -138,8 +143,9 @@ print()
 print(summary.to_string(index=False, float_format=lambda v: f"{v:9.2f}"))
 
 # --------------------------------------------------------------- sensitivity
-price_spreads = [40, 60, 80, 100, 120, 140]
-capex_mults = [0.7, 0.85, 1.0, 1.15, 1.3]
+spread_ref = PARAMS["price_peak_usd_per_MWh"] - PARAMS["price_valley_usd_per_MWh"]
+price_spreads = sorted({40, 60, 80, 100, 120, 140, round(spread_ref)})
+capex_mults = [0.7, 0.85, 1.0, 1.15, 1.3, 1.5, 1.7, 2.0]
 sens_rows = []
 for mult in capex_mults:
     p = dict(PARAMS)
@@ -160,11 +166,11 @@ sens.to_csv(os.path.join(DATA, "economics_sensitivity.csv"), index=False)
 ref = sens[np.isclose(sens.capex_multiplier, 1.0)].sort_values("price_spread_usd_per_MWh")
 be_spread = (float(np.interp(0.0, ref.NPV_MUSD.values, ref.price_spread_usd_per_MWh.values))
              if (ref.NPV_MUSD.min() < 0 < ref.NPV_MUSD.max()) else float("nan"))
-spread_ref = PARAMS["price_peak_usd_per_MWh"] - PARAMS["price_valley_usd_per_MWh"]
-ref2 = sens[np.isclose(sens.price_spread_usd_per_MWh, spread_ref)].sort_values("capex_multiplier")
+ref2 = sens[np.isclose(sens.price_spread_usd_per_MWh, round(spread_ref))].sort_values("capex_multiplier")
 be_mult = (float(np.interp(0.0, ref2.NPV_MUSD.values[::-1], ref2.capex_multiplier.values[::-1]))
            if (ref2.NPV_MUSD.min() < 0 < ref2.NPV_MUSD.max()) else float("nan"))
-print(f"\nbreak-even peak-valley spread at reference CAPEX : {be_spread:.0f} USD/MWh")
+print(f"\nbreak-even peak-valley spread at reference CAPEX : {be_spread:.0f} USD/MWh "
+      f"(reference spread {spread_ref:.0f})")
 print(f"break-even CAPEX multiplier at reference spread  : {be_mult:.2f} "
       f"({be_mult * capex(PARAMS) / 1e6:.1f} MUSD)")
 
