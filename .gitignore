@@ -20,5 +20,8 @@ __pycache__/
 .prefs*/
 *.log
 
+# 企业自有经济参数（保密，不入库；模板见 econ_params_local.example.py）
+econ_params_local.py
+
 # 本机 SSH 密钥（不提交）
 .ssh_local/

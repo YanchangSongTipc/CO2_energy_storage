@@ -64,6 +64,25 @@ PARAMS = {
     "operating_days_heat": 150,        # heating-season days per year
 }
 
+# --------------------------------------------------------------- private input
+# Project quotations are usually confidential. Copy econ_params_local.example.py to
+# econ_params_local.py (gitignored) and fill in the real numbers there: they are
+# loaded here, are never printed and never enter the repository. Everything in this
+# file stays at the public literature values, so the published results remain
+# reproducible from the paper alone.
+_local = os.path.join(HERE, "econ_params_local.py")
+overrides = {}
+if os.path.exists(_local):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("econ_params_local", _local)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    overrides = {k: v for k, v in getattr(mod, "PARAMS", {}).items() if k in PARAMS}
+    PARAMS.update(overrides)
+    print(f"[economics] {len(overrides)} private parameter(s) loaded from "
+          f"{os.path.basename(_local)}; their values are masked in all output")
+
 # daily energy quantities from dispatch_optimality.csv / Table 7
 STRATEGIES = {
     "Rule-based": {"charge_MWh": 66.0, "discharge_MWh": 66.6, "heat_MWh": 44.0},
@@ -138,9 +157,14 @@ for k in ("capex_power_usd_per_kW", "capex_energy_usd_per_kWh",
           "capex_thermal_usd_per_kWh_th", "price_peak_usd_per_MWh",
           "price_valley_usd_per_MWh", "price_heat_usd_per_MWh_th",
           "operating_days_el", "operating_days_heat", "discount_rate", "life_years"):
-    print(f"  {k:32s} {PARAMS[k]}")
+    shown = "private (masked)" if k in overrides else PARAMS[k]
+    print(f"  {k:32s} {shown}")
 print()
 print(summary.to_string(index=False, float_format=lambda v: f"{v:9.2f}"))
+if overrides:
+    print(f"\nNOTE: {len(overrides)} parameter(s) came from the private override file. "
+          "The figures above are for internal use only and must not be published "
+          "until they are replaced by the literature values.")
 
 # --------------------------------------------------------------- sensitivity
 spread_ref = PARAMS["price_peak_usd_per_MWh"] - PARAMS["price_valley_usd_per_MWh"]

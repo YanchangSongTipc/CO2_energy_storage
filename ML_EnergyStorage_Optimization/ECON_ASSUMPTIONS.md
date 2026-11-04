@@ -90,12 +90,28 @@
 
 ## 四、替换清单（你提供后我改代码）
 
-| 优先级 | 需要的数据 | 当前占位 | 哪里查 |
+| 优先级 | 需要的数据 | 当前状态 | 下一步 |
 |---|---|---|---|
-| 高 | 项目所在省份分时电价（峰/平/谷，工商业） | 120 / 40 USD/MWh | 省发改委价格文件、电网公司分时电价公告 |
-| 高 | 热价（工业蒸汽或采暖）与年供热量 | 30 USD/MWh_th | 当地热力公司、园区蒸汽价 |
-| 中 | 设备投资（压缩机、透平、换热器、储罐） | 900 USD/kW + 60 USD/kWh + 25 USD/kWh_th | 项目报价，或文献参数表（需注明来源） |
+| 高 | 山东分时电价（峰/平/谷） | ✅ 已落实：2025-03 国网山东代购电价表 | — |
+| 高 | 山东工业蒸汽价 | ✅ 已落实：济南 349 元/t（2023-01） | 若供热是采暖热水而非蒸汽，需换成元/GJ 口径 |
+| 中 | 设备投资（压缩机、透平、换热器、储罐） | 公开稿用文献区间 900 / 60 / 25 | 真实报价走私有覆盖文件（见 §五），不进仓库 |
 | 低 | 运维费率与融资条件 | 2.5 %/yr、7 % | 可研报告或同类工程经验 |
-| 低 | 是否计碳价 | 0 | CCER/碳市场价 |
+| 低 | 是否计碳价 | 0 | CCER / 碳市场价 |
 
-> 表中"高"两项我未能找到可直接引用的权威公开文件——这类型数据属于省级定价文件与合同价，检索到的二手数字不适合作为投稿引用。你告知省份后，我可以去找该省现行分时目录；热价同理。
+## 五、企业保密数据的处理
+
+项目报价属于企业自有数据、通常不可对外公开。这类情况在工程类期刊里很常见，处理原则是**方法可复现、数字可分档**，不必披露原始报价。我们采用三层结构：
+
+| 层 | 内容 | 是否入仓库 | 用途 |
+|---|---|---|---|
+| 1. 公开层 | 文献区间（IRENA/Wikipedia/已发表算例）+ 山东公开电价热价 | 是 | 论文正文的数字全部来自这一层，任何人可复现 |
+| 2. 私有层 | 企业真实报价与合同价 | **否**（`.gitignore` 排除） | 你自己做决策用的结果 |
+| 3. 结论层 | 盈亏平衡价差、可容忍 CAPEX、NPV 区间 | 是 | 论文报告的是"阈值"而非"造价"，既回答了经济性又不泄露报价 |
+
+**私有层怎么用**：把 `src/econ_params_local.example.py` 复制成 `src/econ_params_local.py`，取消注释并填入真实数字；`economics.py` 会自动加载，只在终端提示"导入了 N 个私有参数"，不打印数值。该文件已被 `.gitignore` 排除，`git status` 永远不会看到它。
+
+**论文里怎么写**（可直接放进 §7 或方法节，英文）：
+
+> The economic assessment relies on publicly reported cost ranges for the capital items and on the published Shandong tariff and industrial-steam prices for the operating revenues. Project-specific quotations are proprietary and are not reproduced here. To keep the conclusions independent of that restriction, all results are reported as break-even values — the peak–valley spread and the capital cost at which the net present value vanishes — rather than as point estimates of the investment. The break-even spread of 62 USD/MWh lies well below the 101 USD/MWh offered by the tariff, and the break-even capital cost of 23.4 MUSD lies within the 500–1200 USD/kW range reported for large-scale CAES, so the conclusion does not depend on the proprietary figures.
+
+**为什么这样写能过审**：审稿人关心的是"结论是否稳健"，而不是"造价是多少"。把可公开的阈值（62 USD/MWh、23.4 MUSD）作为结论，既证明经济性成立，又把敏感区间留给读者判断；同时明确声明数据受限，符合期刊对工业合作研究的惯例。
