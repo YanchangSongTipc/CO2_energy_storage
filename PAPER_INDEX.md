@@ -8,7 +8,9 @@
 
 | 文档 | 路径 | 说明 |
 |---|---|---|
-| **正文** | [ML_EnergyStorage_Optimization/paper_manuscript.md](ML_EnergyStorage_Optimization/paper_manuscript.md) | ICDIES 2026 投稿稿，Markdown，约 700 行，已内嵌 8 图 |
+| **正文** | [ML_EnergyStorage_Optimization/paper_manuscript.md](ML_EnergyStorage_Optimization/paper_manuscript.md) | 期刊版（Applied Energy 口径），Markdown，891 行 / 10,655 词，11 图 11 表，摘要 246 词 |
+| 中文草稿 | [ML_EnergyStorage_Optimization/paper_manuscript_zh.md](ML_EnergyStorage_Optimization/paper_manuscript_zh.md) | 与英文稿逐节对应的中文阅读版，图件共用 |
+| 经济性假设 | [ML_EnergyStorage_Optimization/ECON_ASSUMPTIONS.md](ML_EnergyStorage_Optimization/ECON_ASSUMPTIONS.md) | 山东电价/热价来源、结果、盈亏平衡、保密数据处理 |
 | 修订记录 | [ML_EnergyStorage_Optimization/DATA_REVISION.md](ML_EnergyStorage_Optimization/DATA_REVISION.md) | 旧值 → 新值对照，改稿依据 |
 | 早期框架 | [ML_EnergyStorage_Optimization/paper_framework.md](ML_EnergyStorage_Optimization/paper_framework.md) | 规划稿，**数值已作废**，仅供结构参考 |
 | ML 流程与指标 | [ML_EnergyStorage_Optimization/README.md](ML_EnergyStorage_Optimization/README.md) | 数据生成 → 训练 → 调度 |

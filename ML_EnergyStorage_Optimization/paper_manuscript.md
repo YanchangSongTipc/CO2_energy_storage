@@ -10,7 +10,7 @@
 
 ## Abstract
 
-Compressed carbon dioxide energy storage with combined heat and power (CCES-CHP) couples electrical, thermal and mass flows, so its operational feasibility domain is a polygon in the power–heat plane whose position shifts with two state variables. Building that domain from thermophysical property calls is too slow for real-time dispatch. Surrogates are therefore trained on 38,720 samples generated with REFPROP from a two-stage transcritical CO₂ cycle, using dimensionless couplings γ₁/γ₂ and α₁/α₂ together with a dual state-of-charge formulation in which the CO₂ liquid inventory, not the tank pressure, bounds the instantaneous power. Under five-fold stratified cross-validation XGBoost classifies feasibility at 100.00 ± 0.01 % and an MLP at 99.74 ± 0.11 %, against 82.01 % for a linear classifier, and reproduces both domain boundaries exactly (R² = 1.0000). TreeSHAP attributes 41.5 % of the prediction to the heat state and 25.1 % to the gas inventory; removing the gas state costs 9.3 percentage points, confirming that the inventory constraint is physically active. In a 24-hour case study the surrogate-guided dispatch raises delivered heat from 44.0 to 46.3 MWh (+5.2 %) and the hours with active discharge from 9 to 16, but an exact linear-programming benchmark of the same objective places it 3.8 % from the optimum. A sweep of the heat weight locates the genuine headroom: 48.6 MWh for the heuristic and 52.0 MWh for the optimum, 18 % above the rule-based baseline. Turbine inlet temperature raises efficiency and discharge duration rather than expanding the domain.
+Compressed carbon dioxide energy storage with combined heat and power (CCES-CHP) couples electrical, thermal and mass flows, so its operational feasibility domain is a polygon in the power–heat plane whose position shifts with two state variables; rebuilding it from property calls is too slow for dispatch. Surrogates are trained on 38,720 REFPROP samples of a two-stage transcritical CO₂ cycle, using dimensionless couplings γ₁/γ₂ and α₁/α₂ and a dual state-of-charge formulation in which the liquid CO₂ inventory, not the tank pressure, bounds the instantaneous power. Under five-fold stratified cross-validation XGBoost classifies feasibility at 100.00 ± 0.01 % and an MLP at 99.74 ± 0.11 %, against 82.01 % for a linear classifier, and reproduces both boundaries exactly (R² = 1.0000). TreeSHAP attributes 41.5 % of the prediction to the heat state and 25.1 % to the gas inventory, worth 9.3 percentage points of accuracy. In a 24-hour case study the surrogate-guided dispatch raises delivered heat from 44.0 to 46.3 MWh (+5.2 %) and the hours with active discharge from 9 to 16, yet lies 3.8 % from the linear-programming optimum of the same objective; a heat-weight sweep locates the headroom at 48.6 MWh (heuristic) and 52.0 MWh (optimum), 18 % above the rule-based baseline. Under the Shandong industrial tariff all three policies pay back within eight years (net present value 8.6–10.4 MUSD), breaking even at 62 USD/MWh against the 101 USD/MWh the tariff offers. Turbine inlet temperature raises efficiency and discharge duration rather than expanding the domain.
 
 **Keywords**: Compressed carbon dioxide energy storage; Combined heat and power; Operational feasibility domain; Machine learning; XGBoost; Integrated energy system
 
@@ -38,7 +38,7 @@ This study proposes a machine learning framework for learning and optimizing the
 4. A physically complete dual-SOC formulation in which the HPT liquid inventory bounds the instantaneous power; TreeSHAP attributes 25.1 % of the prediction to the gas-side state and removing it costs 9.3 percentage points of accuracy, confirming that the coupling is physically active rather than nominal.
 5. A quantitative attribution of where the dispatch gain comes from: the conservatism of the surrogate near the constraint boundary, which preserves thermal storage for later hours, rather than an optimal electric–thermal allocation.
 
-The remainder of this paper is organized as follows. Section 2 describes the CCES-CHP system and thermodynamic model. Section 3 presents the feasibility domain construction method. Section 4 details the ML methodology. Section 5 describes the dispatch optimization framework. Section 6 presents the case study and results. Section 7 concludes.
+The remainder of this paper is organized as follows. Section 2 describes the CCES-CHP system and thermodynamic model. Section 3 presents the feasibility domain construction method. Section 4 details the ML methodology. Section 5 describes the dispatch optimization framework. Section 6 presents the case study and results. Section 7 assesses the economics of the three dispatch policies, and Section 8 concludes.
 
 ---
 
@@ -717,7 +717,45 @@ Several limitations warrant acknowledgment. First, the training data assumes fix
 
 ---
 
-## 7. Conclusion
+## 7. Economic Assessment
+
+### 7.1 Data and Assumptions
+
+The economic layer is deliberately separated from the dispatch layer: it consumes the daily energy quantities of Table 7 and applies public prices, so any dispatch policy can be re-costed without re-solving the optimisation.
+
+Revenues follow the Shandong (China) industrial tariff of March 2025: 1.0475 CNY/kWh in the peak period, 0.6899 in the flat period, 0.3324 in the valley and 0.2303 in the deep valley, i.e. 147.5, 97.2, 46.8 and 32.4 USD/MWh at 7.10 CNY/USD. The provincial mechanism sets the peak at +70 %, the valley at −70 %, the critical peak at +100 % and the deep valley at −90 % of the flat rate, so the schedule itself encodes a peak–valley spread of about 101 USD/MWh. Heat is priced as gas-fired industrial steam at 349 CNY/t (Jinan, 2023), about 63 USD/MWh_th at 2.8 GJ/t.
+
+Capital cost is not taken from a single quotation. We use the ranges reported for large-scale compressed-air and liquid-CO₂ storage: 900 USD/kW for the turbomachinery, 60 USD/kWh for the above-ground CO₂ inventory and 25 USD/kWh_th for the thermal store, giving 15.75 MUSD for the 10 MW/50 MWh unit. Operation and maintenance is 2.5 % of capital per year, the discount rate is 7 % and the lifetime 25 years. Arbitrage is assumed on 330 days per year and heat supply on the 150 days of the heating season. Project-specific quotations are proprietary and are not reproduced here; the sensitivity analysis below covers the range in which they are expected to fall.
+
+The three dispatch policies of Section 6 are re-costed with the same capital cost and the same tariffs. The levelised cost of electricity (LCOE) is annualised capital plus fixed O&M divided by the annual discharge, the levelised cost of heat (LCOH) divides the same annual cost by the sum of electrical and thermal output, and the net present value uses the annual net revenue over 25 years at 7 %.
+
+### 7.2 Results
+
+**Table 11. Economic performance of the three dispatch policies (Shandong tariff, 2025).**
+
+| Policy | Annual revenue (MUSD) | LCOE (USD/MWh) | LCOH (USD/MWh) | Payback (yr) | NPV (MUSD) |
+|--------|----------------------|----------------|----------------|--------------|------------|
+| Rule-based | 2.64 | 79.4 | 61.1 | 7.0 | **+10.41** |
+| ML-guided | 2.58 | 81.4 | 61.5 | 7.2 | +9.75 |
+| LP optimum (λ = 1) | 2.48 | 85.6 | 61.9 | 7.6 | +8.56 |
+
+All three policies are profitable under the Shandong tariff, with paybacks between seven and eight years and net present values of 8.6–10.4 MUSD for a 15.75 MUSD investment. The ranking, however, is the opposite of the thermal ranking: the rule-based policy earns the most because revenue is dominated by the discharged electricity (2.1–2.2 MUSD against 0.4 MUSD of heat revenue), and it discharges the largest annual energy. The policy that delivers the most heat therefore captures the least revenue.
+
+The break-even analysis shows how much room the assumption set leaves. Holding the capital cost fixed, the net present value vanishes at a peak–valley spread of 62 USD/MWh, well below the 101 USD/MWh offered by the tariff. Holding the spread fixed, the investment can rise to 23.4 MUSD — a factor of 1.48 — before the project turns negative.
+
+### 7.3 Interpretation
+
+The economic result qualifies the dispatch result rather than contradicting it. Section 6.5 showed that heat supply is a function of the weight λ; the Shandong tariffs imply λ ≈ 63/147.5 ≈ 0.43, close to the λ = 0.5 used throughout the paper, and at that weight the heat gain of 2.3 MWh per day is worth about 0.03 MUSD per year — two orders of magnitude below the arbitrage revenue. A unit compensated for heat at the steam price should therefore be dispatched with λ close to 1, where Section 6.5 reports 48.6 MWh for the heuristic and 52.0 MWh for the optimum; the same analysis then shifts the economically preferred policy from the rule-based to the heat-aware one.
+
+This is also the honest limit of the study: the dispatch and the feasibility domain are optimised for tracking, not for profit, and the mapping between the two is exactly the weight λ. Making the tariff endogenous — a profit-maximising objective with time-of-use prices inside the optimisation — is left to future work, and the present analysis provides both the feasible set and the optimality benchmark that such a formulation would need.
+
+![Fig. 11](data/fig_economics.png)
+
+**Fig. 11. Sensitivity of the economics to the tariff and the capital cost.** Left: levelised cost of electricity; right: simple payback, both against the peak–valley spread for capital-cost multipliers between 0.7 and 2.0 (ML-guided dispatch).
+
+---
+
+## 8. Conclusion
 
 This study presents a machine learning framework for dynamic construction and optimization of the operational feasibility domain of CCES-CHP systems. The main conclusions are:
 
@@ -745,6 +783,8 @@ This study presents a machine learning framework for dynamic construction and op
 4. A turbine inlet temperature sweep (483 K → 503 K) evaluated with REFPROP shows that γ₂ is nearly invariant (1.659 → 1.691), so the feasible domain area changes by only −1.9% even at low SOC. The real benefit of the higher temperature is a 4.7% reduction in the discharge mass flow per unit power, which extends the full-power discharge duration from 5.00 to 5.25 hours (+5.0%) and raises the electricity-to-electricity efficiency from 65.9% to 69.2%. Operating parameters should therefore be optimized for efficiency and duration rather than for domain expansion.
 
 5. The ML prediction speed (milliseconds for 7,200 feasibility queries) enables real-time dispatch optimization that would be computationally prohibitive using full thermodynamic simulation, making the proposed approach suitable for practical energy management system integration.
+
+6. Under the Shandong industrial tariff of March 2025 and a gas-fired industrial steam price, all three dispatch policies are profitable, with paybacks of 7.0–7.6 years and net present values of 8.6–10.4 MUSD on a 15.75 MUSD investment. The plant breaks even at a peak–valley spread of 62 USD/MWh — against the 101 USD/MWh offered by the tariff — and tolerates a 48 % capital-cost overrun. Because the revenue is dominated by discharged electricity rather than heat, the rule-based policy earns the most at the tariff-implied weight λ ≈ 0.43, while heat-aware dispatch becomes preferable once heat is compensated at a level corresponding to λ ≥ 1.
 
 The proposed methodology provides an effective tool for real-time dispatch, capacity planning, and operational optimization of CCES-CHP systems in integrated energy systems with high renewable penetration.
 
