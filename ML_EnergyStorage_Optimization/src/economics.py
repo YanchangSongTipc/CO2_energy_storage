@@ -30,15 +30,23 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "..", "data")
 
 # ---------------------------------------------------------------- assumptions
-# TODO: replace with project data. Ranges in brackets are the literature spread
-# used to sanity-check the defaults; see ECON_ASSUMPTIONS.md.
+# TODO: replace with project data; see ECON_ASSUMPTIONS.md for the full source list.
+# Literature anchors for the defaults:
+#   - large-scale CAES: 500-1200 USD/kW; McIntosh plant 590 USD/kW + 23 USD/kWh
+#     (Wikipedia, "Compressed-air energy storage")
+#   - CAES energy cost 53 USD/kWh (2016) -> 44 by 2030; sensible liquid thermal
+#     storage 22-77 USD/kWh_th (IRENA 2017, Electricity Storage and Renewables,
+#     p.30 and Table 12)
+#   - published liquid-CO2 CCES case: LCOE 0.0907 USD/kWh
+#     (Energy Reports 2022, doi:10.1016/j.egyr.2022.09.021)
+# Grid tariffs and heat prices are project-specific and are NOT sourced here.
 PARAMS = {
     "P_el_design_MW": 10.0,        # CCES-CHP electrical rating
     "E_el_MWh": 50.0,              # electrical storage capacity
     "E_th_MWh": 150.0,             # HTV thermal capacity
-    "capex_power_usd_per_kW": 900.0,    # [700, 1500]
-    "capex_energy_usd_per_kWh": 60.0,   # [30, 100]  electric side
-    "capex_thermal_usd_per_kWh_th": 25.0,  # [15, 40]
+    "capex_power_usd_per_kW": 900.0,    # [500, 1200] CAES range
+    "capex_energy_usd_per_kWh": 60.0,   # [23, 100]  above-ground vessel premium
+    "capex_thermal_usd_per_kWh_th": 25.0,  # [22, 77] IRENA Table 12
     "opex_frac_per_year": 0.025,   # [0.015, 0.04]
     "discount_rate": 0.07,         # [0.05, 0.10]
     "life_years": 25,
