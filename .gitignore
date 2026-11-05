@@ -23,5 +23,9 @@ __pycache__/
 # 企业自有经济参数（保密，不入库；模板见 econ_params_local.example.py）
 econ_params_local.py
 
+# 由 src/make_pdf.ps1 生成的 PDF（可随时重建，不入库）
+ML_EnergyStorage_Optimization/paper_manuscript*.pdf
+ML_EnergyStorage_Optimization/~*.pdf
+
 # 本机 SSH 密钥（不提交）
 .ssh_local/

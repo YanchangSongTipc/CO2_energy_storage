@@ -290,8 +290,8 @@ For each parameter combination, the feasibility label and boundary values are co
 feasible = (Q ≤ slope × W + b_upper) ∧ (Q ≥ slope × W + b_lower)
            ∧ (0 ≤ Q ≤ Q_max) ∧ (0 ≤ W ≤ W_design) ∧ (0 ≤ W ≤ W_inventory)
 
-W_inventory = (m_upper - m)/(α₁Δt)   charging
-            = (m - m_lower)/(α₂Δt)   discharging
+W_inventory = (m_upper - m)/(α_1Δt)   charging
+            = (m - m_lower)/(α_2Δt)   discharging
 ```
 
 The inventory term is what makes the gas-side state informative: without it the feasibility label is independent of SOC_gas for every parameter combination, and the feature importance of SOC_gas collapses to 0.0015, which is what a purely thermal constraint set yields. With it, 2896 of the 3520 sampled (SOC_heat, SOC_gas, mode, W, Q) groups change their feasibility label across the gas axis.
@@ -594,8 +594,8 @@ Beyond dispatch optimization within a fixed domain, the framework also quantifie
 Two couplings depend on T_turb and they respond in opposite directions:
 
 ```
-T_turb ↑ → specific work per kg CO₂ ↑ → α₂ ↓  (less mass per MW)      [strong: −4.7%]
-          → reheat duty and turbine work scale together → γ₂ ≈ const  [weak:   +1.9%]
+T_turb ↑ → specific work per kg CO2 ↑ → α_2 ↓  (less mass per MW)      [strong: −4.7%]
+          → reheat duty and turbine work scale together → γ_2 ≈ const  [weak:   +1.9%]
 ```
 
 Because the discharge constraint slope is −γ₂, a near-invariant γ₂ means an almost unchanged (W, Q) domain. What changes is how long a given tank inventory lasts, which scales as 1/α₂.
