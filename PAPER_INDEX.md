@@ -13,6 +13,8 @@
 | 经济性假设 | [ML_EnergyStorage_Optimization/ECON_ASSUMPTIONS.md](ML_EnergyStorage_Optimization/ECON_ASSUMPTIONS.md) | 山东电价/热价来源、结果、盈亏平衡、保密数据处理 |
 | 修订记录 | [ML_EnergyStorage_Optimization/DATA_REVISION.md](ML_EnergyStorage_Optimization/DATA_REVISION.md) | 旧值 → 新值对照，改稿依据 |
 | 早期框架 | [ML_EnergyStorage_Optimization/paper_framework.md](ML_EnergyStorage_Optimization/paper_framework.md) | 规划稿，**数值已作废**，仅供结构参考 |
+| **补充材料** | [ML_EnergyStorage_Optimization/supplementary.md](ML_EnergyStorage_Optimization/supplementary.md) | 表 S1–S5（负荷曲线、面积、超参、算力） |
+| **待补引用** | [ML_EnergyStorage_Optimization/CITATION_TODO.md](ML_EnergyStorage_Optimization/CITATION_TODO.md) | 10 个引用槽位 + 检索词，补到 40+ 条 |
 | ML 流程与指标 | [ML_EnergyStorage_Optimization/README.md](ML_EnergyStorage_Optimization/README.md) | 数据生成 → 训练 → 调度 |
 | ODE 模型说明 | [CCES_CHP_Simulink/README.md](CCES_CHP_Simulink/README.md) | 双 SOC 模型、闭合条件、结果表 |
 

@@ -16,6 +16,41 @@ Compressed carbon dioxide energy storage with combined heat and power (CCES-CHP)
 
 ---
 
+## Highlights
+
+- Reheat coefficient falls from 2.31 to 1.66 once the evaporator is split out.
+- Liquid inventory, not tank pressure, bounds the instantaneous discharge power.
+- Surrogate reproduces the known domain exactly, 3.8 % from the LP optimum.
+- Turbine inlet temperature raises efficiency, not the feasible-domain area.
+- Shandong tariffs give a seven-year payback for a 10 MW/50 MWh unit.
+
+---
+
+## Nomenclature
+
+| Symbol | Description | Unit |
+|--------|-------------|------|
+| $W_{C,E}$, $W_{T,E}$ | electrical charging / discharging power | MW |
+| $Q_{IC}$ | compression heat recovered from the intercoolers | MW |
+| $Q_{HR}$ | reheat duty of HR1 and HR2 | MW |
+| $Q_{heat}$ | heat delivered to the district-heating network | MW |
+| $Q_{HTV}$ | thermal energy stored in the hot oil tank | MWh |
+| $m_{HPT}$ | liquid CO$_2$ inventory of the high-pressure tank | kg |
+| $m_C$, $m_T$ | mass flow during charging / discharging | kg s$^{-1}$ |
+| $\gamma_1$, $\gamma_2$ | compression heat and reheat per unit electrical power | – |
+| $\alpha_1$, $\alpha_2$ | mass flow per unit electrical power | kg s$^{-1}$ MW$^{-1}$ |
+| $X$, $Y$ | heat supply rate and heat feedback rate | – |
+| $\eta_{C}$, $\eta_{T}$ | compressor and turbine isentropic efficiency | – |
+| $\lambda$ | weight of heat relative to electricity in the dispatch objective | – |
+| $\Delta t$ | dispatch time step | h |
+| $H$ | evaluation horizon | h |
+| $P_{HPT}$ | high-pressure tank pressure | MPa |
+| $T_{turb}$ | turbine inlet temperature | K |
+
+*Abbreviations*: CCES, compressed CO$_2$ energy storage; CHP, combined heat and power; HPT/LPT, high/low-pressure tank; HTV, high-temperature thermal-oil vessel; HR1/HR2, heat-recovery exchangers; MLP, multi-layer perceptron; NPV, net present value; LCOE/LCOH, levelised cost of electricity/heat; SHAP, Shapley additive explanations; SOC, state of charge.
+
+---
+
 ## 1. Introduction
 
 With the growing consensus on achieving carbon neutrality worldwide, the development of renewable energy sources is accelerating at an unprecedented pace [1]. However, the intermittency, seasonality, and unpredictability of these sources have highlighted the critical need for energy storage solutions. Physical energy storage technologies offer a promising approach to achieving gradient utilization of energy, supporting the development of a sustainable, low-carbon, and economically viable energy infrastructure [2,3].
@@ -270,7 +305,7 @@ The turbine inlet temperature affects the two couplings very differently. Evalua
 
 ### 4.1 Training Data Generation
 
-The training data generation pipeline is implemented in MATLAB, utilizing REFPROP v10.0 for high-fidelity CO₂ property calculations across 15 thermodynamic state nodes. The design of experiments systematically samples the parameter space:
+The training data generation pipeline is implemented in MATLAB, utilizing REFPROP v10.0 for high-fidelity CO₂ property calculations across 15 thermodynamic state nodes. The design of experiments systematically samples the parameter space, as summarised in Table 2.
 
 **Table 2. Parameter sampling scheme for training data.**
 
@@ -304,7 +339,7 @@ The inventory term is what makes the gas-side state informative: without it the 
 
 XGBoost (eXtreme Gradient Boosting) [21] is employed as the primary classification model for predicting the feasibility of a given (W, Q) operating point. The model hyperparameters are configured as follows: n_estimators = 200, max_depth = 6, learning_rate = 0.1, subsample = 0.8, colsample_bytree = 0.8.
 
-The dataset is split 80/20 (30,976 training / 7,744 test) with stratification on the feasibility label. The feature importance analysis reveals the dominant factors governing feasibility:
+The dataset is split 80/20 (30,976 training / 7,744 test) with stratification on the feasibility label. The feature importance analysis, reported in Table 3, reveals the dominant factors governing feasibility.
 
 **Table 3. TreeSHAP attribution of the XGBoost classifier.**
 
@@ -334,9 +369,11 @@ Two XGBoost regression models are trained to predict the feasibility domain boun
 
 ### 4.4 MLP Neural Network for Benchmark Comparison
 
-A multi-layer perceptron (MLP) neural network is trained as a benchmark model. Architecture: 3 hidden layers (128×64×32) with ReLU activation, trained using the Adam optimizer with adaptive learning rate, batch size 256, and maximum 300 epochs. Input features are standardized using StandardScaler.
+A multi-layer perceptron (MLP) neural network is trained as a benchmark model. Architecture: 3 hidden layers (128×64×32) with ReLU activation, trained using the Adam optimizer with adaptive learning rate, batch size 256, and maximum 300 epochs. Input features are standardized using StandardScaler. The hyperparameters of both models and the computational resources are listed in Supplementary Tables S3–S5.
 
 ### 4.5 Model Performance
+
+The metrics of all seven classifiers under the same folds are collected in Table 4.
 
 **Table 4. Model performance under five-fold stratified cross-validation.**
 
@@ -432,7 +469,7 @@ every constraint and the objective are linear in (W, Q) once the mode is fixed b
 the sign of the dispatch instruction, the same 24-hour problem can be solved
 exactly as a linear programme. We solve it with HiGHS through SciPy, using the
 same bounds, the same heat-storage recursion and the same objective, so the LP
-value is a valid lower bound on the achievable tracking error.
+value is a valid lower bound on the achievable tracking error. Table 5 compares the three policies against it.
 
 **Table 5. Optimality gap of the dispatch policies (λ = 0.5).**
 
@@ -457,36 +494,7 @@ hours. Section 6.5 turns this into a sensitivity study on λ.
 
 ### 6.1 Case Study Configuration
 
-The case study considers an integrated energy system consisting of a 20 MW wind power unit, a 30 MW conventional CHP unit (heat-to-power ratio = 1.2), and a 10 MW/50 MWh CCES-CHP system. A typical day in the heating season is selected, with 24-hour profiles of electrical load, heat load, and wind power as shown in Fig. 6.
-
-**Table 6. 24-hour load and wind power data.**
-
-| Hour | Heat Load (MW) | Elec Load (MW) | Wind Power (MW) |
-|------|---------------|----------------|-----------------|
-| 1 | 38 | 28 | 18 |
-| 2 | 35 | 22 | 16 |
-| 3 | 32 | 18 | 14 |
-| 4 | 30 | 16 | 12 |
-| 5 | 29 | 15 | 13 |
-| 6 | 28 | 14 | 12 |
-| 7 | 28 | 16 | 8 |
-| 8 | 29 | 18 | 6 |
-| 9 | 31 | 20 | 5 |
-| 10 | 33 | 22 | 4 |
-| 11 | 36 | 26 | 3 |
-| 12 | 39 | 48 | 2 |
-| 13 | 41.5 | 48 | 2 |
-| 14 | 41 | 48 | 3 |
-| 15 | 40 | 45 | 4 |
-| 16 | 38 | 30 | 6 |
-| 17 | 37 | 28 | 10 |
-| 18 | 35 | 24 | 12 |
-| 19 | 40 | 32 | 8 |
-| 20 | 42 | 48 | 6 |
-| 21 | 41.5 | 48 | 5 |
-| 22 | 40 | 48 | 14 |
-| 23 | 42 | 48 | 16 |
-| 24 | 40 | 35 | 18 |
+The case study considers an integrated energy system consisting of a 20 MW wind power unit, a 30 MW conventional CHP unit (heat-to-power ratio = 1.2), and a 10 MW/50 MWh CCES-CHP system. A typical day in the heating season is selected, with 24-hour profiles of electrical load, heat load, and wind power as shown in Fig. 6 and listed in Supplementary Table S1.
 
 Key characteristics: Wind power is abundant at night (hours 1–7) and low during midday. Electrical load peaks at noon (hours 12–15) and evening (hours 19–23). Heat load peaks in the morning and evening, characteristic of winter heating demand. Several charging windows exist (night wind surplus, midday troughs between peaks).
 
@@ -496,9 +504,9 @@ Key characteristics: Wind power is abundant at night (hours 1–7) and low durin
 
 ### 6.2 Dispatch Optimization Results
 
-The 24-hour dispatch comparison between rule-based and ML-optimized strategies is presented in Fig. 7 and Table 7.
+The 24-hour dispatch comparison between rule-based and ML-optimized strategies is presented in Fig. 7 and Table 6.
 
-**Table 7. 24-hour dispatch performance comparison.**
+**Table 6. 24-hour dispatch performance comparison.**
 
 | Metric | Rule-based | ML-guided | Change |
 |--------|-----------|-----------|--------|
@@ -602,7 +610,9 @@ Because the discharge constraint slope is −γ₂, a near-invariant γ₂ means
 
 #### Quantitative Results
 
-**Table 8. Effect of turbine inlet temperature (REFPROP evaluation).**
+The REFPROP evaluation of both cases is given in Table 7.
+
+**Table 7. Effect of turbine inlet temperature (REFPROP evaluation).**
 
 | Quantity | 483 K (baseline) | 503 K | Change |
 |----------|-----------------|-------|--------|
@@ -613,17 +623,7 @@ Because the discharge constraint slope is −γ₂, a near-invariant γ₂ means
 | Full-power discharge duration at fixed inventory (h) | 5.00 | 5.25 | **+5.0%** |
 | Electricity-to-electricity efficiency (%) | 65.9 | 69.2 | +3.3 pp |
 
-**Table 9. Integrated feasible domain area at different SOC levels (MW²).**
-
-| SOC_heat (%) | 483 K | 503 K | Change (%) |
-|-------------|-------|-------|------------|
-| 10 | 65.2 | 64.0 | −1.9 |
-| 20 | 120.5 | 120.5 | 0 (equipment-limited) |
-| 40 | 120.5 | 120.5 | 0 (equipment-limited) |
-| 60 | 120.5 | 120.5 | 0 (equipment-limited) |
-| 80 | 120.5 | 120.5 | 0 (equipment-limited) |
-
-At SOC ≥ 20% the discharge domain is bounded by the equipment limits rather than by the heat budget: even at 10 MW the thermal draw (16.6 MW) plus the maximum heat supply (12.05 MW) stays below the one-hour heat availability (30 MW at 20% SOC), so the domain is the full rectangle and the temperature change has no effect. The thermal constraint starts trimming the domain below about 19% SOC and the power limit below about 11% SOC; at 10% SOC a slightly larger γ₂ reduces the area by 1.9%.
+The area at each SOC level is tabulated in Supplementary Table S2. At SOC ≥ 20% the discharge domain is bounded by the equipment limits rather than by the heat budget: even at 10 MW the thermal draw (16.6 MW) plus the maximum heat supply (12.05 MW) stays below the one-hour heat availability (30 MW at 20% SOC), so the domain is the full rectangle and the temperature change has no effect. The thermal constraint starts trimming the domain below about 19% SOC and the power limit below about 11% SOC; at 10% SOC a slightly larger γ₂ reduces the area by 1.9%.
 
 The sweep is summarized in Fig. 8.
 
@@ -668,9 +668,9 @@ Turbine inlet temperature should be selected as an efficiency and duration lever
 
 The objective in Section 5.1 weights the electrical and thermal deviations by
 λ = 0.5 without justification. Sweeping λ exposes how much of the reported
-behaviour is a property of the system and how much is a property of the weight.
+behaviour is a property of the system and how much is a property of the weight. Table 8 reports the sweep.
 
-**Table 10. Delivered heat (MWh) versus the heat weight λ.**
+**Table 8. Delivered heat (MWh) versus the heat weight λ.**
 
 | λ | Rule-based | ML grid search | LP optimum |
 |---|-----------|----------------|-----------|
@@ -721,17 +721,19 @@ Several limitations warrant acknowledgment. First, the training data assumes fix
 
 ### 7.1 Data and Assumptions
 
-The economic layer is deliberately separated from the dispatch layer: it consumes the daily energy quantities of Table 7 and applies public prices, so any dispatch policy can be re-costed without re-solving the optimisation.
+The economic layer is deliberately separated from the dispatch layer: it consumes the daily energy quantities of Table 6 and applies public prices, so any dispatch policy can be re-costed without re-solving the optimisation.
 
 Revenues follow the Shandong (China) industrial tariff of March 2025: 1.0475 CNY/kWh in the peak period, 0.6899 in the flat period, 0.3324 in the valley and 0.2303 in the deep valley, i.e. 147.5, 97.2, 46.8 and 32.4 USD/MWh at 7.10 CNY/USD. The provincial mechanism sets the peak at +70 %, the valley at −70 %, the critical peak at +100 % and the deep valley at −90 % of the flat rate, so the schedule itself encodes a peak–valley spread of about 101 USD/MWh. Heat is priced as gas-fired industrial steam at 349 CNY/t (Jinan, 2023), about 63 USD/MWh_th at 2.8 GJ/t.
 
-Capital cost is not taken from a single quotation. We use the ranges reported for large-scale compressed-air and liquid-CO₂ storage: 900 USD/kW for the turbomachinery, 60 USD/kWh for the above-ground CO₂ inventory and 25 USD/kWh_th for the thermal store, giving 15.75 MUSD for the 10 MW/50 MWh unit. Operation and maintenance is 2.5 % of capital per year, the discount rate is 7 % and the lifetime 25 years. Arbitrage is assumed on 330 days per year and heat supply on the 150 days of the heating season. Project-specific quotations are proprietary and are not reproduced here; the sensitivity analysis below covers the range in which they are expected to fall.
+Capital cost is not taken from a single quotation. We use the ranges reported for large-scale compressed-air and liquid-CO₂ storage: 900 USD/kW for the turbomachinery, 60 USD/kWh for the above-ground CO₂ inventory and 25 USD/kWh_th for the thermal store, giving 15.75 MUSD for the 10 MW/50 MWh unit. These are mid-range literature values rather than project quotations; the 0.7–2.0 capital-cost multiplier of Fig. 11 spans the band in which a quotation is expected to fall. Operation and maintenance is 2.5 % of capital per year, the discount rate is 7 % and the lifetime 25 years. Arbitrage is assumed on 330 days per year and heat supply on the 150 days of the heating season. Project-specific quotations are proprietary and are not reproduced here; the sensitivity analysis below covers the range in which they are expected to fall.
 
 The three dispatch policies of Section 6 are re-costed with the same capital cost and the same tariffs. The levelised cost of electricity (LCOE) is annualised capital plus fixed O&M divided by the annual discharge, the levelised cost of heat (LCOH) divides the same annual cost by the sum of electrical and thermal output, and the net present value uses the annual net revenue over 25 years at 7 %.
 
 ### 7.2 Results
 
-**Table 11. Economic performance of the three dispatch policies (Shandong tariff, 2025).**
+Table 9 collects the three policies under the same capital cost and tariff.
+
+**Table 9. Economic performance of the three dispatch policies (Shandong tariff, 2025).**
 
 | Policy | Annual revenue (MUSD) | LCOE (USD/MWh) | LCOH (USD/MWh) | Payback (yr) | NPV (MUSD) |
 |--------|----------------------|----------------|----------------|--------------|------------|
@@ -796,6 +798,20 @@ This work was supported by the Technical Institute of Physics and Chemistry, Chi
 
 ---
 
+## CRediT authorship contribution statement
+
+**Yanchang Song**: Conceptualization, Methodology, Software, Formal analysis, Writing – original draft. **Zhentao Zhang**: Supervision, Funding acquisition, Writing – review & editing. **Junling Yang**: Validation, Investigation, Writing – review & editing.
+
+## Declaration of competing interest
+
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+## Data availability
+
+The MATLAB and Python code, the 38,720-sample training set and the source of every figure are available at https://github.com/YanchangSongTipc/CO2_energy_storage. Project-specific cost quotations are proprietary and are not reproduced; the ranges used in the economic assessment are stated in Section 7.1.
+
+---
+
 ## References
 
 [1] Hussain J, Lee CC. A green path towards sustainable development: optimal behavior of the duopoly game model with carbon neutrality instruments. Sustainable Development 2022;30:1523–41.
@@ -853,38 +869,3 @@ This work was supported by the Technical Institute of Physics and Chemistry, Chi
 [27] Aghagoli A, Sorin M. CFD modelling and exergy analysis of a heat pump cycle with Tesla Turbine using CO₂ as a working fluid. Applied Thermal Engineering 2020;178:115587.
 
 ---
-
-## Appendix: ML Model Training Details
-
-**Table A1. XGBoost classifier hyperparameters.**
-
-| Parameter | Value |
-|-----------|-------|
-| n_estimators | 200 |
-| max_depth | 6 |
-| learning_rate | 0.1 |
-| subsample | 0.8 |
-| colsample_bytree | 0.8 |
-| eval_metric | logloss (default) |
-
-**Table A2. MLP classifier hyperparameters.**
-
-| Parameter | Value |
-|-----------|-------|
-| hidden_layer_sizes | (128, 64, 32) |
-| activation | ReLU |
-| solver | Adam |
-| alpha (L2 regularization) | 0.001 |
-| batch_size | 256 |
-| learning_rate | adaptive |
-| max_iter | 300 |
-
-**Table A3. Computational resources.**
-
-| Component | Specification |
-|-----------|--------------|
-| Data generation | MATLAB R2024a + REFPROP v10.0 |
-| ML training | Python 3.10, scikit-learn 1.7, XGBoost 3.2 |
-| Training time (XGBoost) | < 5 seconds |
-| Training time (MLP) | < 30 seconds |
-| Inference time (24h dispatch) | < 100 milliseconds |
