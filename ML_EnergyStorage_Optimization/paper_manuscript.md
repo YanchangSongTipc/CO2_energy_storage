@@ -53,27 +53,27 @@ Compressed carbon dioxide energy storage with combined heat and power (CCES-CHP)
 
 ## 1. Introduction
 
-With the growing consensus on achieving carbon neutrality worldwide, the development of renewable energy sources is accelerating at an unprecedented pace [1]. However, the intermittency, seasonality, and unpredictability of these sources have highlighted the critical need for energy storage solutions. Physical energy storage technologies offer a promising approach to achieving gradient utilization of energy, supporting the development of a sustainable, low-carbon, and economically viable energy infrastructure [2,3].
+Renewable deployment is accelerating under carbon-neutrality targets [1], but its intermittency makes storage indispensable. Physical storage allows graded energy use and underpins a low-carbon, low-cost infrastructure [2,3].
 
-Among many energy storage technologies, compressed gas energy storage (CGES) has become a promising candidate by virtue of its high power generation, wide capacity range, and low investment cost [4]. Compressed air energy storage (CAES) is the earliest developed and most mature CGES technology, but its reliance on large underground storage caverns and low energy density remain significant limitations [5–8]. Liquid air energy storage (LAES) improves energy density but suffers from low round-trip efficiency, typically below 50% [9,10].
+Among physical options, compressed gas energy storage (CGES) offers high power, wide capacity and low investment [4]. Compressed air energy storage (CAES) is the most mature but needs large underground caverns and stores little energy per unit volume [5–8]; liquid air energy storage (LAES) raises energy density, yet its round-trip efficiency stays below 50 % [9,10].
 
-In this context, CO₂ has emerged as a promising working medium for CGES. CO₂ possesses suitable critical parameters (304 K, 7.38 MPa) and can be liquefied at room temperature, creating favorable conditions for high-density storage. CO₂ also exhibits good thermal conductivity, low liquid viscosity, and is non-toxic, non-flammable, and inexpensive [11]. In recent years, scholars have extensively studied the optimal design of CCES systems [12–15,31,32]. Considering the diversification of energy demand, CCES technology is gradually developing toward multi-functionality. As the system involves the storage and release of both electrical and thermal energy, it has the natural capability for combined heat and power supply [16].
+CO₂ is a better CGES working fluid: its critical point (304 K, 7.38 MPa) allows room-temperature liquefaction, and it is thermally conductive, non-toxic, non-flammable and cheap [11]. Design studies of compressed CO₂ energy storage (CCES) are abundant [12–15,31,32] and increasingly consider multi-functional operation, since the cycle stores and releases both electricity and heat and can therefore cogenerate [16].
 
-Several studies have investigated CCES cogeneration. Liu et al. [17] proposed a cooling, heating and power trigeneration system based on transcritical Brayton cycle and CO₂ energy storage. Zhang et al. [18] proposed a combined heat and power system based on fan waste heat utilization and transcritical CCES, achieving a system cycle efficiency of 0.48. He et al. [19] coupled a combined heat and power unit with CCES and achieved system power efficiency of 63.07%. More recently the same idea has been extended to combined cooling, heating and power configurations evaluated on both thermodynamic and economic grounds [33]. However, the operation dispatch of CCES in integrated energy systems remains a critical and underexplored aspect.
+CCES cogeneration has been shown in several configurations: transcritical trigeneration [17], waste-heat-assisted CHP with a cycle efficiency of 0.48 [18], coupling to a CHP unit at 63.07 % power efficiency [19], and, more recently, combined cooling, heating and power assessed on both thermodynamic and economic grounds [33]. Dispatch of CCES inside an integrated energy system remains largely unexplored.
 
-Hao et al. [20] proposed a CCES-CHP system operating in the medium pressure range and developed an innovative method for constructing an operational feasibility domain. By defining dimensionless factors γ₁ and γ₂ and ratio parameters α₁ and α₂, they established constraint boundaries and visualized the system's operational feasible region. However, the construction of the feasibility domain relies on full thermodynamic simulations that are computationally expensive for real-time dispatch applications. Learning the region once from data, rather than re-deriving it at every query, is an established idea in process systems engineering [34], but it has not been applied to CCES-CHP.
+Hao et al. [20] built the operational feasibility domain of a CCES-CHP unit from dimensionless factors γ₁, γ₂ and ratios α₁, α₂, but constructing it needs full thermodynamic simulation, too slow for real-time dispatch. Learning such a region once from data is standard in process systems engineering [34]; it has not been applied to CCES-CHP.
 
-With the rapid development of machine learning techniques, data-driven approaches offer new possibilities for accelerating energy system analysis. XGBoost [21] and neural networks have been successfully applied to various energy system problems, including load forecasting, state estimation, and optimal dispatch [22–24]. However, the application of ML to feasibility domain prediction and dispatch optimization for CCES-CHP systems has not been previously reported.
+Machine learning — XGBoost [21], neural networks and other surrogates — already serves load forecasting, state estimation and dispatch in energy systems [22–24], but not feasibility-domain prediction for CCES-CHP.
 
-This study proposes a machine learning framework for learning and optimizing the operational feasibility domain of CCES-CHP systems. The main contributions are:
+This work learns and optimises that domain. The contributions are:
 
-1. A parameterized training data generation pipeline that maps thermodynamic states to feasibility labels using REFPROP-based simulations, producing 38,720 labeled samples.
-2. XGBoost and MLP models reaching 100.00 ± 0.01 % and 99.74 ± 0.11 % accuracy under five-fold stratified cross-validation, against 82.01 % for a linear classifier, and exact reproduction of both domain boundaries (R² = 1.0000).
-3. A dispatch framework that pairs the surrogate with an exact linear-programming benchmark: the grid-search heuristic delivers 46.3 MWh of heat against 44.0 MWh for the rule-based policy, yet sits 3.8 % from the optimum of its own objective, and a sweep of the heat weight shows the achievable gain rising from 46.3 to 48.6 MWh for the heuristic and from 14.7 to 52.0 MWh for the optimum.
-4. A physically complete dual-SOC formulation in which the HPT liquid inventory bounds the instantaneous power; TreeSHAP attributes 25.1 % of the prediction to the gas-side state and removing it costs 9.3 percentage points of accuracy, confirming that the coupling is physically active rather than nominal.
-5. A quantitative attribution of where the dispatch gain comes from: the conservatism of the surrogate near the constraint boundary, which preserves thermal storage for later hours, rather than an optimal electric–thermal allocation.
+1. A REFPROP-based pipeline that labels 38,720 thermodynamic states feasible or not.
+2. XGBoost and MLP classifiers reaching 100.00 ± 0.01 % and 99.74 ± 0.11 % under five-fold stratified cross-validation, against 82.01 % for a linear baseline, with both domain boundaries reproduced exactly (R² = 1.0000).
+3. A dispatch framework paired with an exact linear-programming benchmark: the grid-search heuristic delivers 46.3 MWh of heat against 44.0 MWh for the rule-based policy but sits 3.8 % from the optimum of its own objective; a heat-weight sweep raises the heuristic to 48.6 MWh and the optimum to 52.0 MWh.
+4. A dual-SOC formulation in which the HPT liquid inventory bounds instantaneous power; TreeSHAP attributes 25.1 % of the prediction to the gas-side state, and removing it costs 9.3 percentage points.
+5. An attribution of the dispatch gain to the conservatism of the surrogate near the constraint boundary, which preserves storage for later hours, rather than to an optimal electric–thermal allocation.
 
-The remainder of this paper is organized as follows. Section 2 describes the CCES-CHP system and thermodynamic model. Section 3 presents the feasibility domain construction method. Section 4 details the ML methodology. Section 5 describes the dispatch optimization framework. Section 6 presents the case study and results. Section 7 assesses the economics of the three dispatch policies, and Section 8 concludes.
+Section 2 describes the system and model, Section 3 the feasible domain, Section 4 the ML methods, Section 5 the dispatch framework, Section 6 the case study, Section 7 the economics, and Section 8 concludes.
 
 ---
 
@@ -491,46 +491,19 @@ generalisation, not in the search itself.
 
 ### 6.3 Where the Dispatch Gain Comes From
 
-The hour-by-hour decisions reveal three mechanisms, and it matters which of them
-is an optimisation result and which is an artefact of the surrogate.
+The hourly decisions reveal three mechanisms, only one of which is a genuine optimisation effect.
 
-#### Mechanism 1: Conservative boundary estimates
+**Mechanism 1: conservative boundary estimates.** Near the boundary the ensemble calls infeasible points that the analytic domain admits: 0.53 MW where 3.7 MW is allowed (hours 5–9), 6.8 MW against 10 MW at hour 17. All 24 selected points are physically feasible, so the conservatism acts as an implicit storage margin and is the actual source of the 5.2 % heat gain. An explicit margin on the analytic constraint would do the same at no modelling cost, hence the attribution to "dynamic electric–thermal allocation" is withdrawn.
 
-Near the constraint boundary the tree ensemble predicts infeasibility for points
-that the analytic domain admits. Between hours 5 and 9 it selects 0.53 MW where
-the analytic domain allows up to 3.7 MW; at hour 17 it selects 6.8 MW against an
-admissible 10 MW. Every selected point lies inside the physical domain (0 of 24
-violations were found on re-checking), so the trajectory is feasible, but the
-conservatism acts as an implicit storage margin and is the actual source of the
-5.2 % heat gain. A safety margin applied to the analytic constraint would produce
-the same effect at no modelling cost, which is why the conference version's
-attribution to "dynamic electric–thermal allocation" is withdrawn here.
+**Mechanism 2: derating.** A fixed inventory drains at γ₂W + Q, so halving the power roughly doubles the duration. Both policies derate; the rule-based one only once the HTV is nearly empty, the surrogate early.
 
-#### Mechanism 2: Derating for duration
+**Mechanism 3: charging sized to the next segment.** The ML policy charges at hours 12–15 and 20–23, just before the evening peak, with a terminal SOC of 0.2 %; the SOC bound, not the optimiser, prevents over-charging.
 
-Because a fixed heat inventory is drained at γ₂W + Q, halving the power roughly
-doubles the duration at which the unit can still deliver. Both the rule-based and
-the ML-guided policies derate, but the rule-based policy derates only after the
-HTV is nearly empty, whereas the surrogate derates early.
+None of this breaks the energy limit. A full-power, full-heat discharge lasts
 
-#### Mechanism 3: Charging sized to the next discharge segment
+$$t_{max} = \frac{Q_{HTV}^{upper}}{\gamma_2 W_{max} + Q_{max}} = \frac{150}{1.659 \times 10 + 12.05} \approx 5.2\ \text{h}$$
 
-The ML-guided policy charges at hours 12–15 and 20–23, immediately before the
-evening peak, and does not over-charge: the terminal SOC is 0.2 %. Over-charging
-is excluded by the SOC upper bound, so this is a constraint property rather than
-an optimisation insight.
-
-The physical upper bound is unchanged: a full-power, full-heat discharge lasts
-about 5.2 h, and the longer coverage is obtained by derating and by recharging,
-not by violating the energy capacity.
-
-#### Physical Upper Bound
-
-It is important to note that the full-power, full-heat continuous discharge is physically limited to approximately 5.2 hours:
-
-$$t_{max} = \frac{Q_{HTV}^{upper}}{\gamma_2 \cdot W_{max} + Q_{max}} = \frac{150}{1.659 \times 10 + 12.05} \approx 5.2 \text{ h}$$
-
-The 24-hour "continuous discharge" is achieved through strategic power derating and multiple charge-discharge cycles — not by violating the fundamental energy capacity constraint. This distinguishes the proposed approach from methods that claim to extend capacity without physical basis.
+so the 24 h coverage comes from derating and recharging, not from extra capacity.
 
 ### 6.4 Effect of Turbine Inlet Temperature: Efficiency Rather than Domain Expansion
 
@@ -636,23 +609,19 @@ rather than as a single number. The three curves are plotted in Fig. 10.
 
 ### 6.6 Discussion
 
-#### 6.6.1 ML Accuracy and Its Physical Basis
+#### 6.6.1 Accuracy and Its Physical Basis
 
-The 100% classification accuracy is expected rather than surprising. The labels are generated by the constraint set itself, so the learning task is to reproduce a known piecewise-linear boundary rather than to discover an unknown one. What the exercise validates is that the surrogate represents that boundary exactly, and can therefore substitute for the property-based evaluation at inference time without loss of accuracy.
+A 100 % score is expected: the labels come from the constraint set, so the task is to reproduce a known piecewise-linear boundary, not to discover one. What the exercise shows is that the surrogate reproduces it exactly and can replace the property evaluation at inference. The MLP's 99.74 ± 0.11 % error sits at the corners where the thermal, inventory and equipment limits meet, and its smooth activations round them off; XGBoost's axis-aligned splits keep them. The 82.01 % of the linear baseline says the feasible set is an intersection of half-spaces.
 
-The MLP reaches 99.74 ± 0.11 % under the same five folds, with errors concentrated at the corners where the thermal, inventory and equipment limits intersect: the smooth activation rounds off precisely the non-smooth features of the boundary. XGBoost's axis-aligned splits reproduce those corners, which is why it reaches 100.00 %. The 82.01 % of the linear baseline is the complementary statement: the feasible set is an intersection of half-spaces, and no single hyperplane separates it.
+#### 6.6.2 From Fixed Constraint to Controllable Variable
 
-#### 6.6.2 From Static Constraint to Controllable Variable
+Dispatch normally treats the domain as fixed. Here it becomes a variable: an outer loop over T_turb changes α₂, hence duration and efficiency, while an inner loop optimises (W, Q) inside the domain. The surrogate makes this two-level search affordable.
 
-Traditional dispatch optimization treats the feasibility domain as a fixed constraint. The proposed framework transforms it into a controllable variable. The two-level optimization architecture — an outer loop over T_turb (altering α₂, and hence duration and efficiency) and an inner loop over (W, Q) within the domain — enables simultaneous parameter and dispatch optimization. This meta-optimization is made computationally feasible by the ML surrogate models, which provide instantaneous feasibility assessments across the parameter space.
+#### 6.6.3 Implications and Limitations
 
-#### 6.6.3 Practical Implications
+Longer active discharge (9 to 16 h) and more heat (44.0 to 46.3 MWh) matter for operation, but three caveats qualify the gain: it is spread over more hours rather than created (discharge falls 2.4 %); it depends on the weight λ, which a tariff-driven objective should set to the price ratio; and its economic value at λ ≈ 0.43 is small (Section 7.3).
 
-The longer active discharge (9→16 h) and the increased heat supply (44.0→46.3 MWh, +5.2 %) have direct implications for integrated energy system operation. Specifically: (a) systems with higher renewable penetration benefit from longer energy shifting capability, (b) raising the turbine inlet temperature improves the electrical efficiency by 3.3 percentage points and lengthens the full-power discharge by 5 % at essentially unchanged domain shape, so parameter selection should be driven by efficiency rather than by an assumed domain expansion, (c) the 2.4 % reduction in discharged energy indicates that the same thermal budget is spread over more hours rather than that more energy is delivered, and (d) because the heat gain depends on the weight λ, a tariff-driven objective (λ = heat price / electricity price) is the natural way to make the dispatch economically meaningful.
-
-#### 6.6.4 Limitations and Future Work
-
-Several limitations warrant acknowledgment. First, the training data assumes fixed γ₁, γ₂ per simulation run; the multi-parameter sweep in Section 6.4 is the first step towards variable-parameter training, which would enable continuous optimisation of α₂ (and hence of the duration–efficiency trade-off) inside the dispatch loop. Second, the 20×15 grid search sits 3.8 % from the exact optimum of its own objective; because the problem is linear once the mode is fixed, replacing the heuristic with the LP — or with a receding-horizon MPC — is a modelling choice rather than a computational obstacle, and the gap reported here is the price of keeping the algorithm model-agnostic. Third, the economic objective (time-of-use electricity prices, heat tariffs) is not yet part of the optimisation, although Section 6.5 shows how the weight λ maps onto it. Fourth, multi-period look-ahead optimization (dynamic programming or model predictive control) could replace the greedy hour-by-hour approach, potentially yielding further improvements through inter-temporal coordination. Fifth, the gas-side inventory constraint binds only at the ends of the operating window (below about 16 % SOC on discharge, above about 89 % on charge), because the HPT is sized for five hours of full-power discharge (943 t, 1280 m³); systems with a smaller tank would exhibit stronger dual-SOC coupling over a wider SOC range.
+Four limitations follow. Training assumes constant γ₁ and γ₂ per run, so α₂ cannot yet be optimised inside the loop, and the multi-parameter sweep of Section 6.4 is a first step. The grid search sits 3.8 % from the LP optimum, a modelling choice rather than a computational obstacle. Prices enter only through λ, not through the objective. The look-ahead is one hour; dynamic programming or MPC would coordinate across periods. Finally, the inventory constraint binds only at the ends of the window (below 16 % SOC on discharge, above 89 % on charge) because the tank is sized for five hours, so a smaller tank would spread the dual-SOC coupling over the whole range.
 
 ---
 
@@ -698,36 +667,21 @@ This is also the honest limit of the study: the dispatch and the feasibility dom
 
 ## 8. Conclusion
 
-This study presents a machine learning framework for dynamic construction and optimization of the operational feasibility domain of CCES-CHP systems. The main conclusions are:
+This work builds and optimises the operational feasibility domain of a CCES-CHP unit with machine learning.
 
-1. A parameterized feasibility domain representation using dimensionless factors γ₁/γ₂ and ratio parameters α₁/α₂ effectively couples the electrical, thermal, and mass flow domains. The dual SOC model (thermal storage + CO₂ liquid inventory) establishes two-dimensional linear constraint boundaries that define the feasible operating region; the inventory term bounds the instantaneous power at the ends of the operating window and makes the gas-side state physically meaningful.
+1. Dimensionless factors γ₁/γ₂ and ratios α₁/α₂ couple the electrical, thermal and mass flows; a dual SOC (thermal storage plus liquid CO₂ inventory) turns the domain into linear constraints, the inventory term bounding power at both ends of the window and making the gas-side state meaningful.
 
-2. XGBoost and MLP models trained on 38,720 REFPROP-based samples reach
-   100.00 ± 0.01 % and 99.74 ± 0.11 % accuracy in feasibility classification
-   under five-fold stratified cross-validation, against 82.01 % for a linear
-   classifier; boundary regression reproduces W_max and Q_max exactly
-   (R² = 1.0000). TreeSHAP attributes 41.5 % and 25.1 % of the prediction to the
-   heat and gas states, and dropping the gas-side feature costs 9.3 percentage
-   points, confirming that the dual-SOC coupling is physically active.
+2. Trained on 38,720 REFPROP samples, XGBoost and an MLP classify feasibility at 100.00 ± 0.01 % and 99.74 ± 0.11 % under five-fold cross-validation, against 82.01 % for a linear classifier, and reproduce W_max and Q_max exactly (R² = 1.0000). TreeSHAP attributes 41.5 % and 25.1 % of the prediction to the heat and gas states, and dropping the latter costs 9.3 percentage points.
 
-3. ML-guided 24-hour dispatch raises delivered heat from 44.0 to 46.3 MWh
-   (+5.2 %) and the number of hours with active discharge from 9 to 16, at the
-   cost of 2.4 % less discharged energy and with the same terminal SOC (0.2 %).
-   The gain stems from the conservatism of the surrogate near the boundary rather
-   than from an optimal allocation: against an exact LP optimum of the same
-   objective the grid search is 3.8 % worse and the rule-based heuristic is
-   slightly better, so the surrogate's value lies in inference speed and
-   parameter generalisation. A λ-sweep locates the genuine headroom: 48.6 MWh for
-   the heuristic and 52.0 MWh for the optimum when heat is weighted at least as
-   heavily as electricity.
+3. ML-guided dispatch raises heat from 44.0 to 46.3 MWh (+5.2 %) and active-discharge hours from 9 to 16, at 2.4 % less discharged energy and the same terminal SOC (0.2 %). The gain is the conservatism of the surrogate near the boundary, not an optimal allocation: against an exact LP optimum the grid search is 3.8 % worse and the rule-based heuristic slightly better, so the surrogate's value is speed and parameter generalisation. A λ-sweep locates the headroom: 48.6 MWh for the heuristic and 52.0 MWh for the optimum.
 
-4. A turbine inlet temperature sweep (483 K → 503 K) evaluated with REFPROP shows that γ₂ is nearly invariant (1.659 → 1.691), so the feasible domain area changes by only −1.9% even at low SOC. The real benefit of the higher temperature is a 4.7% reduction in the discharge mass flow per unit power, which extends the full-power discharge duration from 5.00 to 5.25 hours (+5.0%) and raises the electricity-to-electricity efficiency from 65.9% to 69.2%. Operating parameters should therefore be optimized for efficiency and duration rather than for domain expansion.
+4. Between 483 and 503 K, γ₂ stays at 1.659–1.691 and the domain area changes by −1.9 % even at low SOC; the benefit of a higher turbine inlet temperature is a 4.7 % lower discharge mass flow per unit power, a 5.0 % longer full-power discharge (5.00 to 5.25 h) and 65.9 to 69.2 % electricity-to-electricity efficiency. Parameters should be chosen for efficiency and duration, not for domain expansion.
 
-5. The ML prediction speed (milliseconds for 7,200 feasibility queries) enables real-time dispatch optimization that would be computationally prohibitive using full thermodynamic simulation, making the proposed approach suitable for practical energy management system integration.
+5. Millisecond inference for 7,200 feasibility queries makes real-time dispatch possible where full thermodynamic simulation would not.
 
-6. Under the Shandong industrial tariff of March 2025 and a gas-fired industrial steam price, all three dispatch policies are profitable, with paybacks of 7.0–7.6 years and net present values of 8.6–10.4 MUSD on a 15.75 MUSD investment. The plant breaks even at a peak–valley spread of 62 USD/MWh — against the 101 USD/MWh offered by the tariff — and tolerates a 48 % capital-cost overrun. Because the revenue is dominated by discharged electricity rather than heat, the rule-based policy earns the most at the tariff-implied weight λ ≈ 0.43, while heat-aware dispatch becomes preferable once heat is compensated at a level corresponding to λ ≥ 1.
+6. Under the March 2025 Shandong tariff all three policies pay back in 7.0–7.6 years with net present values of 8.6–10.4 MUSD on 15.75 MUSD; break-even is a 62 USD/MWh spread against the 101 offered, or a 48 % capital overrun. Since revenue is dominated by discharged electricity, the rule-based policy wins at the tariff-implied λ ≈ 0.43, and heat-aware dispatch wins only for λ ≥ 1.
 
-The proposed methodology provides an effective tool for real-time dispatch, capacity planning, and operational optimization of CCES-CHP systems in integrated energy systems with high renewable penetration.
+The framework supports real-time dispatch, capacity planning and operation of CCES-CHP systems in high-renewable integrated energy systems.
 
 ---
 
