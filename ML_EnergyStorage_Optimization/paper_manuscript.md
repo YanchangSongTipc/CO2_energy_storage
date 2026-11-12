@@ -95,7 +95,7 @@ The high-temperature heat exchanger (HG-HE) and low-temperature heat exchanger (
 
 ### 2.2 Thermodynamic Modeling
 
-The thermodynamic model of the CCES-CHP system is developed based on mass conservation and energy conservation equations. The following assumptions are adopted [25–27]:
+The model is built on mass and energy conservation with the following assumptions [25–27]:
 
 1. The charging/discharging power and heating power remain constant during a single dispatch period.
 2. There is no heat exchange between the CO₂ storage tank and the environment.
@@ -103,41 +103,7 @@ The thermodynamic model of the CCES-CHP system is developed based on mass conser
 4. The power consumed by working fluid circulation pumps is disregarded.
 5. The compression heat stored in each complete cycle can be fully utilized for heating after satisfying expansion process requirements.
 
-#### 2.2.1 Compressor Model
-
-The total shaft power of the two-stage compressor at time t is:
-
-$$W_C(t) = \sum_{i=1}^{N_C} \frac{n R_g m_C(t) T_{C,i}^{in}}{n-1} \frac{(\beta_{C,i})^{\frac{n-1}{n}}-1}{\eta_{C,i}}$$
-
-Where N_C = 2 is the number of compressor stages, n = 1.3 is the polytropic index, R_g = 0.1889 kJ/(kg·K) is the ideal gas constant for CO₂, m_C(t) is the CO₂ mass flow rate, T_{C,i}^{in} is the compressor inlet temperature, β_{C,i} is the compression ratio, and η_{C,i} = 0.85 is the isentropic efficiency.
-
-The total electrical power considering mechanical losses is:
-
-$$W_{C,E}(t) = \frac{W_{C1}(t)}{\eta_{C,E}^1} + \frac{W_{C2}(t)}{\eta_{C,E}^2}$$
-
-Where η_{C,E}^1 = η_{C,E}^2 = 0.98 is the motor mechanical efficiency.
-
-#### 2.2.2 Turbine Model
-
-The total shaft power of the two-stage turbine at time t is:
-
-$$W_T(t) = \sum_{i=1}^{N_T} \frac{n R_g m_T(t) T_{T,i}^{in}}{n-1} \left[1 - (\beta_{T,i})^{-\frac{n-1}{n}}\right] \eta_{T,i}$$
-
-The total electrical power output is:
-
-$$W_{T,E}(t) = \eta_{T,E}^1 W_{T1}(t) + \eta_{T,E}^2 W_{T2}(t)$$
-
-Where η_{T,E}^1 = η_{T,E}^2 = 0.95 is the generator mechanical efficiency, and η_{T,i} = 0.88 is the turbine isentropic efficiency.
-
-#### 2.2.3 Heat Exchanger Model
-
-The compression heat storage load from the intermediate coolers (IC1 and IC2) is:
-
-$$Q_{IC}(t) = m_C(t) \left[\sum_{i=1}^{N_C-1} (h_{C,i}^{out} - h_{C,i+1}^{in}) + (h_{C,N_C}^{out} - h_{IC-end})\right]$$
-
-The heat recovery load for the expansion process (HR1 and HR2) is:
-
-$$Q_{HR}(t) = m_T(t) \left[\sum_{i=1}^{N_T-1} (h_{T,i+1}^{in} - h_{T,i}^{out}) + (h_{T,1}^{in} - h_{HR-start})\right]$$
+The two compressor stages and the two turbine stages are modelled as polytropic machines with constant isentropic efficiencies (0.85 and 0.88), and the intercoolers, the reheaters and the evaporator as steady-flow heat exchangers. The resulting expressions for shaft work, electrical power and heat duties are collected in Supplementary Eqs. (S1)–(S6); evaluated at the design point of Table 1 they give 9.74 MW of compression power, 9.62 MW of turbine output and 11.73 MW_th of recovered compression heat.
 
 The charging and discharging processes are plotted in the temperature–entropy plane in Fig. 2.
 
@@ -319,21 +285,9 @@ The training data generation pipeline is implemented in MATLAB, utilizing REFPRO
 
 Total samples: 16 × 11 × 11 × 10 × 2 = **38,720**.
 
-For each parameter combination, the feasibility label and boundary values are computed analytically from the constraint equations:
-
-```
-feasible = (Q ≤ slope × W + b_upper) ∧ (Q ≥ slope × W + b_lower)
-           ∧ (0 ≤ Q ≤ Q_max) ∧ (0 ≤ W ≤ W_design) ∧ (0 ≤ W ≤ W_inventory)
-
-W_inventory = (m_upper - m)/(α_1Δt)   charging
-            = (m - m_lower)/(α_2Δt)   discharging
-```
+For each parameter combination the feasibility label and the two boundary values are computed analytically from the constraint set: a point is feasible when it lies between the upper and lower boundary lines of Section 3.3–3.4, inside the equipment rectangle, and inside the inventory limit. The exact predicate, together with the feature and label definitions, is given in Supplementary Note S8; the nine inputs are the two SOCs, W, Q, the mode and the four coefficients.
 
 The inventory term is what makes the gas-side state informative: without it the feasibility label is independent of SOC_gas for every parameter combination, and the feature importance of SOC_gas collapses to 0.0015, which is what a purely thermal constraint set yields. With it, 2896 of the 3520 sampled (SOC_heat, SOC_gas, mode, W, Q) groups change their feasibility label across the gas axis.
-
-**Features per sample**: SOC_heat_pct, SOC_gas_pct, W_MW, Q_MW, mode, γ₁, γ₂, α₁, α₂
-
-**Labels per sample**: feasible (0/1), W_max_feasible (MW), Q_max_feasible (MW)
 
 ### 4.2 XGBoost Classifier for Feasibility Prediction
 
@@ -436,22 +390,7 @@ Where λ = 0.5 reflects the priority weighting between electrical and thermal di
 
 ### 5.2 ML-Based Grid Search Algorithm
 
-A grid search approach is adopted for its robustness and compatibility with the discrete nature of the ML classifier:
-
-**Algorithm 1: ML-based dispatch optimization for each hour t**
-
-```
-1. Read current states: SOC_heat(t), SOC_gas(t)
-2. Determine mode and targets:
-   if Elec_Dispatch(t) > 0: mode = 0 (charge), W_target = min(Elec_Dispatch, 10), Q_target = min(Heat_Dispatch, 12.05)
-   else: mode = 1 (discharge), W_target = min(|Elec_Dispatch|, 10), Q_target = min(Heat_Dispatch, 12.05)
-3. Generate search grid: W ∈ linspace(0, W_target, 20), Q ∈ linspace(0, Q_target, 15) → 300 candidate points
-4. Batch prediction: f_ML(SOC_h, SOC_g, W, Q, mode) for all 300 points
-5. Select feasible point with best objective score
-6. Update SOC_heat(t+1), SOC_gas(t+1) via thermal balance equations
-```
-
-The grid resolution of 20 × 15 = 300 points provides ~0.5 MW granularity for both W and Q, sufficient for practical dispatch decisions. The computational cost is 300 ML predictions per hour × 24 hours = 7,200 predictions, which completes in milliseconds.
+At each hour the policy fixes the mode from the sign of the dispatch instruction, builds a 20 × 15 grid of (W, Q) candidates between zero and the clipped targets, scores every candidate with the trained classifier, and keeps the best feasible point; the SOC is then propagated with the thermal balance of Section 3.2. The procedure is listed as Algorithm S1 in the Supplementary Material. The grid gives roughly 0.5 MW resolution in both directions, and the 300 predictions per hour — 7,200 per day — complete in milliseconds.
 
 ### 5.3 Rule-Based Baseline
 
