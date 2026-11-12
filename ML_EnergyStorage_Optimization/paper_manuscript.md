@@ -507,22 +507,7 @@ so the 24 h coverage comes from derating and recharging, not from extra capacity
 
 ### 6.4 Effect of Turbine Inlet Temperature: Efficiency Rather than Domain Expansion
 
-Beyond dispatch optimization within a fixed domain, the framework also quantifies how an operating parameter reshapes the domain. A property-based sweep shows that the turbine inlet temperature acts mainly on the mass coupling, not on the shape of the feasible region.
-
-#### Mechanism
-
-Two couplings depend on T_turb and they respond in opposite directions:
-
-```
-T_turb ↑ → specific work per kg CO2 ↑ → α_2 ↓  (less mass per MW)      [strong: −4.7%]
-          → reheat duty and turbine work scale together → γ_2 ≈ const  [weak:   +1.9%]
-```
-
-Because the discharge constraint slope is −γ₂, a near-invariant γ₂ means an almost unchanged (W, Q) domain. What changes is how long a given tank inventory lasts, which scales as 1/α₂.
-
-#### Quantitative Results
-
-The REFPROP evaluation of both cases is given in Table 7.
+Two couplings respond to T_turb in opposite directions: a higher temperature raises the specific work per kilogram of CO₂, so α₂ falls 4.7 %, while the reheat duty and the turbine work scale together and γ₂ stays near 1.66 (+1.9 %). Since the discharge slope is −γ₂, an almost unchanged γ₂ means an almost unchanged (W, Q) domain; what changes is how long a fixed inventory lasts, which scales as 1/α₂.
 
 **Table 7. Effect of turbine inlet temperature (REFPROP evaluation).**
 
@@ -535,46 +520,21 @@ The REFPROP evaluation of both cases is given in Table 7.
 | Full-power discharge duration at fixed inventory (h) | 5.00 | 5.25 | **+5.0%** |
 | Electricity-to-electricity efficiency (%) | 65.9 | 69.2 | +3.3 pp |
 
-The area at each SOC level is tabulated in Supplementary Table S2. At SOC ≥ 20% the discharge domain is bounded by the equipment limits rather than by the heat budget: even at 10 MW the thermal draw (16.6 MW) plus the maximum heat supply (12.05 MW) stays below the one-hour heat availability (30 MW at 20% SOC), so the domain is the full rectangle and the temperature change has no effect. The thermal constraint starts trimming the domain below about 19% SOC and the power limit below about 11% SOC; at 10% SOC a slightly larger γ₂ reduces the area by 1.9%.
-
-The sweep is summarized in Fig. 8.
+At SOC ≥ 20 % the domain is the full rectangle — even at 10 MW, 16.6 MW of thermal draw plus 12.05 MW of heat supply stays below the 30 MW available in one hour — so the temperature has no effect there. The thermal limit trims the domain below about 19 % SOC and the power limit below about 11 %, and at 10 % SOC the slightly larger γ₂ cuts the area by 1.9 % (Supplementary Table S2 gives the area at each SOC level).
 
 ![Fig. 8](data/feasibility_domain_change.png)
 
 **Fig. 8. Effect of the turbine inlet temperature on the feasibility domain.** Left: γ₂ and α₂ between 460 K and 520 K evaluated with REFPROP. Right: the discharging domain at SOC_heat = 10% for 483 K (grey) and 503 K (blue). The two boundaries nearly coincide; the temperature mainly changes the duration and the efficiency rather than the shape of the domain.
 
-#### Multi-Parameter Sweep
+A 175-point sweep (Th 460–520 K, η_t 0.84–0.92, P_HPT 6.0–7.6 MPa) shows which of the three knobs actually moves the couplings. At fixed temperature and pressure, raising η_t from 0.84 to 0.92 lowers γ₂ by 5.7 % (1.670 → 1.574 at 460 K and 6.8 MPa) because less reheat is needed per unit of work; at fixed temperature and efficiency, raising P_HPT from 6.0 to 7.6 MPa raises γ₂ by 3.2 % (1.597 → 1.649). Temperature is the weakest of the three at 0.09–0.11 %/K, or +5–6 % over the 60 K span — the quantitative form of the invariance above. The domain therefore moves by about ±7 %: its area at SOC_heat = 10 % lies between 60.3 and 69.7 MW² around the 65.2 MW² baseline, α₂ spans 3.606–4.752 kg s⁻¹ MW⁻¹ (4.41–5.81 h of full-power discharge from the fixed inventory) and the electrical efficiency spans 58.3–74.2 %.
 
-The comparison above holds the isentropic efficiency and the storage pressure fixed. A 175-point design sweep (Th 460–520 K, η_t 0.84–0.92, P_HPT 6.0–7.6 MPa) shows which of the three knobs actually moves the couplings, and it also exposes a limit that the single-temperature study cannot see.
-
-At fixed temperature and pressure, raising η_t from 0.84 to 0.92 lowers γ₂ by 5.7 % (1.670 → 1.574 at 460 K and 6.8 MPa), because less reheat is needed per unit of work. At fixed temperature and efficiency, raising P_HPT from 6.0 to 7.6 MPa raises γ₂ by 3.2 % (1.597 → 1.649). The temperature dependence is the weakest of the three, 0.09–0.11 %/K, i.e. +5–6 % over the 60 K span, which is the quantitative version of the near-invariance claimed in Section 6.4 above.
-
-The discharge domain therefore moves by about ±7 %: its area at SOC_heat = 10 % lies between 60.3 and 69.7 MW² around the 65.2 MW² baseline, and α₂ spans 3.606–4.752 kg s⁻¹ MW⁻¹, which corresponds to 4.41–5.81 h of full-power discharge from the fixed tank inventory. The electrical efficiency spans 58.3–74.2 %.
-
-The sweep also locates a feasibility boundary that the temperature-only study misses. At 32 of the 175 points the heat-closure solution returns a negative external heat supply (X < 0): the reheat duty alone exceeds the compression heat the cycle produces, so the unit can generate power but cannot deliver heat. These points are marked with open symbols in Fig. 9 and excluded from the statistics above. The deficit appears only above 500 K, and it is concentrated at low storage pressure: 13 of the 35 points at 6.0 MPa, 10 at 6.4 MPa, 7 at 6.8 MPa, 2 at 7.2 MPa and none at 7.6 MPa. For the baseline efficiency and pressure (η_t = 0.88, 6.8 MPa) the surplus vanishes at about 517 K.
-
-This gives the turbine inlet temperature a sharper meaning than "efficiency lever". Raising Th from 460 K to 520 K converts a 16.5 % heat surplus into a 2.5 % deficit at the baseline pressure, so the operating envelope has an upper temperature bound imposed by the heat balance rather than by the turbine. Higher storage pressure relaxes that bound, because it enlarges the compression heat per unit of work.
-
-The sweep is shown in Fig. 9.
+The sweep also exposes a limit that the single-temperature study cannot see. At 32 of the 175 points the heat closure returns a negative external heat supply (X < 0): the reheat duty alone exceeds the compression heat the cycle produces, so the unit can generate power but cannot deliver heat. These points appear only above 500 K and concentrate at low storage pressure — 13 of 35 at 6.0 MPa, 10 at 6.4 MPa, 7 at 6.8 MPa, 2 at 7.2 MPa, none at 7.6 MPa — and at the baseline (η_t = 0.88, 6.8 MPa) the surplus vanishes at about 517 K. Raising Th from 460 to 520 K therefore turns a 16.5 % heat surplus into a 2.5 % deficit: the operating envelope has an upper temperature bound set by the heat balance rather than by the turbine, and a higher storage pressure relaxes it because it enlarges the compression heat per unit of work.
 
 ![Fig. 9](data/fig_parameter_sweep.png)
 
 **Fig. 9. Multi-parameter design sweep.** (a) γ₂ and (b) α₂ against turbine inlet temperature for the five storage pressures at η_t = 0.88; (c) heat supply ratio X for the same slice. Filled markers and solid lines are feasible CHP points; open markers are heat-deficit points (X < 0), which are excluded from the fitted statistics.
 
-#### Physical Interpretation
-
-Under discharge the constraint is
-
-$$Q = -\gamma_2 \cdot W + \frac{Q_{HTV} - Q_{HTV}^{lower}}{\Delta t}$$
-
-At W = 0: Q_max = (Q_HTV − Q_lower)/Δt, unaffected by γ₂.
-At Q = 0: W_max = (Q_HTV − Q_lower)/(γ₂·Δt), inversely proportional to γ₂.
-
-Since γ₂ rises slightly with temperature, W_max falls slightly and the domain contracts marginally rather than expanding. The genuine benefit of a higher turbine inlet temperature lies elsewhere: the electrical round-trip efficiency rises from 65.9% to 69.2%, and a given tank inventory supports a 5.0% longer full-power discharge.
-
-#### Implication
-
-Turbine inlet temperature should be selected as an efficiency and duration lever, not as a domain-expansion lever. This also corrects the strong sensitivity implied by the approximate correction factor of [20]: with the coefficient re-evaluated from REFPROP, γ₂ is nearly invariant over the 460–520 K range (1.620–1.717), so the associated “domain expansion” should not be claimed.
+Under discharge Q = −γ₂W + (Q_HTV − Q_lower)/Δt, so Q_max is independent of γ₂ while W_max is inversely proportional to it; the slight rise in γ₂ therefore shrinks the domain marginally instead of expanding it. The gain lies in efficiency (65.9 → 69.2 %) and in duration (5.00 → 5.25 h). Turbine inlet temperature is an efficiency lever, not a domain-expansion lever, which also corrects the 23 % drop in γ₂ implied by the approximate correction factor of [20]: re-evaluated from REFPROP, γ₂ varies only between 1.620 and 1.717 over 460–520 K.
 
 ### 6.5 Sensitivity to the electric–thermal weight
 
@@ -629,17 +589,15 @@ Four limitations follow. Training assumes constant γ₁ and γ₂ per run, so �
 
 ### 7.1 Data and Assumptions
 
-The economic layer is deliberately separated from the dispatch layer: it consumes the daily energy quantities of Table 6 and applies public prices, so any dispatch policy can be re-costed without re-solving the optimisation.
+The economics are separate from the dispatch: daily energy from Table 6 is priced with public tariffs, so any policy can be re-costed without re-solving.
 
-Revenues follow the Shandong (China) industrial tariff of March 2025 [36]: 1.0475 CNY/kWh in the peak period, 0.6899 in the flat period, 0.3324 in the valley and 0.2303 in the deep valley, i.e. 147.5, 97.2, 46.8 and 32.4 USD/MWh at 7.10 CNY/USD. The provincial mechanism sets the peak at +70 %, the valley at −70 %, the critical peak at +100 % and the deep valley at −90 % of the flat rate [36], so the schedule itself encodes a peak–valley spread of about 101 USD/MWh. Heat is priced as gas-fired industrial steam at 349 CNY/t (Jinan, 2023) [37], about 63 USD/MWh_th at 2.8 GJ/t.
+Revenues follow the Shandong industrial tariff of March 2025 [36]: 1.0475 CNY/kWh at peak, 0.6899 flat, 0.3324 valley and 0.2303 deep valley, i.e. 147.5, 97.2, 46.8 and 32.4 USD/MWh at 7.10 CNY/USD. The mechanism sets peak at +70 %, valley at −70 %, critical peak at +100 % and deep valley at −90 % of the flat rate [36], a peak–valley spread of about 101 USD/MWh. Heat is priced as gas-fired industrial steam at 349 CNY/t (Jinan, 2023) [37], about 63 USD/MWh_th at 2.8 GJ/t.
 
-Capital cost is not taken from a single quotation. We use the ranges reported for large-scale compressed-air and liquid-CO₂ storage [28–32]: 900 USD/kW for the turbomachinery, 60 USD/kWh for the above-ground CO₂ inventory and 25 USD/kWh_th for the thermal store, giving 15.75 MUSD for the 10 MW/50 MWh unit. These are mid-range literature values rather than project quotations; the 0.7–2.0 capital-cost multiplier of Fig. 11 spans the band in which a quotation is expected to fall. Operation and maintenance is 2.5 % of capital per year, the discount rate is 7 % and the lifetime 25 years [28,30]. Arbitrage is assumed on 330 days per year and heat supply on the 150 days of the heating season. Project-specific quotations are proprietary and are not reproduced here; the sensitivity analysis below covers the range in which they are expected to fall.
+Capital cost is not a single quotation but the mid-range of values reported for large-scale compressed-air and liquid-CO₂ storage [28–32]: 900 USD/kW for the turbomachinery, 60 USD/kWh for the above-ground CO₂ inventory and 25 USD/kWh_th for the thermal store, i.e. 15.75 MUSD for this unit. The 0.7–2.0 multiplier of Fig. 11 spans the band in which a quotation is expected to fall. O&M is 2.5 % of capital, the discount rate 7 % and the lifetime 25 years [28,30]; arbitrage is assumed on 330 days and heat supply on the 150 days of the heating season. Project quotations are proprietary and are not reproduced.
 
-The three dispatch policies of Section 6 are re-costed with the same capital cost and the same tariffs. The levelised cost of electricity (LCOE) is annualised capital plus fixed O&M divided by the annual discharge, the levelised cost of heat (LCOH) divides the same annual cost by the sum of electrical and thermal output, and the net present value uses the annual net revenue over 25 years at 7 %.
+LCOE is annualised capital plus O&M over annual discharge; LCOH divides the same cost by electrical plus thermal output; NPV uses the annual net revenue over 25 years at 7 %.
 
 ### 7.2 Results
-
-Table 9 collects the three policies under the same capital cost and tariff.
 
 **Table 9. Economic performance of the three dispatch policies (Shandong tariff, 2025).**
 
@@ -649,15 +607,15 @@ Table 9 collects the three policies under the same capital cost and tariff.
 | ML-guided | 2.58 | 81.4 | 61.5 | 7.2 | +9.75 |
 | LP optimum (λ = 1) | 2.48 | 85.6 | 61.9 | 7.6 | +8.56 |
 
-All three policies are profitable under the Shandong tariff, with paybacks between seven and eight years and net present values of 8.6–10.4 MUSD for a 15.75 MUSD investment. The ranking, however, is the opposite of the thermal ranking: the rule-based policy earns the most because revenue is dominated by the discharged electricity (2.1–2.2 MUSD against 0.4 MUSD of heat revenue), and it discharges the largest annual energy. The policy that delivers the most heat therefore captures the least revenue.
+All three policies are profitable, with paybacks of seven to eight years and net present values of 8.6–10.4 MUSD on 15.75 MUSD. The ranking inverts the thermal one: revenue is dominated by discharged electricity (2.1–2.2 MUSD against 0.4 MUSD of heat), so the rule-based policy earns most and the policy delivering the most heat earns least.
 
-The break-even analysis shows how much room the assumption set leaves. Holding the capital cost fixed, the net present value vanishes at a peak–valley spread of 62 USD/MWh, well below the 101 USD/MWh offered by the tariff. Holding the spread fixed, the investment can rise to 23.4 MUSD — a factor of 1.48 — before the project turns negative.
+The assumption set leaves room. With capital fixed, the net present value vanishes at a peak–valley spread of 62 USD/MWh, well below the 101 offered; with the spread fixed, capital can rise to 23.4 MUSD (1.48×) before the project turns negative.
 
 ### 7.3 Interpretation
 
-The economic result qualifies the dispatch result rather than contradicting it. Section 6.5 showed that heat supply is a function of the weight λ; the Shandong tariffs imply λ ≈ 63/147.5 ≈ 0.43, close to the λ = 0.5 used throughout the paper, and at that weight the heat gain of 2.3 MWh per day is worth about 0.03 MUSD per year — two orders of magnitude below the arbitrage revenue. A unit compensated for heat at the steam price should therefore be dispatched with λ close to 1, where Section 6.5 reports 48.6 MWh for the heuristic and 52.0 MWh for the optimum; the same analysis then shifts the economically preferred policy from the rule-based to the heat-aware one.
+This qualifies rather than contradicts Section 6. The tariff implies λ ≈ 63/147.5 ≈ 0.43, close to the 0.5 used throughout, and at that weight the 2.3 MWh daily heat gain is worth about 0.03 MUSD per year — two orders of magnitude below the arbitrage revenue. A unit paid for heat at the steam price should run at λ ≈ 1, where Section 6.5 reports 48.6 MWh for the heuristic and 52.0 MWh for the optimum, and the preferred policy then shifts from rule-based to heat-aware.
 
-This is also the honest limit of the study: the dispatch and the feasibility domain are optimised for tracking, not for profit, and the mapping between the two is exactly the weight λ. Making the tariff endogenous — a profit-maximising objective with time-of-use prices inside the optimisation — is left to future work, and the present analysis provides both the feasible set and the optimality benchmark that such a formulation would need.
+The limit is honest: dispatch and domain are optimised for tracking, not profit, and λ is the only link between them. Endogenising the tariff — a profit-maximising objective with time-of-use prices inside the optimisation — is left to future work; the feasible set and the optimality benchmark given here are what such a formulation needs.
 
 ![Fig. 11](data/fig_economics.png)
 
