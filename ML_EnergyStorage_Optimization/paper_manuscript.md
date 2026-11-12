@@ -203,27 +203,17 @@ The coupled evolution of the two SOCs under the periodic operating schedule is s
 
 ### 3.3 Charging-Heating Feasibility Domain
 
-Under the charging-heating condition, electrical energy consumed by the compressor is converted into thermal energy of the storage medium and potential pressure energy of CO₂. The HTV heat storage must satisfy:
-
-$$Q_{HTV}^{lower} \leq Q_{HTV}(t) \leq Q_{HTV}^{upper}$$
-
-$$0 \leq Q_{heat}(t) \leq Q_{heat}^{max}$$
-
-The boundary of the charging feasibility domain is a polygon formed by the following constraint lines:
+The charging domain is the polygon enclosed by
 
 $$Q_{heat}(t) = \frac{Q_{HTV}(t-1) - Q_{HTV}^{lower}}{\Delta t} + \gamma_1 W_{C,E}(t) \quad \text{(lower bound)}$$
 
 $$Q_{heat}(t) = \frac{Q_{HTV}(t-1) - Q_{HTV}^{upper}}{\Delta t} + \gamma_1 W_{C,E}(t) \quad \text{(upper bound)}$$
 
-$$Q_{heat}(t) = Q_{heat}^{max} \quad \text{(equipment limit)}$$
-
-$$W_{C,E}(t) = W_{C,E}^{upper} \quad \text{(power limit)}$$
+$$Q_{heat}(t) = Q_{heat}^{max}, \quad W_{C,E}(t) = W_{C,E}^{upper}$$
 
 $$W_{C,E}(t) \le \frac{m_{HPT}^{upper} - m_{HPT}(t-1)}{\alpha_1 \Delta t} \quad \text{(inventory limit)}$$
 
-**Key characteristic**: The positive slope +γ₁ indicates electric-thermal **complementarity** during charging — higher charging power produces more compression heat, enabling greater heat supply. The inventory limit becomes active only when the tank approaches its upper bound (above about 89% SOC), where additional charging would overfill the HPT.
-
-The resulting charging-heating domain is sketched in Fig. 4.
+The positive slope +γ₁ expresses electric-thermal complementarity: more charging power produces more compression heat and therefore a higher heat ceiling. The inventory limit binds only above about 89 % SOC, where further charging would overfill the HPT (Fig. 4).
 
 ![Fig. 4](../CCES_CHP_Analysis/output_figures/Fig01_ChargeHeat_Feasibility.png)
 
@@ -231,7 +221,7 @@ The resulting charging-heating domain is sketched in Fig. 4.
 
 ### 3.4 Discharging-Heating Feasibility Domain
 
-Under the discharging-heating condition, the thermal energy of the storage medium and the potential pressure energy of CO₂ are converted into electrical power and direct heat supply. The boundary is determined by:
+Discharge draws on the same thermal budget, so the boundary is
 
 $$Q_{heat}(t) = \frac{Q_{HTV}(t-1) - Q_{HTV}^{lower}}{\Delta t} - \gamma_2 W_{T,E}(t) \quad \text{(upper bound)}$$
 
@@ -241,29 +231,25 @@ $$Q_{heat}(t) = Q_{heat}^{max}, \quad W_{T,E}(t) = W_{T,E}^{upper}$$
 
 $$W_{T,E}(t) \le \frac{m_{HPT}(t-1) - m_{HPT}^{lower}}{\alpha_2 \Delta t} \quad \text{(inventory limit)}$$
 
-**Key characteristic**: The negative slope −γ₂ indicates electric-thermal **competition** during discharging — power generation and heat supply compete for the same limited HTV stored energy. The upper-right corner (maximum power and maximum heat simultaneously) is infeasible.
+The negative slope −γ₂ expresses competition: power and heat draw on one store, so the upper-right corner is infeasible (Fig. 5). The extreme points are
 
-The resulting discharging-heating domain is sketched in Fig. 5.
+$$W_{max} = \min\left[\frac{Q_{HTV}(t-1) - Q_{HTV}^{lower}}{\gamma_2 \Delta t},\ \frac{m_{HPT}(t-1) - m_{HPT}^{lower}}{\alpha_2 \Delta t},\ W_{T,E}^{upper}\right], \quad Q_{max} = \frac{Q_{HTV}(t-1) - Q_{HTV}^{lower}}{\Delta t}$$
+
+With 943 t in the tank and 151 t released per hour at 10 MW, the inventory limit binds only below about 16 % SOC; elsewhere the thermal or equipment limits govern.
 
 ![Fig. 5](../CCES_CHP_Analysis/output_figures/Fig02_DischargeHeat_Feasibility.png)
 
 **Fig. 5. Discharging-heating feasibility domain.** The negative slope −γ₂ expresses electric-thermal competition: power generation and heat supply draw on the same thermal budget, so the upper-right corner (simultaneous maxima) is infeasible. The lines are drawn for a representative available-heat level so that the sloped constraint falls inside the plotting window.
 
-The zero-heat maximum power and zero-power maximum heat are:
-
-$$W_{max} = \min\left[\frac{Q_{HTV}(t-1) - Q_{HTV}^{lower}}{\gamma_2 \Delta t},\ \frac{m_{HPT}(t-1) - m_{HPT}^{lower}}{\alpha_2 \Delta t},\ W_{T,E}^{upper}\right], \quad Q_{max} = \frac{Q_{HTV}(t-1) - Q_{HTV}^{lower}}{\Delta t}$$
-
-The inventory limit is active only below about 16% SOC: a 943 t tank discharges 151 t in one hour at 10 MW, so the last hour of a deep discharge becomes inventory-limited while the rest of the domain remains thermal- or equipment-limited.
-
 ### 3.5 Effect of Operating Parameters on Feasibility Domain
 
-The heat supply rate X, reflecting the ratio of high and low-temperature heat supply to total heat storage, is related to γ₁, γ₂, α₁, α₂ by:
+The heat supply rate X relates the external heat to the stored heat:
 
 $$X = 1 - \frac{\gamma_2 \alpha_1}{\gamma_1 \alpha_2}$$
 
-which follows from the cycle energy balance $Q_{IC} t_c = Q_{HR} t_d + Q_{LG} t_d$ combined with the mass balance $\alpha_1 W_{C,E} t_c = \alpha_2 W_{T,E} t_d$. At the design point this gives X = 9.3%, consistent with the thermodynamic evaluation of Section 2.4. Because the dimensionless groups are already defined on electrical power, the motor and generator efficiencies must not be applied a second time in this expression.
+which follows from the energy balance $Q_{IC} t_c = Q_{HR} t_d + Q_{LG} t_d$ and the mass balance $\alpha_1 W_{C,E} t_c = \alpha_2 W_{T,E} t_d$. At the design point X = 9.3 %, consistent with Section 2.4. Since the groups are already defined on electrical power, motor and generator efficiencies must not be applied twice.
 
-The turbine inlet temperature affects the two couplings very differently. Evaluated directly from REFPROP, γ₂ changes only from 1.659 at 483 K to 1.691 at 503 K (+1.9%), because the reheat duty and the turbine work scale together, whereas α₂ falls from 4.191 to 3.993 kg/(s·MW) (−4.7%) as the specific work per kilogram of CO₂ increases. The approximate correction factor proposed in [20] implies a far stronger sensitivity (γ₂ ↓ 23%); that estimate is not adopted here, since the property-based evaluation shows the reheat coefficient to be nearly invariant with temperature. The consequence, quantified in Section 6.4, is that raising T_turb barely reshapes the feasibility domain, but it reduces the mass drawn per unit power and improves the electrical efficiency.
+Temperature acts on the two couplings unequally. γ₂ moves only from 1.659 at 483 K to 1.691 at 503 K (+1.9 %), because reheat duty and turbine work scale together, while α₂ falls from 4.191 to 3.993 kg/(s·MW) (−4.7 %) as the specific work per kilogram rises. The correction factor of [20], which implies a 23 % drop in γ₂, is therefore not adopted: REFPROP gives a nearly invariant reheat coefficient, so a higher T_turb barely reshapes the domain but shortens the mass drawn per unit power.
 
 ---
 
@@ -433,17 +419,13 @@ hours. Section 6.5 turns this into a sensitivity study on λ.
 
 ### 6.1 Case Study Configuration
 
-The case study considers an integrated energy system consisting of a 20 MW wind power unit, a 30 MW conventional CHP unit (heat-to-power ratio = 1.2), and a 10 MW/50 MWh CCES-CHP system. A typical day in the heating season is selected, with 24-hour profiles of electrical load, heat load, and wind power as shown in Fig. 6 and listed in Supplementary Table S1.
-
-Key characteristics: Wind power is abundant at night (hours 1–7) and low during midday. Electrical load peaks at noon (hours 12–15) and evening (hours 19–23). Heat load peaks in the morning and evening, characteristic of winter heating demand. Several charging windows exist (night wind surplus, midday troughs between peaks).
+The case is a 20 MW wind unit, a 30 MW conventional CHP unit (heat-to-power ratio 1.2) and a 10 MW/50 MWh CCES-CHP unit on a typical winter day (Fig. 6; the 24 h profiles are listed in Supplementary Table S1). Wind is abundant overnight (hours 1-7) and weak at midday; electrical load peaks at noon and in the evening; heat load peaks morning and evening. The charging windows are the night surplus and the midday trough.
 
 ![Fig. 6](../CCES_CHP_Analysis/output_figures/Fig03_LoadWind.png)
 
 **Fig. 6. 24-hour profiles of the electrical load, heat load and wind power.** Wind output peaks overnight, electrical load peaks at noon and in the evening, and the heat load peaks in the morning and evening, leaving charging windows overnight and at the midday trough.
 
 ### 6.2 Dispatch Optimization Results
-
-The 24-hour dispatch comparison between rule-based and ML-optimized strategies is presented in Fig. 7 and Table 6.
 
 **Table 6. 24-hour dispatch performance comparison.**
 
@@ -457,37 +439,13 @@ The 24-hour dispatch comparison between rule-based and ML-optimized strategies i
 | Terminal SOC_heat (%) | 0.2 | 0.2 | — |
 | Electrical dispatch tracking rate (%) | 44.9 | 45.4 | +0.5 pp |
 
-Two metrics are reported because an earlier version of this work conflated them:
-"hours with active discharge" counts hours in which the dispatch instruction is a
-discharge and the unit delivers positive power (9 → 16), whereas "hours with
-non-zero power" also counts charging hours (17 → 24). The 17 → 24 claim in the
-conference version referred to the second quantity.
+The two duration metrics differ: hours with active discharge count only hours whose instruction is a discharge (9 → 16), whereas hours with non-zero power also count charging hours (17 → 24), which is what the conference version reported.
 
 ![Fig. 7](data/dispatch_comparison.png)
 
 **Fig. 7. Rule-based versus ML-guided 24-hour dispatch.** Top: electrical dispatch instruction and the achieved charging/discharging power. Middle: heat dispatch instruction and the achieved heat supply. Bottom: HTV thermal SOC. The ML-guided policy keeps a small discharge through hours 18–24 instead of collapsing at hour 17.
 
-Three observations:
-
-**Observation 1 — Longer active discharge.** The rule-based policy exhausts the
-HTV by hour 10 and then tracks only the remaining heat load; the ML-guided policy
-keeps a positive discharge in 16 of the hours that call for one. Both policies end
-the horizon essentially empty (0.2 %), so the difference is timing rather than a
-reserved margin.
-
-**Observation 2 — More heat, at the cost of discharge energy.** Total heat rises
-from 44.0 to 46.3 MWh while total discharge falls by 2.4 %. The mechanism is not
-an optimal allocation: the surrogate classifies some feasible operating points as
-infeasible near the boundary, so the grid search picks lower power than the
-analytic domain would allow (for example 0.53 MW instead of 3.68 MW at hour 5),
-which leaves thermal energy for later hours. Section 6.5 shows what an explicit
-weighting of heat delivers instead.
-
-**Observation 3 — The heuristic is not optimal.** Under the same objective the
-LP of Section 5.4 reaches 82.868 against 86.041 for the grid search, and the
-rule-based heuristic is closer to the optimum than the grid search is. The
-value of the surrogate therefore lies in inference speed and in parameter
-generalisation, not in the search itself.
+The rule-based policy drains the HTV by hour 10 and then tracks only the heat load, while the ML-guided policy keeps a positive discharge in 16 of the hours that call for one; both end the horizon empty (0.2 %), so the difference is timing rather than a reserved margin. Heat rises from 44.0 to 46.3 MWh while discharge falls 2.4 % — not through an optimal allocation, but because the surrogate calls feasible points infeasible near the boundary, so the grid picks lower power than the domain allows (0.53 MW instead of 3.68 MW at hour 5) and leaves heat for later hours. Nor is the heuristic optimal: under the same objective the LP of Section 5.4 reaches 82.868 against 86.041, and the rule-based policy is closer to the optimum than the grid search, so the surrogate's value lies in speed and parameter generalisation.
 
 ### 6.3 Where the Dispatch Gain Comes From
 
